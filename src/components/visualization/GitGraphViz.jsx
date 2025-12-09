@@ -107,104 +107,190 @@ const GitGraphViz = () => {
         );
     }
 
+    // Helper to determine file status
+    const getFileStatus = (file) => {
+        const isStaged = state.staging.includes(file);
+        const isModified = state.modified.includes(file);
+        if (isStaged) return 'staged';
+        if (isModified) return 'modified';
+        return 'clean';
+    };
+
+    const { runCommand } = useGit();
+
     return (
-        <div style={{ width: '100%', height: '100%', overflow: 'auto' }}>
-            <svg width="2000" height="1000">
-                <defs>
-                    <marker
-                        id="arrowhead"
-                        markerWidth="10"
-                        markerHeight="7"
-                        refX="24"
-                        refY="3.5"
-                        orient="auto"
-                    >
-                        <polygon points="0 0, 10 3.5, 0 7" fill="var(--border-active)" />
-                    </marker>
-                </defs>
+        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <div style={{
+                display: 'flex',
+                gap: '1rem',
+                padding: '1rem',
+                borderBottom: '1px solid var(--border-primary)',
+                backgroundColor: 'var(--bg-secondary)',
+                flexShrink: 0
+            }}>
+                {/* Working Directory Panel Now Shows ALL Files */}
+                <div style={{ flex: 1, border: '1px solid var(--border-primary)', borderRadius: '4px', padding: '0.5rem' }}>
+                    <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: 'var(--text-primary)', textTransform: 'uppercase' }}>Working Directory (Files)</h3>
+                    {state.files && state.files.length > 0 ? (
+                        <ul style={{ margin: 0, paddingLeft: '0', fontSize: '0.85rem', listStyle: 'none' }}>
+                            {state.files.map(f => {
+                                const status = getFileStatus(f);
+                                let color = 'var(--text-tertiary)'; // clean
+                                let icon = null;
 
-                {/* Edges */}
-                <AnimatePresence>
-                    {edges.map(edge => (
-                        <motion.line
-                            key={edge.id}
-                            initial={{ pathLength: 0, opacity: 0 }}
-                            animate={{ pathLength: 1, opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            x1={edge.x1}
-                            y1={edge.y1}
-                            x2={edge.x2}
-                            y2={edge.y2}
-                            stroke="var(--border-active)"
-                            strokeWidth="2"
-                            markerEnd="url(#arrowhead)"
-                        />
-                    ))}
-                </AnimatePresence>
+                                if (status === 'modified') {
+                                    color = '#e5534b';
+                                } else if (status === 'staged') {
+                                    // If staged, it might technically be "clean" in WD relative to Index if fully staged,
+                                    // but for our list we just want to show it exists.
+                                    // But typically, if fully staged, it's not "modified" in WD.
+                                    // Let's show it as "staged" color or keep it clean if we only care about WD diff?
+                                    // User wants to see it so they can edit it again.
+                                    // If it's staged, we can still edit it to make it modified again.
+                                    color = '#238636';
+                                }
 
-                {/* Nodes */}
-                <AnimatePresence>
-                    {nodes.map(node => {
-                        const isHead = node.id === headCommitId;
-                        return (
-                            <motion.g
-                                key={node.id}
-                                initial={{ scale: 0, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0, opacity: 0 }}
-                                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                            >
-                                <circle
-                                    cx={node.x}
-                                    cy={node.y}
-                                    r={NODE_RADIUS}
-                                    fill={isHead ? "var(--bg-secondary)" : "var(--bg-primary)"}
-                                    stroke={isHead ? "var(--accent-primary)" : "var(--text-tertiary)"}
-                                    strokeWidth={isHead ? 3 : 2}
-                                />
-                                <text
-                                    x={node.x}
-                                    y={node.y + 4}
-                                    textAnchor="middle"
-                                    fill={isHead ? "var(--accent-primary)" : "var(--text-secondary)"}
-                                    fontSize="10"
-                                    style={{ fontFamily: 'monospace', pointerEvents: 'none', userSelect: 'none' }}
+                                return (
+                                    <li key={f} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', color }}>
+                                        <span>{f} <span style={{ fontSize: '0.7em', opacity: 0.7 }}>({status})</span></span>
+                                        {status === 'clean' || status === 'staged' ? (
+                                            <button
+                                                onClick={() => runCommand(`touch ${f}`)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: '1px solid var(--border-primary)',
+                                                    borderRadius: '3px',
+                                                    color: 'var(--text-secondary)',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.7rem',
+                                                    padding: '2px 6px',
+                                                    position: 'relative',
+                                                    zIndex: 10
+                                                }}
+                                                title="Edit file (touch)"
+                                            >
+                                                Edit
+                                            </button>
+                                        ) : null}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    ) : (
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>No files</div>
+                    )}
+                </div>
+
+                <div style={{ flex: 1, border: '1px solid var(--border-primary)', borderRadius: '4px', padding: '0.5rem' }}>
+                    <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.8rem', color: '#238636', textTransform: 'uppercase' }}>Staging Area</h3>
+                    {state.staging && state.staging.length > 0 ? (
+                        <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.85rem' }}>
+                            {state.staging.map(f => <li key={f} style={{ color: '#238636' }}>{f}</li>)}
+                        </ul>
+                    ) : (
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>Empty</div>
+                    )}
+                </div>
+            </div>
+
+            <div style={{ flex: 1, overflow: 'auto', position: 'relative' }}>
+                <svg width="2000" height="1000">
+                    <defs>
+                        <marker
+                            id="arrowhead"
+                            markerWidth="10"
+                            markerHeight="7"
+                            refX="24"
+                            refY="3.5"
+                            orient="auto"
+                        >
+                            <polygon points="0 0, 10 3.5, 0 7" fill="var(--border-active)" />
+                        </marker>
+                    </defs>
+
+                    {/* Edges */}
+                    <AnimatePresence>
+                        {edges.map(edge => (
+                            <motion.line
+                                key={edge.id}
+                                initial={{ pathLength: 0, opacity: 0 }}
+                                animate={{ pathLength: 1, opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                x1={edge.x1}
+                                y1={edge.y1}
+                                x2={edge.x2}
+                                y2={edge.y2}
+                                stroke="var(--border-active)"
+                                strokeWidth="2"
+                                markerEnd="url(#arrowhead)"
+                            />
+                        ))}
+                    </AnimatePresence>
+
+                    {/* Nodes */}
+                    <AnimatePresence>
+                        {nodes.map(node => {
+                            const isHead = node.id === headCommitId;
+                            return (
+                                <motion.g
+                                    key={node.id}
+                                    initial={{ scale: 0, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0, opacity: 0 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
                                 >
-                                    {node.id}
-                                </text>
-
-                                {/* Message Label */}
-                                <text
-                                    x={node.x}
-                                    y={node.y + NODE_RADIUS + 16}
-                                    textAnchor="middle"
-                                    fill="var(--text-secondary)"
-                                    fontSize="10"
-                                    style={{ whiteSpace: 'pre' }}
-                                >
-                                    {node.message}
-                                </text>
-
-                                {/* HEAD Indicator Label */}
-                                {isHead && (
-                                    <motion.text
-                                        initial={{ y: -10, opacity: 0 }}
-                                        animate={{ y: 0, opacity: 1 }}
+                                    <circle
+                                        cx={node.x}
+                                        cy={node.y}
+                                        r={NODE_RADIUS}
+                                        fill={isHead ? "var(--bg-secondary)" : "var(--bg-primary)"}
+                                        stroke={isHead ? "var(--accent-primary)" : "var(--text-tertiary)"}
+                                        strokeWidth={isHead ? 3 : 2}
+                                    />
+                                    <text
                                         x={node.x}
-                                        y={node.y - NODE_RADIUS - 8}
+                                        y={node.y + 4}
                                         textAnchor="middle"
-                                        fill="var(--accent-primary)"
-                                        fontSize="11"
-                                        fontWeight="bold"
+                                        fill={isHead ? "var(--accent-primary)" : "var(--text-secondary)"}
+                                        fontSize="10"
+                                        style={{ fontFamily: 'monospace', pointerEvents: 'none', userSelect: 'none' }}
                                     >
-                                        HEAD
-                                    </motion.text>
-                                )}
-                            </motion.g>
-                        );
-                    })}
-                </AnimatePresence>
-            </svg>
+                                        {node.id}
+                                    </text>
+
+                                    {/* Message Label */}
+                                    <text
+                                        x={node.x}
+                                        y={node.y + NODE_RADIUS + 16}
+                                        textAnchor="middle"
+                                        fill="var(--text-secondary)"
+                                        fontSize="10"
+                                        style={{ whiteSpace: 'pre' }}
+                                    >
+                                        {node.message}
+                                    </text>
+
+                                    {/* HEAD Indicator Label */}
+                                    {isHead && (
+                                        <motion.text
+                                            initial={{ y: -10, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            x={node.x}
+                                            y={node.y - NODE_RADIUS - 8}
+                                            textAnchor="middle"
+                                            fill="var(--accent-primary)"
+                                            fontSize="11"
+                                            fontWeight="bold"
+                                        >
+                                            HEAD
+                                        </motion.text>
+                                    )}
+                                </motion.g>
+                            );
+                        })}
+                    </AnimatePresence>
+                </svg>
+            </div>
         </div>
     );
 };

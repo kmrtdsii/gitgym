@@ -10,6 +10,17 @@ export const GitProvider = ({ children }) => {
         const parts = cmdString.trim().split(/\s+/);
         const cmd = parts[0];
 
+        // Pre-Git Commands or Shell Overrides
+        if (cmd === 'touch') {
+            const args = parts.slice(1); // Parse args locally for touch
+            if (args.length > 0) {
+                dispatch({ type: 'TOUCH', payload: { file: args[0] } });
+                return; // Silent usually
+            } else {
+                return { output: 'touch: missing file operand' };
+            }
+        }
+
         if (cmd !== 'git') {
             return { output: `Command not found: ${cmd}` };
         }
@@ -19,6 +30,8 @@ export const GitProvider = ({ children }) => {
         const subCmd = args[0];
         const flags = args.filter(a => a.startsWith('-'));
         const params = args.filter(a => !a.startsWith('-') && a !== subCmd);
+
+
 
         switch (subCmd) {
             case 'init':

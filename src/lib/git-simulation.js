@@ -9,7 +9,8 @@ export const ACTION_TYPES = {
     STATUS: 'STATUS',
     LOG: 'LOG',
     SWITCH: 'SWITCH',
-    RESTORE: 'RESTORE'
+    RESTORE: 'RESTORE',
+    TOUCH: 'TOUCH' // Simulate editing a file
 };
 
 export const initialState = {
@@ -18,6 +19,8 @@ export const initialState = {
     branches: {}, // Map branchName -> commitId
     HEAD: { type: 'branch', ref: null }, // { type: 'branch', ref: 'name' } or { type: 'commit', id: 'hash' }
     staging: [], // Array of file paths
+    modified: [], // Array of file paths (Working Directory)
+    files: [], // Array of all known files in the project
     output: [], // Command output history
     lastUpdated: 0 // Timestamp to force updates on silent commands
 };
@@ -37,17 +40,51 @@ export function gitReducer(state, action) {
                 branches: { main: null },
                 HEAD: { type: 'branch', ref: 'main' },
                 staging: [],
+                files: ['file.txt', 'style.css', 'app.js', 'README.md'], // Basic project files
+                modified: ['file.txt', 'style.css', 'app.js', 'README.md'], // Initially all modified/untracked
                 output: [...state.output, 'Initialized empty Git repository']
             };
+
+        case ACTION_TYPES.TOUCH: {
+            if (!state.initialized) return { ...state, output: [...state.output, 'fatal: not a git repository'] };
+            const { file } = action.payload;
+
+            // If known file, mark as modified
+            if (state.files.includes(file)) {
+                if (state.staging.includes(file)) {
+                    // If staged, it becomes modified AGAIN? (Staged + Modified)
+                    // For simplicity, let's just say it's modified.
+                    // A file can be both, but our array logic is simple.
+                    // Let's ensure it's in modified.
+                }
+                return {
+                    ...state,
+                    modified: [...new Set([...state.modified, file])],
+                    output: [...state.output, ` touched ${file}`]
+                };
+            }
+            return { ...state, output: [...state.output, `touch: ${file}: No such file`] };
+        }
 
         case ACTION_TYPES.ADD: {
             if (!state.initialized) return { ...state, output: [...state.output, 'fatal: not a git repository'] };
             const { files } = action.payload; // array of filenames
-            // Simplified: just add everything to staging if it's not already there
-            const newStaging = [...new Set([...state.staging, ...files])];
+
+            // Move from modified to staging
+            // If specific files, filter. If logic is 'add .', assume simulated behavior
+
+            // For sim: if files includes a file in 'modified', move it.
+            // If not in modified, maybe user created it?
+
+            const filesToAdd = files.includes('.') ? state.modified : files;
+
+            const newStaging = [...new Set([...state.staging, ...filesToAdd])];
+            const newModified = state.modified.filter(f => !filesToAdd.includes(f));
+
             return {
                 ...state,
                 staging: newStaging,
+                modified: newModified,
                 output: state.output,
                 lastUpdated: Date.now()
             };
@@ -97,7 +134,9 @@ export function gitReducer(state, action) {
                 ...state,
                 commits: [...state.commits, newCommit],
                 branches: newBranches,
+                branches: newBranches,
                 staging: [], // clear staging after commit
+                // modified remains as is (unless we assume commit clears something, but usually only staging clears)
                 output: [...state.output, `[${state.HEAD.type === 'branch' ? state.HEAD.ref : 'detached'} ${newCommitId}] ${message}`]
             };
 
@@ -300,14 +339,18 @@ export function gitReducer(state, action) {
 
             if (staged) {
                 // git restore --staged <file>...
-                // Remove files from staging
-                const newStaging = state.staging.filter(f => !files.includes(f));
+                // Move from staging back to modified
+                const filesToRestore = files.includes('.') ? state.staging : files;
+                const newStaging = state.staging.filter(f => !filesToRestore.includes(f));
+
+                // Add back to modified if it was there (or if we assume it becomes modified)
+                const newModified = [...new Set([...state.modified, ...filesToRestore])];
+
                 return {
                     ...state,
                     staging: newStaging,
-                    output: state.output // No output usually, or maybe silent?
-                    // "Unstaged changes after reset:" is often what people see but that's reset.
-                    // restore --staged is silent usually.
+                    modified: newModified,
+                    output: state.output
                 };
             }
 
@@ -332,11 +375,17 @@ export function gitReducer(state, action) {
             if (branchName) lines.push(`On branch ${branchName}`);
             else lines.push(`HEAD detached at ${headId}`);
 
-            if (state.staging.length === 0) {
+            if (state.staging.length === 0 && state.modified.length === 0) {
                 lines.push('nothing to commit, working tree clean');
             } else {
-                lines.push('Changes to be committed:');
-                state.staging.forEach(f => lines.push(`  (use "git restore --staged <file>..." to unstage)\n\tnew file:   ${f}`));
+                if (state.staging.length > 0) {
+                    lines.push('Changes to be committed:');
+                    state.staging.forEach(f => lines.push(`  (use "git restore --staged <file>..." to unstage)\n\tnew file:   ${f}`));
+                }
+                if (state.modified.length > 0) {
+                    lines.push('Changes not staged for commit:');
+                    state.modified.forEach(f => lines.push(`  (use "git add <file>..." to update what will be committed)\n\tmodified:   ${f}`));
+                }
             }
 
             return { ...state, output: [...state.output, ...lines] };
