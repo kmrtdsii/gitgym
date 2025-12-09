@@ -8,9 +8,10 @@
         "ghcr.io/devcontainers/features/node:1": {
             "version": "18"
         },
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+        "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
             "version": "latest",
-            "enableNonRootDocker": "true"
+            "enableNonRootDocker": "true",
+            "moby": "true"
         }
     },
     // Configure tool-specific properties.
