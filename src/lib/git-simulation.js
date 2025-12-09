@@ -81,6 +81,7 @@ export function gitReducer(state, action) {
                 message,
                 parentId,
                 secondParentId: null, // For merges
+                branch: state.HEAD.type === 'branch' ? state.HEAD.ref : 'detached',
                 timestamp: new Date().toISOString()
             };
 
@@ -242,6 +243,7 @@ export function gitReducer(state, action) {
                 message: `Merge branch '${source}'`,
                 parentId: headCommitId,
                 secondParentId: sourceCommitId,
+                branch: state.HEAD.type === 'branch' ? state.HEAD.ref : 'detached',
                 timestamp: new Date().toISOString()
             };
 

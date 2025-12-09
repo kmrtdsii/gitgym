@@ -13,93 +13,46 @@ const START_Y = 100;
 const computeLayout = (commits, branches, HEAD) => {
     if (commits.length === 0) return { nodes: [], edges: [] };
 
-    // 1. Build adjacency list (children)
-    const childrenMap = {};
-    const roots = [];
+    // 1. Assign Lanes based on branch name
+    // 'main' is always lane 0
+    const laneMap = { 'main': 0 };
+    let nextLane = 1;
 
+    // We process commits in order to discover branches
     commits.forEach(c => {
-        if (!c.parentId) {
-            roots.push(c.id);
-        } else {
-            if (!childrenMap[c.parentId]) childrenMap[c.parentId] = [];
-            childrenMap[c.parentId].push(c.id);
-        }
-
-        // Handle merge parents
-        if (c.secondParentId) {
-            if (!childrenMap[c.secondParentId]) childrenMap[c.secondParentId] = [];
-            childrenMap[c.secondParentId].push(c.id);
+        const branchName = c.branch || 'detached';
+        if (laneMap[branchName] === undefined) {
+            laneMap[branchName] = nextLane++;
         }
     });
 
-    // 2. Assign lanes via DFS
     const positions = {}; // commitId -> { x, y, lane }
-    const lanes = {};     // laneIndex -> nextAvailableX (not used strictly, but good for tracking)
 
-    // Create a map to look up commit by ID easily
-    const commitMap = commits.reduce((acc, c) => ({ ...acc, [c.id]: c }), {});
-
-    const traverse = (commitId, lane, xIndex) => {
-        positions[commitId] = {
-            x: START_X + xIndex * X_SPACING,
+    // 2. Compute Positions
+    commits.forEach((c, index) => {
+        const lane = laneMap[c.branch || 'detached'] || 0;
+        positions[c.id] = {
+            x: START_X + index * X_SPACING,
             y: START_Y + lane * Y_SPACING,
             lane
         };
-
-        const children = childrenMap[commitId] || [];
-
-        // Sort children? Chronological usually.
-        // We want the "main" child to stay on the same lane.
-        // Heuristic: First child keeps lane, others get new lanes.
-
-        children.forEach((childId, idx) => {
-            let childLane = lane;
-            if (idx > 0) {
-                // Find next available lane? For now just +1 per fork.
-                // A better algo would find free lanes.
-                // Simple hack: lane + idx
-                // But what if lane+1 is occupied?
-                // Let's just use a global counter or check collision?
-                // Simple Tree Layout: childLane = lane + idx
-                // This might overlap if multiple branches merge or split close by.
-                // For MVP sandbox, let's assume simple branching.
-                childLane = lane + idx;
-
-                // If current position already taken at this x-index?
-                // Actually X is strictly increasing? No, branches can exist in parallel time.
-                // In my current simulation, commits are chronological list.
-                // Lets use index in `commits` array as X for strict time ordering?
-                // Yes, that avoids collision in X.
-                const childCommit = commitMap[childId];
-                const globalIndex = commits.findIndex(c => c.id === childId);
-
-                // Re-calculate X based on global index to ensure time flow
-                // positions[childId] assigned below.
-            }
-
-            const childGlobalIndex = commits.findIndex(c => c.id === childId);
-            // We recurse, but pass the computed lane.
-            // We use globalIndex for X to ensure no overlaps and chronological order.
-            traverse(childId, childLane, childGlobalIndex);
-        });
-    };
-
-    roots.forEach(rootId => {
-        traverse(rootId, 0, commits.findIndex(c => c.id === rootId));
     });
 
-    // 3. Generate Nodes and Edges
+    // 3. Generate Nodes
     const nodes = commits.map(c => ({
         ...c,
         ...positions[c.id]
     }));
 
+    // 4. Generate Edges
     const edges = [];
     commits.forEach(c => {
         if (c.parentId) {
             const source = positions[c.parentId];
             const target = positions[c.id];
             if (source && target) {
+                // Determine if this is a "branching out" or "merging in" edge visually?
+                // Just draw direct lines for now.
                 edges.push({
                     id: `${c.parentId}-${c.id}`,
                     x1: source.x, y1: source.y,
@@ -122,8 +75,7 @@ const computeLayout = (commits, branches, HEAD) => {
         }
     });
 
-    // 4. Determine Active Status (HEAD)
-    // HEAD can be a commit or a branch ref.
+    // 5. Determine Active Status (HEAD)
     let headCommitId = null;
     if (HEAD.type === 'commit') headCommitId = HEAD.id;
     else if (HEAD.type === 'branch') headCommitId = branches[HEAD.ref];
