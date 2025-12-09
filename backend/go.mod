@@ -1,6 +1,8 @@
 module github.com/kmrtdsii/playwithantigravity/backend
 
-go 1.24
+go 1.23.0
+
+toolchain go1.23.4
 
 require (
 	github.com/go-git/go-billy/v5 v5.5.0
