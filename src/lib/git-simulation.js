@@ -115,13 +115,27 @@ export function gitReducer(state, action) {
                 parentId = state.HEAD.id;
             }
 
+            // Determine Tracked Files for Snapshot
+            // The commit includes files that were staged (now committed) + files that were already clean.
+            // In our Sim:
+            // state.files = All files
+            // state.modified = Untracked/Modified files
+            // state.staging = Files about to be committed (moved out of modified)
+
+            // So Tracked Files in this commit = (state.files - state.modified)
+            // Note: 'state.staging' files are already REMOVED from 'state.modified' by ADD action.
+            // So 'state.files - state.modified' includes Staged files + Clean files.
+            // This is exactly what we want.
+            const trackedFiles = state.files.filter(f => !state.modified.includes(f));
+
             const newCommit = {
                 id: newCommitId,
                 message,
                 parentId,
                 secondParentId: null, // For merges
                 branch: state.HEAD.type === 'branch' ? state.HEAD.ref : 'detached',
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                fileSnapshot: trackedFiles // Snapshot ONLY tracked files
             };
 
             // Update branch pointer if HEAD is on a branch
@@ -134,9 +148,8 @@ export function gitReducer(state, action) {
                 ...state,
                 commits: [...state.commits, newCommit],
                 branches: newBranches,
-                branches: newBranches,
                 staging: [], // clear staging after commit
-                // modified remains as is (unless we assume commit clears something, but usually only staging clears)
+                // modified remains as is (Untracked files persist)
                 output: [...state.output, `[${state.HEAD.type === 'branch' ? state.HEAD.ref : 'detached'} ${newCommitId}] ${message}`]
             };
 
@@ -314,6 +327,7 @@ export function gitReducer(state, action) {
                     ? state.branches[state.HEAD.ref]
                     : state.HEAD.id;
 
+                // When creating a branch, we stay on current files (snapshot doesn't change yet)
                 return {
                     ...state,
                     branches: { ...state.branches, [ref]: currentCommitId },
@@ -323,9 +337,49 @@ export function gitReducer(state, action) {
             } else {
                 // git switch <name>
                 if (state.branches[ref] !== undefined) {
+                    const targetCommitId = state.branches[ref];
+
+                    // Restore Files from Snapshot
+                    let restoredTrackedFiles = [];
+
+                    // Find commit
+                    const commit = state.commits.find(c => c.id === targetCommitId);
+                    if (commit && commit.fileSnapshot) {
+                        restoredTrackedFiles = commit.fileSnapshot;
+                    } else if (!commit && !targetCommitId) {
+                        // Attempting to switch to a branch with no commits? (e.g. initial 'main')
+                        // If we are simulating "initial state", maybe we restore initial files?
+                        // But usually 'switch' implies switching to a commit.
+                        // For safety, let's default to [] if purely empty.
+                        // If we are keeping some "initial" files, we might lose them here if we default to [].
+                        // But for now, let's assume empty tracked.
+                    }
+
+                    // Current Untracked files = state.modified
+                    // (Files in WD that are NOT tracked in current HEAD are in modified)
+                    const currentUntracked = state.modified;
+
+                    // New Files List = Restored Tracked + Current Untracked
+                    // Use Set to dedup (though they should be disjoint ideally)
+                    // If a file is in both, it means it's tracked in Target AND was untracked in Source?
+                    // -> Git would overwrite (or complain).
+                    // -> We will allow it to become "Tracked Clean" (from snapshot).
+                    // So we prioritize Snapshot?
+                    // Wait, if it's in Snapshot, it will be Clean.
+                    // If it was in Untracked, we should probably remove it from Untracked (state.modified) because now it's tracked!
+
+                    // New Modified = Current Untracked MINUS Restored Tracked
+                    // (i.e. if file exists in Target, it becomes clean)
+                    const newModified = currentUntracked.filter(f => !restoredTrackedFiles.includes(f));
+
+                    const newFiles = [...new Set([...restoredTrackedFiles, ...newModified])];
+
                     return {
                         ...state,
                         HEAD: { type: 'branch', ref: ref },
+                        files: newFiles,
+                        staging: [],
+                        modified: newModified,
                         output: [...state.output, `Switched to branch '${ref}'`]
                     };
                 }
