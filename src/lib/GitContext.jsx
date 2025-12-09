@@ -60,6 +60,10 @@ export const GitProvider = ({ children }) => {
                     return { output: 'error: switch `m` requires a value' };
                 }
 
+                if (!message) {
+                    return { output: 'Aborting commit due to empty commit message.' };
+                }
+
                 // If user didn't modify anything? (Simulated environment)
                 // For now, if staging is empty, maybe we reject in reducer.
                 dispatch({ type: 'COMMIT', payload: { message } });
