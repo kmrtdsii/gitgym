@@ -100,6 +100,25 @@ export const GitProvider = ({ children }) => {
                 }
                 break;
 
+
+            case 'switch':
+                const isCreate = flags.includes('-c') || flags.includes('--create');
+                if (params.length > 0) {
+                    dispatch({ type: 'SWITCH', payload: { ref: params[0], create: isCreate } });
+                } else {
+                    return { output: "fatal: missing branch name" };
+                }
+                break;
+
+            case 'restore':
+                const isStaged = flags.includes('--staged') || flags.includes('--source=HEAD'); // simplified
+                if (params.length > 0) {
+                    dispatch({ type: 'RESTORE', payload: { files: params, staged: isStaged } });
+                } else {
+                    return { output: "fatal: you must specify path(s) to restore" };
+                }
+                break;
+
             case 'log':
                 // Return log string directly? Or dispatch LOG?
                 // Let's just generate log from state here for simplicity or dispatch to add to output

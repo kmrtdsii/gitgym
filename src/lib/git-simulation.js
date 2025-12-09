@@ -7,7 +7,9 @@ export const ACTION_TYPES = {
     BRANCH: 'BRANCH',
     MERGE: 'MERGE',
     STATUS: 'STATUS',
-    LOG: 'LOG'
+    LOG: 'LOG',
+    SWITCH: 'SWITCH',
+    RESTORE: 'RESTORE'
 };
 
 export const initialState = {
@@ -257,6 +259,67 @@ export function gitReducer(state, action) {
                 commits: [...state.commits, newCommit],
                 branches: newBranches,
                 output: [...state.output, `Merge made by the 'ort' strategy.`, ` ${sourceCommitId} merged into ${state.HEAD.ref || headCommitId}`]
+            };
+        }
+
+        case ACTION_TYPES.SWITCH: {
+            if (!state.initialized) return { ...state, output: [...state.output, 'fatal: not a git repository'] };
+            const { ref, create } = action.payload;
+
+            if (create) {
+                // git switch -c <name> (same as checkout -b)
+                if (state.branches[ref]) {
+                    return { ...state, output: [...state.output, `fatal: A branch named '${ref}' already exists.`] };
+                }
+                const currentCommitId = state.HEAD.type === 'branch'
+                    ? state.branches[state.HEAD.ref]
+                    : state.HEAD.id;
+
+                return {
+                    ...state,
+                    branches: { ...state.branches, [ref]: currentCommitId },
+                    HEAD: { type: 'branch', ref: ref },
+                    output: [...state.output, `Switched to a new branch '${ref}'`]
+                };
+            } else {
+                // git switch <name>
+                if (state.branches[ref] !== undefined) {
+                    return {
+                        ...state,
+                        HEAD: { type: 'branch', ref: ref },
+                        output: [...state.output, `Switched to branch '${ref}'`]
+                    };
+                }
+                return { ...state, output: [...state.output, `fatal: invalid reference: ${ref}`] };
+            }
+        }
+
+        case ACTION_TYPES.RESTORE: {
+            if (!state.initialized) return { ...state, output: [...state.output, 'fatal: not a git repository'] };
+            const { files, staged } = action.payload;
+
+            if (staged) {
+                // git restore --staged <file>...
+                // Remove files from staging
+                const newStaging = state.staging.filter(f => !files.includes(f));
+                return {
+                    ...state,
+                    staging: newStaging,
+                    output: state.output // No output usually, or maybe silent?
+                    // "Unstaged changes after reset:" is often what people see but that's reset.
+                    // restore --staged is silent usually.
+                };
+            }
+
+            // git restore <file>... (working tree)
+            // In our sim, this "discards changes". If we had a list of modified files distinct from staged, we'd revert them.
+            // Since we assume simple sim where "changes" come from "add .", let's just say we can't fully simulate file content restore yet
+            // UNLESS we interpret "restore" as removing from our implicit "modified list" which we don't assume exists until 'add'.
+            // Actually, if we have files in 'staging', and we 'restore' them (without --staged), it does nothing unless they are modified relative to index.
+            // Let's just output a message that we restored them.
+            return {
+                ...state,
+                output: [...state.output] // Silent success for simulation
             };
         }
 
