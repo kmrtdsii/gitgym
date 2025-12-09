@@ -80,14 +80,41 @@ const computeLayout = (commits, branches, HEAD) => {
     if (HEAD.type === 'commit') headCommitId = HEAD.id;
     else if (HEAD.type === 'branch') headCommitId = branches[HEAD.ref];
 
-    return { nodes, edges, headCommitId };
+    // 6. Compute Labels per Commit
+    // Map commitId -> strings[] (labels to stack)
+    // Order: Bottom -> Top
+    const labelsMap = {};
+
+    // Add branches
+    Object.entries(branches).forEach(([name, commitId]) => {
+        if (!commitId) return;
+        if (!labelsMap[commitId]) labelsMap[commitId] = [];
+        labelsMap[commitId].push({ text: name, type: 'branch' });
+    });
+
+    // Add HEAD
+    // If HEAD points to a branch, we already added the branch label.
+    // Ideally we want to show HEAD marker too.
+    // User wants "HEAD" specifically.
+    // If HEAD is detached, it points to commitId directly.
+    // If HEAD is branch, it points to branch ref.
+    // The visual request is: "HEAD" label should be displayed.
+    // And if HEAD and Branch are same commit, HEAD should be on top.
+
+    // Let's add HEAD logic:
+    if (headCommitId) {
+        if (!labelsMap[headCommitId]) labelsMap[headCommitId] = [];
+        labelsMap[headCommitId].push({ text: 'HEAD', type: 'head' });
+    }
+
+    return { nodes, edges, headCommitId, labelsMap };
 };
 
 const GitGraphViz = () => {
     const { state } = useGit();
     const { commits, branches, HEAD } = state;
 
-    const { nodes, edges, headCommitId } = useMemo(() =>
+    const { nodes, edges, headCommitId, labelsMap } = useMemo(() =>
         computeLayout(commits, branches, HEAD),
         [commits, branches, HEAD]
     );
@@ -270,21 +297,38 @@ const GitGraphViz = () => {
                                         {node.message}
                                     </text>
 
-                                    {/* HEAD Indicator Label */}
-                                    {isHead && (
-                                        <motion.text
-                                            initial={{ y: -10, opacity: 0 }}
-                                            animate={{ y: 0, opacity: 1 }}
-                                            x={node.x}
-                                            y={node.y - NODE_RADIUS - 8}
-                                            textAnchor="middle"
-                                            fill="var(--accent-primary)"
-                                            fontSize="11"
-                                            fontWeight="bold"
-                                        >
-                                            HEAD
-                                        </motion.text>
-                                    )}
+                                    {/* Labels (HEAD, Branches) */}
+                                    {(labelsMap[node.id] || []).map((label, i) => {
+                                        // Stack upwards: y - radius - padding - (i * height)
+                                        // i=0 is bottom-most label (Branch), i=last is top (HEAD)
+                                        // But Wait!
+                                        // If I push Branch then HEAD, index 0 is Branch, index 1 is HEAD.
+                                        // Stacking:
+                                        // Y_base = node.y - NODE_RADIUS - 8;
+                                        // Label Y = Y_base - (i * 12);
+                                        // So i=0 is lowest (Branch), i=1 is higher (HEAD).
+                                        // This matches request "HEAD on top".
+
+                                        const yPos = node.y - NODE_RADIUS - 10 - (i * 14);
+                                        const isHeadLabel = label.type === 'head';
+
+                                        return (
+                                            <motion.text
+                                                key={`${node.id}-${label.text}`}
+                                                initial={{ y: -10, opacity: 0 }}
+                                                animate={{ y: yPos - node.y + NODE_RADIUS + 10 + (i * 14), opacity: 1 }} // animate relative? No, absolute y is fine if parent g is transformed? No parent g is not translated.
+                                                // Actually animate from slightly lower?
+                                                x={node.x}
+                                                y={yPos}
+                                                textAnchor="middle"
+                                                fill={isHeadLabel ? "var(--accent-primary)" : "var(--text-secondary)"}
+                                                fontSize="11"
+                                                fontWeight={isHeadLabel ? "bold" : "normal"}
+                                            >
+                                                {label.text}
+                                            </motion.text>
+                                        );
+                                    })}
                                 </motion.g>
                             );
                         })}
