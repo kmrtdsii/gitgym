@@ -164,6 +164,58 @@ func ExecuteGitCommand(sessionID string, args []string) (string, error) {
 		return "Created branch " + branchName, nil
 
 
+	case "checkout":
+		w, _ := session.Repo.Worktree()
+		if len(args) < 2 {
+			return "", fmt.Errorf("usage: git checkout <branch> | git checkout -b <branch>")
+		}
+
+		// Handle -b
+		if args[1] == "-b" {
+			if len(args) < 3 {
+				return "", fmt.Errorf("usage: git checkout -b <branch>")
+			}
+			branchName := args[2]
+
+			// Create branch reference manually first (like git branch <name>)
+			// We do this because Checkout with Create: true might fail if we don't handle it right, 
+			// or we can use the CheckoutOptions.Create but let's stick to standard go-git flow.
+			// Actually go-git CheckoutOptions has Create: true.
+			
+			err := w.Checkout(&git.CheckoutOptions{
+				Create: true,
+				Force:  false,
+				Branch: plumbing.ReferenceName("refs/heads/" + branchName),
+			})
+			if err != nil {
+				return "", err
+			}
+			return fmt.Sprintf("Switched to a new branch '%s'", branchName), nil
+		}
+
+		// Handle normal checkout (branch or commit)
+		target := args[1]
+		
+		// 1. Try as branch
+		branchRef := plumbing.ReferenceName("refs/heads/" + target)
+		err := w.Checkout(&git.CheckoutOptions{
+			Branch: branchRef,
+		})
+		if err == nil {
+			return fmt.Sprintf("Switched to branch '%s'", target), nil
+		}
+
+		// 2. Try as hash (Detached HEAD)
+		hash := plumbing.NewHash(target)
+		err = w.Checkout(&git.CheckoutOptions{
+			Hash: hash,
+		})
+		if err == nil {
+			return fmt.Sprintf("Note: switching to '%s'.\n\nYou are in 'detached HEAD' state.", target), nil
+		}
+
+		return "", fmt.Errorf("pathspec '%s' did not match any file(s) known to git", target)
+
 	default:
 		return "", fmt.Errorf("command not supported: %s", cmd)
 	}
