@@ -25,31 +25,19 @@ type Session struct {
 
 var sessions = make(map[string]*Session)
 
-// InitSession creates a new in-memory git repository
+// InitSession creates a new session with empty filesystem
 func InitSession(id string) error {
 	fs := memfs.New()
-	st := memory.NewStorage()
+	// st := memory.NewStorage() // Storage created on init
 
-	repo, err := git.Init(st, fs)
-	if err != nil {
-		return err
-	}
-
-	// Create initial files
-	f, _ := fs.Create("README.md")
-	f.Write([]byte("# My Project\n"))
-	f.Close()
-
-	// Debug: Check status immediately
-	w, _ := repo.Worktree()
-	status, _ := w.Status()
-	fmt.Printf("InitSession: Status after README creation: %v\n", status)
+	// No git init here
+	// No files created here
 
 	sessions[id] = &Session{
 		ID:         id,
 		Filesystem: fs,
-		Repo:       repo,
-		CreatedAt:  time.Time{}, // Mock timestamp or use real
+		Repo:       nil, // Repo is nil until git init
+		CreatedAt:  time.Now(),
 	}
 	return nil
 }
@@ -67,42 +55,55 @@ func ExecuteGitCommand(sessionID string, args []string) (string, error) {
 	}
 
 	cmd := args[0]
-	w, err := session.Repo.Worktree()
-	if err != nil {
-		return "", err
+	// Check for repo existence for non-init commands
+	if session.Repo == nil && cmd != "init" {
+		return "", fmt.Errorf("fatal: not a git repository (or any of the parent directories): .git")
 	}
 
 	switch cmd {
 	case "status":
-		status, err := w.Status()
-		if err != nil {
-			return "", err
-		}
+		w, _ := session.Repo.Worktree()
+		status, _ := w.Status()
 		return status.String(), nil
 
 	case "init":
-		err := InitSession(sessionID)
+		if session.Repo != nil {
+			return "Git repository already initialized", nil
+		}
+
+		st := memory.NewStorage()
+		repo, err := git.Init(st, session.Filesystem)
 		if err != nil {
 			return "", err
 		}
-		return "Initialized empty Git repository", nil
+		session.Repo = repo
+
+		// Create initial files (simulating project start)
+		f, _ := session.Filesystem.Create("README.md")
+		f.Write([]byte("# My Project\n"))
+		f.Close()
+
+		return "Initialized empty Git repository in /", nil
 
 	case "add":
+		w, _ := session.Repo.Worktree()
 		if len(args) < 2 {
 			return "", fmt.Errorf("usage: git add <file>")
 		}
 		file := args[1]
-		if file == "." {
-			_, err = w.Add(".")
-		} else {
-			_, err = w.Add(file)
-		}
-		if err != nil {
-			return "", err
-		}
+			var err error
+			if file == "." {
+				_, err = w.Add(".")
+			} else {
+				_, err = w.Add(file)
+			}
+			if err != nil {
+				return "", err
+			}
 		return "Added " + file, nil
 
 	case "commit":
+		w, _ := session.Repo.Worktree()
 		// simple parsing
 		msg := "Default commit message"
 		if len(args) >= 3 && args[1] == "-m" {
@@ -167,71 +168,70 @@ func GetGraphState(sessionID string) (*GraphState, error) {
 	}
 
 	// 1. Get HEAD
-	ref, err := session.Repo.Head()
-	if err != nil {
-		// If empty repo (no commits yet)
-		if err.Error() == "reference not found" {
-			state.HEAD = Head{Type: "branch", Ref: "main"} // Default
-			// Continue to get files even if no commits
-		} else {
-			return nil, err
-		}
+	if session.Repo == nil {
+		// No repo, no HEAD
+		state.HEAD = Head{Type: "none"}
 	} else {
-		if ref.Name().IsBranch() {
-			state.HEAD = Head{Type: "branch", Ref: ref.Name().Short()}
+		ref, err := session.Repo.Head()
+		if err != nil {
+			// If empty repo (no commits yet)
+			if err.Error() == "reference not found" {
+				state.HEAD = Head{Type: "branch", Ref: "main"} // Default
+				// Continue to get files even if no commits
+			} else {
+				return nil, err
+			}
 		} else {
-			state.HEAD = Head{Type: "commit", ID: ref.Hash().String()}
+			if ref.Name().IsBranch() {
+				state.HEAD = Head{Type: "branch", Ref: ref.Name().Short()}
+			} else {
+				state.HEAD = Head{Type: "commit", ID: ref.Hash().String()}
+			}
 		}
 	}
 
 	// 2. Get Branches
-	iter, err := session.Repo.Branches()
-	if err != nil {
-		return nil, err
-	}
-	iter.ForEach(func(r *plumbing.Reference) error {
-		state.Branches[r.Name().Short()] = r.Hash().String()
-		return nil
-	})
-
-	// 3. Walk Commits to build graph
-	// This is a simplified walk. For a full graph with complex merges and disjoint branches,
-	// we should iterate all refs and walk down.
-	cIter, err := session.Repo.Log(&git.LogOptions{All: true})
-	if err != nil {
-		// Maybe no commits yet
-		return state, nil
-	}
-
-	cIter.ForEach(func(c *object.Commit) error {
-		// Naive logic:
-		// In the real app, we need to map commits to lanes/branches for coloring.
-		// For now, we just list them.
-
-		parentID := ""
-		if len(c.ParentHashes) > 0 {
-			parentID = c.ParentHashes[0].String()
+	if session.Repo != nil {
+		iter, err := session.Repo.Branches()
+		if err != nil {
+			return nil, err
 		}
-		secondParentID := ""
-		if len(c.ParentHashes) > 1 {
-			secondParentID = c.ParentHashes[1].String()
-		}
-
-		state.Commits = append(state.Commits, Commit{
-			ID:             c.Hash.String(),
-			Message:        c.Message,
-			ParentID:       parentID,
-			SecondParentID: secondParentID,
-			Timestamp:      c.Committer.When.Format(time.RFC3339),
+		iter.ForEach(func(r *plumbing.Reference) error {
+			state.Branches[r.Name().Short()] = r.Hash().String()
+			return nil
 		})
-		return nil
-	})
+	}
+
+	// 3. Walk Commits
+	if session.Repo != nil {
+		cIter, err := session.Repo.Log(&git.LogOptions{All: true})
+		if err == nil {
+			cIter.ForEach(func(c *object.Commit) error {
+				parentID := ""
+				if len(c.ParentHashes) > 0 {
+					parentID = c.ParentHashes[0].String()
+				}
+				secondParentID := ""
+				if len(c.ParentHashes) > 1 {
+					secondParentID = c.ParentHashes[1].String()
+				}
+
+				state.Commits = append(state.Commits, Commit{
+					ID:             c.Hash.String(),
+					Message:        c.Message,
+					ParentID:       parentID,
+					SecondParentID: secondParentID,
+					Timestamp:      c.Committer.When.Format(time.RFC3339),
+				})
+				return nil
+			})
+		}
+	}
 
 	// 4. Get Status (Files, Staging, Modified)
-	w, _ := session.Repo.Worktree()
-	status, _ := w.Status()
-
+	
 	// Walk filesystem to find all files (tracked and untracked)
+	// Even if no repo, we can list files (which should be empty initially)
 	fmt.Println("Searching for files in root...")
 	util.Walk(session.Filesystem, "/", func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
@@ -257,16 +257,40 @@ func GetGraphState(sessionID string) (*GraphState, error) {
 	})
 	fmt.Printf("Total files found: %d\n", len(state.Files))
 
-	// Use status to determine Staging/Modified
-	for file, s := range status {
-		if s.Staging != git.Unmodified {
-			state.Staging = append(state.Staging, file)
+	if session.Repo != nil {
+		w, _ := session.Repo.Worktree()
+		status, _ := w.Status()
+		for file, s := range status {
+			// Only add to Staging if it is NOT Unmodified AND NOT Untracked
+			if s.Staging != git.Unmodified && s.Staging != git.Untracked {
+				state.Staging = append(state.Staging, file)
+			}
+			if s.Worktree != git.Unmodified {
+				state.Modified = append(state.Modified, file)
+			}
 		}
-		if s.Worktree != git.Unmodified {
-			state.Modified = append(state.Modified, file)
-		}
-		// Note: Files are already added via Walk
 	}
 
 	return state, nil
+}
+
+// TouchFile updates the modification time and appends content to a file to ensure it's treated as modified
+func TouchFile(sessionID, filename string) error {
+	session, ok := sessions[sessionID]
+	if !ok {
+		return fmt.Errorf("session not found")
+	}
+
+	// Append a newline to ensure checksum changes (go-git relies on hash)
+	f, err := session.Filesystem.OpenFile(filename, os.O_APPEND|os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err := f.Write([]byte("\n// Update")); err != nil {
+		return err
+	}
+	
+	return nil
 }
