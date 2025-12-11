@@ -79,19 +79,34 @@ func execCommand(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Fields(req.Command)
 	log.Printf("Command received: user=%s cmd=%s parts=%v", req.SessionID, req.Command, parts)
 	// Basic check
-	if len(parts) > 0 && parts[0] == "git" {
-		output, err := ExecuteGitCommand(req.SessionID, parts[1:])
-		if err != nil {
+	if len(parts) > 0 {
+		if parts[0] == "git" {
+			output, err := ExecuteGitCommand(req.SessionID, parts[1:])
+			if err != nil {
+				w.Header().Set("Content-Type", "application/json")
+				json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+				return
+			}
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+			json.NewEncoder(w).Encode(map[string]string{"output": output})
+			return
+		} else if parts[0] == "touch" {
+			if len(parts) < 2 {
+				http.Error(w, "Filename required", http.StatusBadRequest)
+				return
+			}
+			err := TouchFile(req.SessionID, parts[1])
+			if err != nil {
+				json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+				return
+			}
+			json.NewEncoder(w).Encode(map[string]string{"output": "File updated"})
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"output": output})
-	} else {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"error": "Only git commands supported right now"})
 	}
+	
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"error": "Only git commands supported right now"})
 }
 
 func getGraphState(w http.ResponseWriter, r *http.Request) {
