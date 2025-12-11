@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-billy/v5"
@@ -129,6 +130,39 @@ func ExecuteGitCommand(sessionID string, args []string) (string, error) {
 	case "log":
 		// ... implementation
 		return "Log not implemented yet", nil
+
+	case "branch":
+		if len(args) == 1 {
+			// List branches
+			iter, err := session.Repo.Branches()
+			if err != nil {
+				return "", err
+			}
+			var branches []string
+			iter.ForEach(func(r *plumbing.Reference) error {
+				branches = append(branches, r.Name().Short())
+				return nil
+			})
+			return strings.Join(branches, "\n"), nil
+		}
+
+		// Create branch
+		branchName := args[1]
+		headRef, err := session.Repo.Head()
+		if err != nil {
+			return "", fmt.Errorf("cannot create branch: %v (maybe no commits yet?)", err)
+		}
+
+		// Create new reference
+		refName := plumbing.ReferenceName("refs/heads/" + branchName)
+		newRef := plumbing.NewHashReference(refName, headRef.Hash())
+		
+		if err := session.Repo.Storer.SetReference(newRef); err != nil {
+			return "", err
+		}
+		
+		return "Created branch " + branchName, nil
+
 
 	default:
 		return "", fmt.Errorf("command not supported: %s", cmd)
