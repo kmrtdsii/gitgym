@@ -34,7 +34,7 @@
         }
     },
     // Use 'postCreateCommand' to run commands after the container is created.
-    "postCreateCommand": "cd backend && go mod download && cd ../frontend && npm install",
+    "postCreateCommand": "cd backend && go mod download && cd ../frontend && npm install && /bin/bash scripts/check-git-config.sh",
     // Comment out connect as root instead. More secure default.
     "remoteUser": "vscode"
 }
