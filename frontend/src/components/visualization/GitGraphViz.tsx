@@ -5,8 +5,8 @@ import type { Commit, GitState } from '../../context/GitAPIContext';
 
 // Basic constants
 const NODE_RADIUS = 16;
-const X_SPACING = 80;
-const Y_SPACING = 60;
+const X_SPACING = 100;
+const Y_SPACING = 100;
 const START_X = 50;
 const START_Y = 100;
 
@@ -265,18 +265,18 @@ const GitGraphViz: React.FC = () => {
                                     />
                                     <text
                                         x={node.x}
-                                        y={node.y + 4}
+                                        y={node.y + NODE_RADIUS + 15}
                                         textAnchor="middle"
-                                        fill={isHead ? "var(--accent-primary)" : "var(--text-secondary)"}
+                                        fill="var(--text-secondary)"
                                         fontSize="10"
                                         style={{ fontFamily: 'monospace', pointerEvents: 'none', userSelect: 'none' }}
                                     >
-                                        {node.id}
+                                        {node.id.substring(0, 7) + '...'}
                                     </text>
 
                                     <text
                                         x={node.x}
-                                        y={node.y + NODE_RADIUS + 16}
+                                        y={node.y + NODE_RADIUS + 35}
                                         textAnchor="middle"
                                         fill="var(--text-secondary)"
                                         fontSize="10"
