@@ -11,11 +11,13 @@ const GitTerminal = () => {
     const runCommandRef = useRef(runCommand);
     const lastOutputLen = useRef(0);
     const lastCommandCount = useRef(0);
+    const stateRef = useRef(state);
 
     // Keep ref updated
     useEffect(() => {
         runCommandRef.current = runCommand;
-    }, [runCommand]);
+        stateRef.current = state;
+    }, [runCommand, state]);
 
     // Effect to sync state output to terminal
     useEffect(() => {
@@ -86,10 +88,10 @@ const GitTerminal = () => {
                     if (cmd === 'clear') {
                         term.clear();
                         let prompt = '$ ';
-                        // We need to access current state here, but state is in closure.
-                        // Ideally we should use a ref for state access in event handler.
-                        // However, let's just default to simple prompt for clear, next command will fix it.
-                        // Or better, let's use a ref to track current prompt string.
+                        if (stateRef.current.initialized) {
+                            const branch = stateRef.current.HEAD.ref || stateRef.current.HEAD.id?.substring(0, 7) || 'DETACHED'; // Use stateRef
+                            prompt = `(${branch}) $ `;
+                        }
                         term.write(prompt);
                     } else {
                         // Run command - result handling is in the other useEffect
@@ -100,11 +102,12 @@ const GitTerminal = () => {
                     }
                 } else {
                     // Empty command, just new prompt
-                    // But wait, we don't have easy access to state here without ref.
-                    // Let's rely on the useEffect to update prompt? No, useEffect only runs on state change.
-                    // If user hits enter empty, we just show prompt again.
-                    // Let's use a simple $ for empty enter for now or try to fetch ref.
-                    term.write('$ ');
+                    let prompt = '$ ';
+                    if (stateRef.current.initialized) {
+                        const branch = stateRef.current.HEAD.ref || stateRef.current.HEAD.id?.substring(0, 7) || 'DETACHED';
+                        prompt = `(${branch}) $ `;
+                    }
+                    term.write(prompt);
                 }
                 currentLine = '';
             }
