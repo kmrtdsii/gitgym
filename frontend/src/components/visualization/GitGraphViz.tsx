@@ -3,21 +3,21 @@ import { useGit } from '../../context/GitAPIContext';
 import type { Commit, GitState } from '../../context/GitAPIContext';
 
 // --- Constants & Config ---
-const ROW_HEIGHT = 28;
-const LANE_WIDTH = 12; // Narrower for "rail" look
-const CIRCLE_RADIUS = 4;
-const PADDING_TOP = 20;
-const GRAPH_LEFT_PADDING = 20;
+const ROW_HEIGHT = 36; // Taller rows
+const LANE_WIDTH = 18; // Wider lanes
+const CIRCLE_RADIUS = 5; // Slightly larger nodes
+const PADDING_TOP = 24;
+const GRAPH_LEFT_PADDING = 24;
 
 const LANE_COLORS = [
-    '#00bfff', // Deep Sky Blue (Cyan-ish)
-    '#ff00ff', // Magenta
-    '#ffff00', // Yellow
-    '#00ff00', // Lime
-    '#ff4500', // OrangeRed
-    '#1e90ff', // Dodger Blue
-    '#da70d6', // Orchid
-    '#adff2f', // GreenYellow
+    '#58a6ff', // Blue
+    '#d2a8ff', // Purple
+    '#3fb950', // Green
+    '#ffa657', // Orange
+    '#ff7b72', // Red
+    '#79c0ff', // Light Blue
+    '#f2cc60', // Yellow
+    '#56d364', // Light Green
 ];
 
 interface VizNode extends Commit {
