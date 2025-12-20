@@ -12,6 +12,13 @@
             "version": "latest",
             "enableNonRootDocker": "true",
             "moby": "true"
+        },
+        "ghcr.io/devcontainers/features/playwright:1": {},
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": "true",
+            "configureZshAsDefaultShell": "true",
+            "installOhMyZsh": "true",
+            "upgradePackages": "true"
         }
     },
     // Configure tool-specific properties.
@@ -21,7 +28,8 @@
                 "golang.go",
                 "dbaeumer.vscode-eslint",
                 "esbenp.prettier-vscode",
-                "ms-azuretools.vscode-docker"
+                "ms-azuretools.vscode-docker",
+                "ms-playwright.playwright"
             ],
             "settings": {
                 "go.toolsManagement.checkForUpdates": "local",
@@ -34,7 +42,7 @@
         }
     },
     // Use 'postCreateCommand' to run commands after the container is created.
-    "postCreateCommand": "cd backend && go mod download && cd ../frontend && npm install && /bin/bash scripts/check-git-config.sh",
+    "postCreateCommand": "cd backend && go mod download && cd ../frontend && npm install && npx playwright install && cd .. && /bin/bash scripts/check-git-config.sh",
     "mounts": [
         "source=${env:HOME}/.gitconfig,target=/home/vscode/.gitconfig,type=bind,consistency=cached"
     ],
