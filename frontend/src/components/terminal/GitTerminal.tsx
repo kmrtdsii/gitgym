@@ -36,12 +36,13 @@ const GitTerminal = () => {
             if (state.initialized) {
                 const branch = state.HEAD.ref || state.HEAD.id?.substring(0, 7) || 'DETACHED';
                 prompt = `(${branch}) $ `;
+                console.log("GitTerminal: Prompt updated with branch:", branch, "HEAD:", state.HEAD);
             }
             xtermRef.current.write(`\r\n${prompt}`);
             lastCommandCount.current = state.commandCount;
         }
 
-    }, [state.output, state.commandCount]);
+    }, [state.output, state.commandCount, state.HEAD, state.initialized]); // Added dependecies
 
     useEffect(() => {
         if (!terminalRef.current) return;
