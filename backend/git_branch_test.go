@@ -57,4 +57,16 @@ func TestGitBranchDelete(t *testing.T) {
 	if _, err := ExecuteGitCommand(sessionID, []string{"branch", "-d", "non-existent"}); err == nil {
 		t.Error("Expected error when deleting non-existent branch, got nil")
 	}
+
+	// 8. Test invalid flag (prevent creation of branch named "-r")
+	if _, err := ExecuteGitCommand(sessionID, []string{"branch", "-r"}); err == nil {
+		t.Error("Expected error when using invalid flag -r, got nil")
+	}
+	output, err = ExecuteGitCommand(sessionID, []string{"branch"})
+	if err != nil {
+		t.Fatalf("Failed to list branches: %v", err)
+	}
+	if strings.Contains(output, "-r") {
+		t.Errorf("Expected branch list to NOT contain '-r', got:\n%s", output)
+	}
 }
