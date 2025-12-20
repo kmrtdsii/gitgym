@@ -146,6 +146,33 @@ func ExecuteGitCommand(sessionID string, args []string) (string, error) {
 			return strings.Join(branches, "\n"), nil
 		}
 
+		// Handle branch deletion
+		if args[1] == "-d" {
+			if len(args) < 3 {
+				return "", fmt.Errorf("branch name required")
+			}
+			branchName := args[2]
+
+			// Validate branch exists
+			refName := plumbing.ReferenceName("refs/heads/" + branchName)
+			_, err := session.Repo.Reference(refName, true)
+			if err != nil {
+				return "", fmt.Errorf("branch '%s' not found.", branchName)
+			}
+
+			// Prevent deleting current branch
+			headRef, err := session.Repo.Head()
+			if err == nil && headRef.Name() == refName {
+				return "", fmt.Errorf("cannot delete branch '%s' checked out at '%s'", branchName, "." /* worktree path info unavailable here */)
+			}
+
+			// Delete reference
+			if err := session.Repo.Storer.RemoveReference(refName); err != nil {
+				return "", err
+			}
+			return "Deleted branch " + branchName, nil
+		}
+
 		// Create branch
 		branchName := args[1]
 		headRef, err := session.Repo.Head()
