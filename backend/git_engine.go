@@ -175,6 +175,10 @@ func ExecuteGitCommand(sessionID string, args []string) (string, error) {
 
 		// Create branch
 		branchName := args[1]
+		if strings.HasPrefix(branchName, "-") {
+			return "", fmt.Errorf("unknown switch `c' configuration: %s", branchName)
+		}
+
 		headRef, err := session.Repo.Head()
 		if err != nil {
 			return "", fmt.Errorf("cannot create branch: %v (maybe no commits yet?)", err)
