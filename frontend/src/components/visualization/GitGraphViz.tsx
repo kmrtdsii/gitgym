@@ -327,8 +327,11 @@ const GitGraphViz: React.FC<GitGraphVizProps> = ({ onSelect }) => {
                             onClick={() => onSelect && onSelect(node)}
                             style={{
                                 position: 'absolute',
-                                left: textX,
+                                left: 0,
                                 top: node.y - ROW_HEIGHT / 2,
+                                width: '100%',
+                                paddingLeft: textX,
+                                boxSizing: 'border-box',
                                 height: ROW_HEIGHT,
                                 display: 'flex',
                                 alignItems: 'center',
