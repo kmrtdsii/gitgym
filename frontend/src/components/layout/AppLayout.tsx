@@ -211,6 +211,7 @@ const AppLayout = () => {
                             <GitReferenceList
                                 type={viewMode === 'branches' ? 'branches' : 'tags'}
                                 onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
+                                selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
                             />
                         )}
                     </div>
