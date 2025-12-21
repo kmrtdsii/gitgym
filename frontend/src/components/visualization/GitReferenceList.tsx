@@ -23,7 +23,14 @@ const GitReferenceList: React.FC<GitReferenceListProps> = ({ type, onSelect }) =
             commitId,
             commit
         };
-    }).sort((a, b) => a.name.localeCompare(b.name));
+    }).sort((a, b) => {
+        if (type === 'tags') {
+            const timeA = a.commit ? new Date(a.commit.timestamp).getTime() : 0;
+            const timeB = b.commit ? new Date(b.commit.timestamp).getTime() : 0;
+            return timeB - timeA;
+        }
+        return a.name.localeCompare(b.name);
+    });
 
     if (!listItems.length) {
         return (
