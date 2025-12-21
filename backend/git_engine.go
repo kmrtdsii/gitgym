@@ -716,6 +716,40 @@ Type 'git help <command>' for more information about a specific command.`, nil
 			return "", fmt.Errorf("cannot checkout file without HEAD")
 		}
 
+		// Handle -B (Force create/reset branch)
+		if args[1] == "-B" {
+			if len(args) < 3 {
+				return "", fmt.Errorf("usage: git checkout -B <branch>")
+			}
+			branchName := args[2]
+
+			// Get current HEAD to set the branch to
+			headRef, err := session.Repo.Head()
+			if err != nil {
+				return "", fmt.Errorf("cannot checkout -B without HEAD")
+			}
+			
+			// Create/Update reference
+			refName := plumbing.ReferenceName("refs/heads/" + branchName)
+			newRef := plumbing.NewHashReference(refName, headRef.Hash())
+			
+			if err := session.Repo.Storer.SetReference(newRef); err != nil {
+				return "", err
+			}
+			
+			// Checkout the branch
+			opts := &git.CheckoutOptions{
+				Create: false, // Already created manually
+				Force:  false,
+				Branch: refName,
+			}
+			if err := w.Checkout(opts); err != nil {
+				return "", err
+			}
+			session.recordReflog(fmt.Sprintf("checkout: moving from %s to %s", "HEAD", branchName))
+			return fmt.Sprintf("Switched to and reset branch '%s'", branchName), nil
+		}
+
 		// Handle -b
 		if args[1] == "-b" {
 			if len(args) < 3 {
@@ -772,9 +806,18 @@ Type 'git help <command>' for more information about a specific command.`, nil
 	case "merge":
 		w, _ := session.Repo.Worktree()
 		if len(args) < 2 {
-			return "", fmt.Errorf("usage: git merge <branch>")
+			return "", fmt.Errorf("usage: git merge [--squash] <branch>")
 		}
+		
 		targetName := args[1]
+		squash := false
+		if args[1] == "--squash" {
+			if len(args) < 3 {
+				return "", fmt.Errorf("usage: git merge --squash <branch>")
+			}
+			squash = true
+			targetName = args[2]
+		}
 
 		// 1. Resolve HEAD
 		headRef, err := session.Repo.Head()
@@ -802,6 +845,50 @@ Type 'git help <command>' for more information about a specific command.`, nil
 			return "", fmt.Errorf("merge: %s - not something we can merge", targetName)
 		}
 
+		// Update ORIG_HEAD before any merge operation
+		updateOrigHead(session)
+
+		// --- SQUASH HANDLING ---
+		if squash {
+			// 1. Apply changes from target to worktree (Simplified: Overwrite/Add from Target)
+			// In a real git, this would do a proper 3-way merge and leave it staged.
+			// Here we emulate "Theirs" strategy for demo purposes or just copy files.
+			
+			tree, err := targetCommit.Tree()
+			if err != nil {
+				return "", err
+			}
+			
+			err = tree.Files().ForEach(func(f *object.File) error {
+				// Write content
+				content, err := f.Contents()
+				if err != nil {
+					return err
+				}
+				
+				// Identify path
+				path := f.Name
+				
+				// Write to FS
+				fsFile, err := session.Filesystem.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+				if err != nil {
+					return err
+				}
+				defer fsFile.Close()
+				fsFile.Write([]byte(content))
+				
+				// Stage
+				_, err = w.Add(path)
+				return err
+			})
+			if err != nil {
+				return "", err
+			}
+
+			// 2. Do NOT commit.
+			return "Squash merge -- not committed", nil
+		}
+
 		// 3. Analyze Ancestry
 		base, err := targetCommit.MergeBase(headCommit)
 		if err == nil && len(base) > 0 {
@@ -814,44 +901,38 @@ Type 'git help <command>' for more information about a specific command.`, nil
 			// Check for Fast-Forward
 			// If HEAD is ancestor of target (base == head), then we can FF
 			if base[0].Hash == headCommit.Hash {
-				// Perform Checkout (Fast-Forward)
-				err = w.Checkout(&git.CheckoutOptions{
-					Hash: targetCommit.Hash,
-				})
-				if err != nil {
-					return "", err
-				}
-
-				// If we were on a branch, update the branch ref too?
-				// w.Checkout(Hash) puts us in Detached HEAD if we don't specify Branch.
-				// But we want to move the current branch pointer.
-				// go-git's w.Checkout behavior:
-				// If we are on a branch, and we merge, we want to update THAT branch to point to new commit.
-
-				// If we use w.Checkout with Hash, it creates detached HEAD.
-				// We need to manually update the reference of the current HEAD branch.
-
+				// Fast-Forward Logic
+				
 				if headRef.Name().IsBranch() {
-					newRef := plumbing.NewHashReference(headRef.Name(), targetCommit.Hash)
-					session.Repo.Storer.SetReference(newRef)
-					// And we need to update working tree files?
-					// w.Checkout with Keep: true?
-					// Or just w.Reset?
+					// We are on a branch. Use Reset --hard to move the branch ptr and update worktree.
+					// Note: go-git's w.Reset moves the *current* HEAD. If it's a branch, it moves the branch.
 					
 					// Update ORIG_HEAD before reset
 					updateOrigHead(session)
 					
-					w.Reset(&git.ResetOptions{
+					err = w.Reset(&git.ResetOptions{
 						Commit: targetCommit.Hash,
 						Mode:   git.HardReset,
 					})
+					if err != nil {
+						return "", err
+					}
+					
 					return fmt.Sprintf("Updating %s..%s\nFast-forward", headCommit.Hash.String()[:7], targetCommit.Hash.String()[:7]), nil
+				} else {
+					// Detached HEAD. Just checkout the new commit (remains detached).
+					
+					// Update ORIG_HEAD
+					updateOrigHead(session)
+					
+					err = w.Checkout(&git.CheckoutOptions{
+						Hash: targetCommit.Hash,
+					})
+					if err != nil {
+						return "", err
+					}
+					return fmt.Sprintf("Fast-forward to %s", targetName), nil
 				}
-
-				// If we were detached, just checkout target
-				updateOrigHead(session)
-				w.Checkout(&git.CheckoutOptions{Hash: targetCommit.Hash})
-				return fmt.Sprintf("Fast-forward to %s", targetName), nil
 			}
 		}
 
