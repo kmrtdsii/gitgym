@@ -816,6 +816,7 @@ type GraphState struct {
 	Files    []string          `json:"files"`
 	Staging  []string          `json:"staging"`
 	Modified []string          `json:"modified"`
+	Untracked []string         `json:"untracked"`
 }
 
 type Commit struct {
@@ -938,12 +939,20 @@ func GetGraphState(sessionID string) (*GraphState, error) {
 		w, _ := session.Repo.Worktree()
 		status, _ := w.Status()
 		for file, s := range status {
-			// Only add to Staging if it is NOT Unmodified AND NOT Untracked
+			// 1. Untracked
+			if s.Staging == git.Untracked {
+				state.Untracked = append(state.Untracked, file)
+			}
+
+			// 2. Modified (Worktree)
+			// Must NOT be Unmodified AND NOT Untracked
+			if s.Worktree != git.Unmodified && s.Staging != git.Untracked {
+				state.Modified = append(state.Modified, file)
+			}
+
+			// 3. Staged
 			if s.Staging != git.Unmodified && s.Staging != git.Untracked {
 				state.Staging = append(state.Staging, file)
-			}
-			if s.Worktree != git.Unmodified {
-				state.Modified = append(state.Modified, file)
 			}
 		}
 	}

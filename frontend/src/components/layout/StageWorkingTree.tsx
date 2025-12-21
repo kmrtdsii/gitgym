@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { } from 'react';
 import { useGit } from '../../context/GitAPIContext';
 import './AppLayout.css'; // Re-use layout styles or create specific ones if needed
 
@@ -11,12 +11,9 @@ const StageWorkingTree: React.FC<StageWorkingTreeProps> = ({ onSelect }) => {
     const { state } = useGit();
 
     // De-structure state for easier access
-    const { staging, modified } = state;
+    const { staging, modified, untracked } = state;
 
-    // Helper to separate untracked files
-    const untracked = useMemo(() => {
-        return state.files || [];
-    }, [state.files]);
+
 
     const FileCard = ({ name, status }: { name: string, status: 'untracked' | 'staged' | 'modified' }) => {
         let statusColor = '#999';
