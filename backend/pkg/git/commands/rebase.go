@@ -30,12 +30,12 @@ func (c *RebaseCommand) Execute(ctx context.Context, s *git.Session, args []stri
 	if len(args) < 2 {
 		return "", fmt.Errorf("usage: git rebase <upstream>")
 	}
-	
+
 	// Update ORIG_HEAD before rebase starts
 	s.UpdateOrigHead()
-	
+
 	upstreamName := args[1]
-	
+
 	// 1. Resolve Upstream
 	upstreamHash, err := repo.ResolveRevision(plumbing.Revision(upstreamName))
 	if err != nil {
@@ -119,16 +119,20 @@ func (c *RebaseCommand) Execute(ctx context.Context, s *git.Session, args []stri
 			}
 			path := to.Path()
 			file, err := c.File(path)
-			if err != nil { continue }
+			if err != nil {
+				continue
+			}
 			content, err := file.Contents()
-			if err != nil { continue }
-			
+			if err != nil {
+				continue
+			}
+
 			f, _ := w.Filesystem.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 			f.Write([]byte(content))
 			f.Close()
 			w.Add(path)
 		}
-		
+
 		// Ensure timestamp distinctness
 		time.Sleep(10 * time.Millisecond)
 

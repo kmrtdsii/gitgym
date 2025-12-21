@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/kmrtdsii/playwithantigravity/backend/pkg/git"
 )
@@ -83,103 +82,37 @@ func (s *Server) handleExecCommand(w http.ResponseWriter, r *http.Request) {
 		req.SessionID = "user-session-1" // Default for testing
 	}
 
-	parts := strings.Fields(req.Command)
-	
-	// Handle Shortcuts
-	if len(parts) > 0 {
-		switch parts[0] {
-		case "reset":
-			newParts := []string{"git", "reset"}
-			parts = append(newParts, parts[1:]...)
-		case "add":
-			newParts := []string{"git", "add"}
-			parts = append(newParts, parts[1:]...)
-		case "commit":
-			newParts := []string{"git", "commit", "-m"}
-			parts = append(newParts, parts[1:]...)
-		case "merge":
-			newParts := []string{"git", "merge"}
-			parts = append(newParts, parts[1:]...)
-		case "tag":
-			newParts := []string{"git", "tag"}
-			parts = append(newParts, parts[1:]...)
-		case "rebase":
-			newParts := []string{"git", "rebase"}
-			parts = append(newParts, parts[1:]...)
-		case "checkout":
-			newParts := []string{"git", "checkout"}
-			parts = append(newParts, parts[1:]...)
-		case "branch":
-			newParts := []string{"git", "branch"}
-			parts = append(newParts, parts[1:]...)
-		case "switch":
-			newParts := []string{"git", "switch"}
-			parts = append(newParts, parts[1:]...)
-		}
+	// Logging
+	log.Printf("Command received: user=%s cmd=%s", req.SessionID, req.Command)
+
+	// 1. Parse Command & Resolve Aliases
+	cmdName, args := git.ParseCommand(req.Command)
+	if cmdName == "" {
+		// Empty command
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"output": ""})
+		return
 	}
 
-	log.Printf("Command received: user=%s cmd=%s parts=%v", req.SessionID, req.Command, parts)
-	
-	if len(parts) > 0 {
-		if parts[0] == "git" {
-			session, err := s.SessionManager.GetSession(req.SessionID)
-			if err != nil {
-				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-				return
-			}
-			
-			cmdName := ""
-			args := []string{}
-			if len(parts) > 1 {
-				cmdName = parts[1]
-				args = parts[1:]
-			}
-			
-			output, err := git.Dispatch(r.Context(), session, cmdName, args)
-			if err != nil {
-				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-				return
-			}
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"output": output})
-			return
-
-		} else if parts[0] == "touch" {
-			if len(parts) < 2 {
-				http.Error(w, "Filename required", http.StatusBadRequest)
-				return
-			}
-			err := s.SessionManager.TouchFile(req.SessionID, parts[1])
-			if err != nil {
-				json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-				return
-			}
-			json.NewEncoder(w).Encode(map[string]string{"output": "File updated"})
-			return
-
-		} else if parts[0] == "ls" || parts[0] == "cd" || parts[0] == "rm" {
-			session, err := s.SessionManager.GetSession(req.SessionID)
-			if err != nil {
-				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-				return
-			}
-			output, err := git.Dispatch(r.Context(), session, parts[0], parts)
-			if err != nil {
-				w.Header().Set("Content-Type", "application/json")
-				json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-				return
-			}
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"output": output})
-			return
-		}
+	// 2. Get Session
+	session, err := s.SessionManager.GetSession(req.SessionID)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
 	}
-	
+
+	// 3. Dispatch Command
+	// This now handles 'touch', 'ls', 'cd', 'rm' and all 'git' commands uniformly
+	output, err := git.Dispatch(r.Context(), session, cmdName, args)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"error": "Only git commands supported right now"})
+	json.NewEncoder(w).Encode(map[string]string{"output": output})
 }
 
 func (s *Server) handleGetGraphState(w http.ResponseWriter, r *http.Request) {
@@ -192,7 +125,7 @@ func (s *Server) handleGetGraphState(w http.ResponseWriter, r *http.Request) {
 	if sessionID == "" {
 		sessionID = "user-session-1" // Default
 	}
-	
+
 	showAll := r.URL.Query().Get("showAll") == "true"
 
 	state, err := s.SessionManager.GetGraphState(sessionID, showAll)

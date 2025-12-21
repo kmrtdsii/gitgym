@@ -71,27 +71,27 @@ func (sm *SessionManager) CreateSession(id string) (*Session, error) {
 // GetRepo returns the repository associated with the current directory
 // Returns nil if no repository is active in the current directory
 func (s *Session) GetRepo() *git.Repository {
-    // Simple logic: if CurrentDir is a repo root, return it.
-    // If CurrentDir is "/", return nil (or handle nested if we supported it, but flat is easier)
-    
-    // Normalize path
-    path := s.CurrentDir
-    if len(path) > 0 && path[0] == '/' {
-        path = path[1:]
-    }
-    
-    // Direct match (assuming we are at root of repo)
-    if repo, ok := s.Repos[path]; ok {
-        return repo
-    }
-    
-    return nil
+	// Simple logic: if CurrentDir is a repo root, return it.
+	// If CurrentDir is "/", return nil (or handle nested if we supported it, but flat is easier)
+
+	// Normalize path
+	path := s.CurrentDir
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+
+	// Direct match (assuming we are at root of repo)
+	if repo, ok := s.Repos[path]; ok {
+		return repo
+	}
+
+	return nil
 }
 
 // RecordReflog adds an entry to the session's reflog.
 // Note: Callers must hold the session lock.
 func (s *Session) RecordReflog(msg string) {
-    repo := s.GetRepo()
+	repo := s.GetRepo()
 	if repo == nil {
 		return
 	}
@@ -102,7 +102,7 @@ func (s *Session) RecordReflog(msg string) {
 	} else {
 		return // HEAD not resolving usually means no commits yet
 	}
-	
+
 	// Prepend for newest top
 	s.Reflog = append([]ReflogEntry{{Hash: hash, Message: msg}}, s.Reflog...)
 }
@@ -120,7 +120,7 @@ func (s *Session) Unlock() {
 // UpdateOrigHead saves the current HEAD to ORIG_HEAD ref.
 // Note: Callers must hold the session lock.
 func (s *Session) UpdateOrigHead() error {
-    repo := s.GetRepo()
+	repo := s.GetRepo()
 	if repo == nil {
 		return nil
 	}
@@ -128,41 +128,41 @@ func (s *Session) UpdateOrigHead() error {
 	if err != nil {
 		return err // No HEAD to save
 	}
-	
+
 	origHeadRef := plumbing.NewHashReference(plumbing.ReferenceName("ORIG_HEAD"), headRef.Hash())
 	return repo.Storer.SetReference(origHeadRef)
 }
 
 // RemoveAll removes path and any children it contains.
 func (s *Session) RemoveAll(path string) error {
-    // memfs Remove might not be recursive.
-    // We implement a simple recursive removal.
-    
-    fi, err := s.Filesystem.Stat(path)
-    if err != nil {
-        return nil // Already gone?
-    }
-    
-    if !fi.IsDir() {
-        return s.Filesystem.Remove(path)
-    }
-    
-    // Directory: ReadDir and remove children first
-    entries, err := s.Filesystem.ReadDir(path)
-    if err != nil {
-        return err
-    }
-    
-    for _, entry := range entries {
-        childPath := path + "/" + entry.Name()
-        if path == "/" {
-             childPath = entry.Name() // Handle root special case if needed, though usually strict paths
-        }
-        
-        if err := s.RemoveAll(childPath); err != nil {
-            return err
-        }
-    }
-    
-    return s.Filesystem.Remove(path)
+	// memfs Remove might not be recursive.
+	// We implement a simple recursive removal.
+
+	fi, err := s.Filesystem.Stat(path)
+	if err != nil {
+		return nil // Already gone?
+	}
+
+	if !fi.IsDir() {
+		return s.Filesystem.Remove(path)
+	}
+
+	// Directory: ReadDir and remove children first
+	entries, err := s.Filesystem.ReadDir(path)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		childPath := path + "/" + entry.Name()
+		if path == "/" {
+			childPath = entry.Name() // Handle root special case if needed, though usually strict paths
+		}
+
+		if err := s.RemoveAll(childPath); err != nil {
+			return err
+		}
+	}
+
+	return s.Filesystem.Remove(path)
 }

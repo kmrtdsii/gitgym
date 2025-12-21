@@ -27,7 +27,7 @@ func (c *CommitCommand) Execute(ctx context.Context, s *git.Session, args []stri
 	}
 
 	w, _ := repo.Worktree()
-	
+
 	// Parse options
 	msg := "Default commit message"
 	amend := false
@@ -71,7 +71,7 @@ func (c *CommitCommand) Execute(ctx context.Context, s *git.Session, args []stri
 		s.UpdateOrigHead()
 
 		newCommitHash, err := w.Commit(msg, &gogit.CommitOptions{
-			Parents: parents, 
+			Parents: parents,
 			Author: &object.Signature{
 				Name:  "User",
 				Email: "user@example.com",

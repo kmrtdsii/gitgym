@@ -105,8 +105,8 @@ func TestGitPhase2Features(t *testing.T) {
 
 		// Verify status (should be modified)
 		status, _ := exec("status")
-		if !strings.Contains(status, "M README.md") && !strings.Contains(status, "README.md") { 
-			// Check later; status format is custom in this engine? 
+		if !strings.Contains(status, "M README.md") && !strings.Contains(status, "README.md") {
+			// Check later; status format is custom in this engine?
 			// No, it calls w.Status().String().
 		}
 
@@ -116,7 +116,7 @@ func TestGitPhase2Features(t *testing.T) {
 			t.Fatalf("checkout file failed: %v", err)
 		}
 	})
-	
+
 	// 5. Test Diff (Commits)
 	t.Run("Diff", func(t *testing.T) {
 		// Need 2 commits
@@ -131,7 +131,7 @@ func TestGitPhase2Features(t *testing.T) {
 
 		out, err := exec("diff", "HEAD^", "HEAD")
 		if err != nil {
-			t.Fatalf("diff failed: %v", err) 
+			t.Fatalf("diff failed: %v", err)
 		}
 		if !strings.Contains(out, "new.txt") {
 			// Expected diff to show new file
@@ -146,7 +146,7 @@ func TestGitPhase2Features(t *testing.T) {
 		if err != nil {
 			t.Fatalf("reset failed: %v", err)
 		}
-		
+
 		log, _ := exec("log", "--oneline")
 		if strings.Contains(log, "Second") {
 			t.Errorf("log should not contain Second after reset: %s", log)
@@ -189,36 +189,36 @@ func TestGitPhase2Features(t *testing.T) {
 		// main: C1 -> C2
 		// feature: C1 -> C3
 		// Goal: rebase feature on main -> C1 -> C2 -> C3'
-		
+
 		// Reset to C1 (Base)
 		// Instead of assuming state, let's create branches
-		
+
 		// Current state: main has commits.
 		// Let's create new branch 'feature-rebase' from HEAD^ (Base)
 		exec("checkout", "main")
-		exec("branch", "feature-rebase") 
-		exec("reset", "--hard", "HEAD^") // move main back 1
+		exec("branch", "feature-rebase")
+		exec("reset", "--hard", "HEAD^")                       // move main back 1
 		exec("commit", "--allow-empty", "-m", "Main Diverged") // main has Base -> Diverged
-		
-		exec("checkout", "feature-rebase") 
-		
+
+		exec("checkout", "feature-rebase")
+
 		// Let's build explicitly for clarity
 		exec("checkout", "-b", "base-branch")
 		exec("commit", "--allow-empty", "-m", "Base Commit")
-		
+
 		exec("checkout", "-b", "feat-branch")
 		exec("commit", "--allow-empty", "-m", "Feat Commit")
-		
+
 		exec("checkout", "base-branch")
 		exec("commit", "--allow-empty", "-m", "Upstream Commit")
-		
+
 		// Rebase feat-branch on base-branch
 		exec("checkout", "feat-branch")
-		_, err := exec("rebase", "base-branch") 
+		_, err := exec("rebase", "base-branch")
 		if err != nil {
 			t.Fatalf("rebase failed: %v", err)
 		}
-		
+
 		// Verify log
 		// Should be: Base -> Upstream -> Feat'
 		log, _ := exec("log", "--oneline")
@@ -233,7 +233,7 @@ func TestGitPhase2Features(t *testing.T) {
 		if err != nil {
 			t.Fatalf("reflog failed: %v", err)
 		}
-		
+
 		// We expect "rebase", "checkout", "commit" from previous step
 		if !strings.Contains(out, "rebase: finished") {
 			t.Errorf("reflog missing rebase entry: %s", out)

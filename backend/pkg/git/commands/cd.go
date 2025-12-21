@@ -24,7 +24,7 @@ func (c *CdCommand) Execute(ctx context.Context, s *git.Session, args []string) 
 	}
 
 	target := args[1]
-	
+
 	// Handle absolute path
 	var newPath string
 	if len(target) > 0 && target[0] == '/' {
@@ -35,7 +35,7 @@ func (c *CdCommand) Execute(ctx context.Context, s *git.Session, args []string) 
 
 	// Clean path (handle .., ., etc)
 	newPath = filepath.Clean(newPath)
-	
+
 	// Ensure valid path (simple check: root exists, subdirs need check)
 	if newPath == "/" || newPath == "." {
 		s.CurrentDir = "/"
@@ -43,15 +43,15 @@ func (c *CdCommand) Execute(ctx context.Context, s *git.Session, args []string) 
 	}
 
 	// Check if directory exists in FS
-    // Note: memfs might behave weirdly with "Stat" on directories sometimes, but usually works.
+	// Note: memfs might behave weirdly with "Stat" on directories sometimes, but usually works.
 	// Stripping leading slash for billy if needed?
-    // billy usually takes paths. simple memfs:
-    
-    // Check if it's one of our known repos
-    displayPath := newPath
-    if strings.HasPrefix(newPath, "/") {
-        newPath = newPath[1:]
-    }
+	// billy usually takes paths. simple memfs:
+
+	// Check if it's one of our known repos
+	displayPath := newPath
+	if strings.HasPrefix(newPath, "/") {
+		newPath = newPath[1:]
+	}
 
 	fi, err := s.Filesystem.Stat(newPath)
 	if err != nil {

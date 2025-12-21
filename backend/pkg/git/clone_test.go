@@ -43,7 +43,7 @@ func TestGitCloneAndPushRestriction(t *testing.T) {
 		if ref == nil {
 			t.Fatal("HEAD is nil")
 		}
-		
+
 		// Verify file existence (basic.git has specific files)
 		// It has a LICENSE file usually, or just check log
 		logOut, err := exec("log", "--oneline")
@@ -61,7 +61,7 @@ func TestGitCloneAndPushRestriction(t *testing.T) {
 		if err == nil {
 			t.Error("push command succeeded unexpectedly")
 		}
-		
+
 		expectedError := "'push' is not a git command"
 		if !strings.Contains(err.Error(), expectedError) {
 			t.Errorf("unexpected error message: %v (expected to contain %q)", err, expectedError)

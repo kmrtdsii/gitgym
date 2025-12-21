@@ -47,7 +47,7 @@ func (c *CheckoutCommand) Execute(ctx context.Context, s *git.Session, args []st
 				return "", fmt.Errorf("file %s not found in HEAD", filename)
 			}
 			content, _ := file.Contents()
-			
+
 			f, _ := w.Filesystem.OpenFile(filename, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 			f.Write([]byte(content))
 			f.Close()
@@ -68,15 +68,15 @@ func (c *CheckoutCommand) Execute(ctx context.Context, s *git.Session, args []st
 		if err != nil {
 			return "", fmt.Errorf("cannot checkout -B without HEAD")
 		}
-		
+
 		// Create/Update reference
 		refName := plumbing.ReferenceName("refs/heads/" + branchName)
 		newRef := plumbing.NewHashReference(refName, headRef.Hash())
-		
+
 		if err := repo.Storer.SetReference(newRef); err != nil {
 			return "", err
 		}
-		
+
 		// Checkout the branch
 		opts := &gogit.CheckoutOptions{
 			Create: false, // Already created manually
@@ -130,7 +130,7 @@ func (c *CheckoutCommand) Execute(ctx context.Context, s *git.Session, args []st
 		if _, err := repo.CommitObject(*hash); err != nil {
 			return "", fmt.Errorf("reference is not a commit: %v", err)
 		}
-		
+
 		err = w.Checkout(&gogit.CheckoutOptions{
 			Hash: *hash,
 		})
@@ -147,7 +147,6 @@ func (c *CheckoutCommand) Execute(ctx context.Context, s *git.Session, args []st
 func (c *CheckoutCommand) Help() string {
 	return "usage: git checkout [-b] <branch>"
 }
-
 
 type SwitchCommand struct{}
 
@@ -187,7 +186,7 @@ func (c *SwitchCommand) Execute(ctx context.Context, s *git.Session, args []stri
 
 	// Handle normal switch (existing branch)
 	target := args[1]
-	
+
 	// Validate that target is actually a branch (local)
 	branchRefName := "refs/heads/" + target
 	_, err := repo.Reference(plumbing.ReferenceName(branchRefName), true)

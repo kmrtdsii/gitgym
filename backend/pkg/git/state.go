@@ -26,11 +26,11 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 		Tags:         make(map[string]string),
 		References:   make(map[string]string),
 		FileStatuses: make(map[string]string),
-        CurrentPath:  session.CurrentDir,
+		CurrentPath:  session.CurrentDir,
 	}
 
 	// 1. Get HEAD
-    repo := session.GetRepo()
+	repo := session.GetRepo()
 	if repo == nil {
 		state.HEAD = Head{Type: "none"}
 	} else {
@@ -100,10 +100,10 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 			if err == nil {
 				queue = append(queue, h.Hash())
 			}
-            
-            // Note: In default mode (showAll=false), we only show history reachable from HEAD.
-            // Branches and Tags that are not reachable from HEAD will not be shown.
-            // This mimics standard 'git log'.
+
+			// Note: In default mode (showAll=false), we only show history reachable from HEAD.
+			// Branches and Tags that are not reachable from HEAD will not be shown.
+			// This mimics standard 'git log'.
 
 			// BFS
 			for len(queue) > 0 {
@@ -142,7 +142,7 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 			q := []string{j.Hash.String()}
 			visited := make(map[string]bool)
 			visited[j.Hash.String()] = true
-			
+
 			// Limit depth/steps to avoid apparent hang on huge repos with equal timestamps
 			steps := 0
 			maxSteps := 500
@@ -152,7 +152,7 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 					return false // Assume not ancestor if too far (fallback to hash sort)
 				}
 				steps++
-				
+
 				currID := q[0]
 				q = q[1:]
 
@@ -178,7 +178,7 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 		sort.SliceStable(collectedCommits, func(i, j int) bool {
 			tI := collectedCommits[i].Committer.When
 			tJ := collectedCommits[j].Committer.When
-			
+
 			if tI.Equal(tJ) {
 				cI := collectedCommits[i]
 				cJ := collectedCommits[j]
@@ -219,35 +219,35 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 	}
 
 	// 4. Get Status (Files, Staging, Modified)
-    walkPath := session.CurrentDir
-    if len(walkPath) > 0 && walkPath[0] == '/' {
-        walkPath = walkPath[1:]
-    }
-    if walkPath == "" {
-        walkPath = "."
-    }
+	walkPath := session.CurrentDir
+	if len(walkPath) > 0 && walkPath[0] == '/' {
+		walkPath = walkPath[1:]
+	}
+	if walkPath == "" {
+		walkPath = "."
+	}
 
-    // Use ReadDir for shallow listing (File Explorer style)
-    infos, err := session.Filesystem.ReadDir(walkPath)
-    if err == nil {
-        for _, info := range infos {
-            name := info.Name()
-            if info.IsDir() {
-                if name == ".git" {
-                    continue
-                }
-                name = name + "/"
-            }
-            state.Files = append(state.Files, name)
-        }
-    }
-    
-    // Legacy Walk logic removed to support directory navigation
-    /*
-	util.Walk(session.Filesystem, walkPath, func(path string, fi os.FileInfo, err error) error {
-        // ...
-	})
-    */
+	// Use ReadDir for shallow listing (File Explorer style)
+	infos, err := session.Filesystem.ReadDir(walkPath)
+	if err == nil {
+		for _, info := range infos {
+			name := info.Name()
+			if info.IsDir() {
+				if name == ".git" {
+					continue
+				}
+				name = name + "/"
+			}
+			state.Files = append(state.Files, name)
+		}
+	}
+
+	// Legacy Walk logic removed to support directory navigation
+	/*
+		util.Walk(session.Filesystem, walkPath, func(path string, fi os.FileInfo, err error) error {
+	        // ...
+		})
+	*/
 
 	if repo != nil {
 		w, _ := repo.Worktree()
@@ -272,18 +272,18 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 		}
 	}
 
-    // 5. Get Projects (always scan root)
-    rootInfos, err := session.Filesystem.ReadDir("/")
-    if err == nil {
-        for _, info := range rootInfos {
-            if info.IsDir() && info.Name() != ".git" {
-                state.Projects = append(state.Projects, info.Name())
-            }
-        }
-        log.Printf("Scan Projects: found %d projects: %v", len(state.Projects), state.Projects)
-    } else {
-        log.Printf("Scan Projects Error: %v", err)
-    }
+	// 5. Get Projects (always scan root)
+	rootInfos, err := session.Filesystem.ReadDir("/")
+	if err == nil {
+		for _, info := range rootInfos {
+			if info.IsDir() && info.Name() != ".git" {
+				state.Projects = append(state.Projects, info.Name())
+			}
+		}
+		log.Printf("Scan Projects: found %d projects: %v", len(state.Projects), state.Projects)
+	} else {
+		log.Printf("Scan Projects Error: %v", err)
+	}
 
 	return state, nil
 }

@@ -12,7 +12,7 @@ import (
 func main() {
 	// Initialize Core Dependencies
 	sessionManager := git.NewSessionManager()
-	
+
 	// Initialize HTTP Server
 	srv := server.NewServer(sessionManager)
 

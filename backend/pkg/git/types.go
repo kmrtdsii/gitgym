@@ -8,18 +8,18 @@ type ReflogEntry struct {
 
 // GraphState represents the serialized state for the frontend
 type GraphState struct {
-	Commits    []Commit          `json:"commits"`
-	Branches   map[string]string `json:"branches"`
-	Tags       map[string]string `json:"tags"`
-	References map[string]string `json:"references"`
-	HEAD       Head              `json:"HEAD"`
-	Files      []string          `json:"files"`
-	Staging    []string          `json:"staging"`
-	Modified   []string          `json:"modified"`
-	Untracked  []string          `json:"untracked"`
+	Commits      []Commit          `json:"commits"`
+	Branches     map[string]string `json:"branches"`
+	Tags         map[string]string `json:"tags"`
+	References   map[string]string `json:"references"`
+	HEAD         Head              `json:"HEAD"`
+	Files        []string          `json:"files"`
+	Staging      []string          `json:"staging"`
+	Modified     []string          `json:"modified"`
+	Untracked    []string          `json:"untracked"`
 	FileStatuses map[string]string `json:"fileStatuses"`
-    CurrentPath  string            `json:"currentPath"`
-    Projects     []string          `json:"projects"`
+	CurrentPath  string            `json:"currentPath"`
+	Projects     []string          `json:"projects"`
 }
 
 type Commit struct {
