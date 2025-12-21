@@ -81,15 +81,7 @@ func execCommand(w http.ResponseWriter, r *http.Request) {
 	// Handle Shortcuts
 	if len(parts) > 0 {
 		switch parts[0] {
-		case "br": // git branch
-			newParts := []string{"git", "branch"}
-			parts = append(newParts, parts[1:]...)
-		case "sw": // git switch
-			newParts := []string{"git", "switch"}
-			parts = append(newParts, parts[1:]...)
-		case "co": // git checkout
-			newParts := []string{"git", "checkout"}
-			parts = append(newParts, parts[1:]...)
+
 		case "reset": // git reset
 			newParts := []string{"git", "reset"}
 			parts = append(newParts, parts[1:]...)
@@ -107,6 +99,15 @@ func execCommand(w http.ResponseWriter, r *http.Request) {
 			parts = append(newParts, parts[1:]...)
 		case "rebase": // git rebase
 			newParts := []string{"git", "rebase"}
+			parts = append(newParts, parts[1:]...)
+		case "checkout": // git checkout
+			newParts := []string{"git", "checkout"}
+			parts = append(newParts, parts[1:]...)
+		case "branch": // git branch
+			newParts := []string{"git", "branch"}
+			parts = append(newParts, parts[1:]...)
+		case "switch": // git switch
+			newParts := []string{"git", "switch"}
 			parts = append(newParts, parts[1:]...)
 		}
 	}
