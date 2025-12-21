@@ -17,6 +17,7 @@ export interface GitState {
     HEAD: { type: 'branch' | 'commit', ref: string | null, id?: string };
     staging: string[];
     modified: string[];
+    untracked: string[];
     files: string[];
 
     output: string[];
@@ -39,6 +40,7 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         HEAD: { type: 'branch', ref: null },
         staging: [],
         modified: [],
+        untracked: [],
         files: [],
 
         output: [],
@@ -82,6 +84,7 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 files: data.files || [],
                 staging: data.staging || [],
                 modified: data.modified || [],
+                untracked: data.untracked || [],
                 initialized: true
             }));
         } catch (e) {
