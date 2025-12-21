@@ -223,7 +223,7 @@ const FileExplorer: React.FC<FileExplorerProps> = ({ onSelect }) => {
                                         className="delete-btn"
                                         title="Delete Project"
                                         onClick={(e) => handleDeleteProject(project, e)}
-                                        style={{ marginLeft: '8px', opacity: 0.5, cursor: 'pointer', fontSize: '12px' }}
+                                        style={{ marginLeft: '8px', marginRight: '8px', opacity: 0.9, cursor: 'pointer', fontSize: '12px' }}
                                     >
                                         🗑️
                                     </span>
