@@ -31,7 +31,7 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 	if len(args) < 2 {
 		return "", fmt.Errorf("usage: git merge [--squash] <branch>")
 	}
-	
+
 	targetName := args[1]
 	squash := false
 	if args[1] == "--squash" {
@@ -78,17 +78,17 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 		if err != nil {
 			return "", err
 		}
-		
+
 		err = tree.Files().ForEach(func(f *object.File) error {
 			// Write content
 			content, err := f.Contents()
 			if err != nil {
 				return err
 			}
-			
+
 			// Identify path
 			path := f.Name
-			
+
 			// Write to FS
 			fsFile, err := w.Filesystem.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 			if err != nil {
@@ -96,7 +96,7 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 			}
 			defer fsFile.Close()
 			fsFile.Write([]byte(content))
-			
+
 			// Stage
 			_, err = w.Add(path)
 			return err
@@ -122,7 +122,7 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 			if headRef.Name().IsBranch() {
 				// We are on a branch. Use Reset --hard
 				s.UpdateOrigHead()
-				
+
 				err = w.Reset(&gogit.ResetOptions{
 					Commit: targetCommit.Hash,
 					Mode:   gogit.HardReset,
@@ -130,12 +130,12 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 				if err != nil {
 					return "", err
 				}
-				
+
 				return fmt.Sprintf("Updating %s..%s\nFast-forward", headCommit.Hash.String()[:7], targetCommit.Hash.String()[:7]), nil
 			} else {
 				// Detached HEAD
 				s.UpdateOrigHead()
-				
+
 				err = w.Checkout(&gogit.CheckoutOptions{
 					Hash: targetCommit.Hash,
 				})
@@ -150,9 +150,9 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 	// 4. Merge Commit
 	msg := fmt.Sprintf("Merge branch '%s'", targetName)
 	parents := []plumbing.Hash{headCommit.Hash, targetCommit.Hash}
-	
+
 	s.UpdateOrigHead()
-	
+
 	newCommitHash, err := w.Commit(msg, &gogit.CommitOptions{
 		Parents: parents,
 		Author: &object.Signature{

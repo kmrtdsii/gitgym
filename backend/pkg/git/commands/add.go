@@ -26,7 +26,7 @@ func (c *AddCommand) Execute(ctx context.Context, s *git.Session, args []string)
 	if len(args) < 2 {
 		return "", fmt.Errorf("usage: git add <file>")
 	}
-	
+
 	// args[0] is "add"
 	file := args[1]
 	var err error

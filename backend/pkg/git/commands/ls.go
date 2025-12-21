@@ -18,13 +18,13 @@ func (c *LsCommand) Execute(ctx context.Context, s *git.Session, args []string) 
 	s.Lock()
 	defer s.Unlock()
 
-    path := s.CurrentDir
-    if len(path) > 0 && path[0] == '/' {
-        path = path[1:]
-    }
-    if path == "" {
-        path = "."
-    }
+	path := s.CurrentDir
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	if path == "" {
+		path = "."
+	}
 
 	infos, err := s.Filesystem.ReadDir(path)
 	if err != nil {
@@ -33,10 +33,10 @@ func (c *LsCommand) Execute(ctx context.Context, s *git.Session, args []string) 
 
 	var output []string
 	for _, info := range infos {
-        name := info.Name()
-        if info.IsDir() {
-            name = name + "/"
-        }
+		name := info.Name()
+		if info.IsDir() {
+			name = name + "/"
+		}
 		output = append(output, name)
 	}
 

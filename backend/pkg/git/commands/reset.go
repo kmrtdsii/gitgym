@@ -57,7 +57,7 @@ func (c *ResetCommand) Execute(ctx context.Context, s *git.Session, args []strin
 	}
 
 	w, _ := repo.Worktree()
-	
+
 	// Update ORIG_HEAD before reset
 	s.UpdateOrigHead()
 
