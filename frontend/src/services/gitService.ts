@@ -26,6 +26,7 @@ export const gitService = {
         return {
             commits: data.commits || [],
             branches: data.branches || {},
+            tags: data.tags || {},
             references: data.references || {},
             HEAD: data.HEAD || { type: 'branch', ref: 'main' },
             files: data.files || [],

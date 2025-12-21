@@ -10,6 +10,7 @@ type ReflogEntry struct {
 type GraphState struct {
 	Commits    []Commit          `json:"commits"`
 	Branches   map[string]string `json:"branches"`
+	Tags       map[string]string `json:"tags"`
 	References map[string]string `json:"references"`
 	HEAD       Head              `json:"HEAD"`
 	Files      []string          `json:"files"`
