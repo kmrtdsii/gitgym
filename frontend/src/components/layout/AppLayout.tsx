@@ -3,6 +3,7 @@ import './AppLayout.css';
 import { useGit } from '../../context/GitAPIContext';
 import GitTerminal from '../terminal/GitTerminal';
 import GitGraphViz from '../visualization/GitGraphViz';
+import GitReferenceList from '../visualization/GitReferenceList';
 import FileExplorer from './FileExplorer';
 import ObjectInspector from './ObjectInspector';
 
@@ -12,10 +13,13 @@ export interface SelectedObject {
     data?: any;
 }
 
+type ViewMode = 'graph' | 'branches' | 'tags';
+
 const AppLayout = () => {
     const { showAllCommits, toggleShowAllCommits } = useGit();
     const [selectedObject, setSelectedObject] = useState<SelectedObject | null>(null);
     const [isLeftPaneOpen, setIsLeftPaneOpen] = useState(true);
+    const [viewMode, setViewMode] = useState<ViewMode>('graph');
 
     // Resizable Pane State
     const [vizHeight, setVizHeight] = useState(300); // Initial height in pixels
@@ -105,7 +109,28 @@ const AppLayout = () => {
             <main className="center-pane">
                 {/* Unified Header for Center Pane */}
                 <div className="pane-header" style={{ justifyContent: 'space-between' }}>
-                    <span>Repository Visualization & Terminal</span>
+                    {/* View Switcher */}
+                    <div style={{ display: 'flex', background: 'var(--bg-secondary)', borderRadius: '6px', padding: '2px' }}>
+                        {(['graph', 'branches', 'tags'] as ViewMode[]).map((mode) => (
+                            <button
+                                key={mode}
+                                onClick={() => setViewMode(mode)}
+                                style={{
+                                    background: viewMode === mode ? 'var(--accent-primary)' : 'transparent',
+                                    color: viewMode === mode ? '#fff' : 'var(--text-secondary)',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    padding: '2px 10px',
+                                    fontSize: '0.75rem',
+                                    cursor: 'pointer',
+                                    textTransform: 'capitalize',
+                                    fontWeight: 500
+                                }}
+                            >
+                                {mode}
+                            </button>
+                        ))}
+                    </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         {/* Toggle Button */}
@@ -138,10 +163,17 @@ const AppLayout = () => {
                         style={{ height: vizHeight, flex: 'none', minHeight: 0 }}
                         ref={vizRef}
                     >
-                        <GitGraphViz
-                            onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
-                            selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
-                        />
+                        {viewMode === 'graph' ? (
+                            <GitGraphViz
+                                onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
+                                selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
+                            />
+                        ) : (
+                            <GitReferenceList
+                                type={viewMode === 'branches' ? 'branches' : 'tags'}
+                                onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
+                            />
+                        )}
                     </div>
 
                     {/* Resizer Handle */}

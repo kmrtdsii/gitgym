@@ -11,6 +11,7 @@ export interface GitState {
     initialized: boolean;
     commits: Commit[];
     branches: Record<string, string>; // branchName -> commitId
+    tags: Record<string, string>; // tagName -> commitId
     references: Record<string, string>; // references like ORIG_HEAD -> commitId
     HEAD: { type: 'branch' | 'commit', ref: string | null, id?: string };
     staging: string[];

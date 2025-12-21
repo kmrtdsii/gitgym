@@ -25,6 +25,7 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 	state := &GraphState{
 		Commits:      []Commit{},
 		Branches:     make(map[string]string),
+		Tags:         make(map[string]string),
 		References:   make(map[string]string),
 		FileStatuses: make(map[string]string),
 	}
@@ -70,7 +71,7 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 		tIter, err := session.Repo.Tags()
 		if err == nil {
 			tIter.ForEach(func(r *plumbing.Reference) error {
-				state.References[r.Name().Short()] = r.Hash().String()
+				state.Tags[r.Name().Short()] = r.Hash().String()
 				return nil
 			})
 		}
