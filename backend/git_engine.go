@@ -985,28 +985,75 @@ func GetGraphState(sessionID string, showAll bool) (*GraphState, error) {
 				})
 			}
 		} else {
-			// Standard Graph Traversal (Reachable commits only)
-			cIter, err := session.Repo.Log(&git.LogOptions{All: true})
-			if err == nil {
-				cIter.ForEach(func(c *object.Commit) error {
-					parentID := ""
-					if len(c.ParentHashes) > 0 {
-						parentID = c.ParentHashes[0].String()
-					}
-					secondParentID := ""
-					if len(c.ParentHashes) > 1 {
-						secondParentID = c.ParentHashes[1].String()
-					}
-					state.Commits = append(state.Commits, Commit{
-						ID:             c.Hash.String(),
-						Message:        c.Message,
-						ParentID:       parentID,
-						SecondParentID: secondParentID,
-						Timestamp:      c.Committer.When.Format(time.RFC3339),
-					})
+			// Standard Graph Traversal (Reachable from Branches/Tags/HEAD only)
+			// We cannot use LogOptions{All: true} because it includes ORIG_HEAD which keeps deleted branches visible.
+			
+			seen := make(map[string]bool)
+			var queue []plumbing.Hash
+
+			if session.Repo != nil {
+				// 1. HEAD
+				h, err := session.Repo.Head()
+				if err == nil {
+					queue = append(queue, h.Hash())
+				}
+				// 2. Branches
+				bIter, _ := session.Repo.Branches()
+				bIter.ForEach(func(r *plumbing.Reference) error {
+					queue = append(queue, r.Hash())
+					return nil
+				})
+				// 3. Tags
+				tIter, _ := session.Repo.Tags()
+				tIter.ForEach(func(r *plumbing.Reference) error {
+					queue = append(queue, r.Hash())
 					return nil
 				})
 			}
+
+			// BFS to find all reachable commits
+			for len(queue) > 0 {
+				current := queue[0]
+				queue = queue[1:]
+
+				if seen[current.String()] {
+					continue
+				}
+				seen[current.String()] = true
+
+				c, err := session.Repo.CommitObject(current)
+				if err != nil {
+					continue
+				}
+
+				// Add to state
+				parentID := ""
+				if len(c.ParentHashes) > 0 {
+					parentID = c.ParentHashes[0].String()
+				}
+				secondParentID := ""
+				if len(c.ParentHashes) > 1 {
+					secondParentID = c.ParentHashes[1].String()
+				}
+				state.Commits = append(state.Commits, Commit{
+					ID:             c.Hash.String(),
+					Message:        c.Message,
+					ParentID:       parentID,
+					SecondParentID: secondParentID,
+					Timestamp:      c.Committer.When.Format(time.RFC3339),
+				})
+				
+				// Enqueue parents
+				queue = append(queue, c.ParentHashes...)
+			}
+			
+			// Sort by timestamp newly created first
+			sort.Slice(state.Commits, func(i, j int) bool {
+				if state.Commits[i].Timestamp == state.Commits[j].Timestamp {
+					return state.Commits[i].ID > state.Commits[j].ID
+				}
+				return state.Commits[i].Timestamp > state.Commits[j].Timestamp
+			})
 		}
 	}
 
