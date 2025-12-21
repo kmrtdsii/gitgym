@@ -1,16 +1,102 @@
-# React + Vite
+# GitGym 🏋️‍♂️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+GitGym is an interactive, visual sandbox for learning and experimenting with Git commands. It provides a real-time visualization of the Git graph structure alongside a functional terminal interface, allowing users to see exactly how their commands affect the repository state.
 
-Currently, two official plugins are available:
+![GitGym Interface](frontend/public/vite.svg) <!-- You might want to replace this with a real screenshot later -->
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+- **Interactive Terminal**: A fully functional web-based terminal to run Git commands.
+- **Real-time Visualization**: Instantly see commits, branches, and HEAD movement as you type.
+- **Sandboxed Environment**: Experiment safely without affecting your actual projects.
+- **Command Support**:
+  - `git init`, `status`, `add`, `commit`
+  - `git branch`, `checkout`, `switch`
+  - `git log`, `diff`
+  - `git tag`, `reset`, `clean`
+  - `git merge`, `rebase` (basic support)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🏗 Architecture
 
-## Expanding the ESLint configuration
+GitGym is built with a modern, modular stack designed for maintainability and performance.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Frontend (`/frontend`)
+- **Framework**: React 19 + TypeScript
+- **Build Tool**: Vite
+- **Terminal**: Xterm.js
+- **Visualization**: Custom SVG-based graph renderer
+- **Testing**: Playwright (E2E)
+
+### Backend (`/backend`)
+- **Language**: Go (Golang) 1.22+
+- **Core Library**: `go-git` (pure Go implementation of Git)
+- **Design Pattern**: Command Pattern (encapsulating Git operations)
+- **API**: RESTful endpoints for session management and command execution
+
+### Infrastructure
+- **Docker**: Full containerization of frontend (Nginx) and backend services.
+- **Dev Container**: Ready-to-use development environment for VS Code.
+
+## 🛠 Getting Started
+
+### Prerequisites
+- Docker & Docker Compose
+
+### Quick Start
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/playwithantigravity.git
+   cd playwithantigravity
+   ```
+
+2. Start the application:
+   ```bash
+   docker compose up --build
+   ```
+
+3. Open your browser:
+   - Navigate to [http://localhost](http://localhost) to access GitGym.
+
+### Development Setup
+We recommend using **VS Code Dev Containers** for the best experience.
+1. Open the project in VS Code.
+2. Click "Reopen in Container" when prompted.
+3. The environment comes pre-configured with Go, Node.js, and all extensions.
+
+## 🧪 Testing
+
+### Backend Tests
+Run integration tests for the Git engine and API server:
+```bash
+cd backend
+go test -v ./...
+```
+
+### Frontend E2E Tests
+Run End-to-End tests using Playwright (requires Dev Container or local Node environment):
+```bash
+cd frontend
+npm run test:e2e
+```
+
+## 📂 Project Structure
+
+```
+.
+├── backend/            # Go backend service
+│   ├── pkg/
+│   │   ├── git/        # Core Git logic (commands, session, types)
+│   │   └── server/     # HTTP handlers and router
+│   └── main.go         # Entry point
+├── frontend/           # React frontend
+│   ├── src/
+│   │   ├── components/ # UI Components (Terminal, GraphViz)
+│   │   ├── context/    # State management
+│   │   └── services/   # API abstraction
+│   └── tests/          # Playwright E2E specs
+├── .devcontainer/      # VS Code Dev Container config
+└── docker-compose.yml  # Production/Staging orchestration
+```
+
+## 📄 License
+MIT
