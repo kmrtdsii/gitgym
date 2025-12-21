@@ -397,7 +397,9 @@ const GitGraphViz: React.FC<GitGraphVizProps> = ({ onSelect, selectedCommitId })
                                 paddingRight: '16px',
                                 userSelect: 'none',
                                 // @ts-ignore
-                                opacity: node.opacity
+                                opacity: node.opacity,
+                                backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent', // Row Highlight
+                                borderLeft: isSelected ? '4px solid var(--accent-primary)' : '4px solid transparent', // Accent bar
                             }}
                             className="commit-row"
                         >
@@ -459,9 +461,7 @@ const GitGraphViz: React.FC<GitGraphVizProps> = ({ onSelect, selectedCommitId })
                                 textAlign: 'right',
                                 flexShrink: 0,
                                 fontWeight: isSelected ? 'bold' : 'normal',
-                                backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-                                padding: isSelected ? '2px 6px' : '0',
-                                borderRadius: '4px'
+                                padding: '0',
                             }}>
                                 {node.id.substring(0, 7)}
                             </span>

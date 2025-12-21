@@ -6,9 +6,10 @@ import type { Commit } from '../../types/gitTypes';
 interface GitReferenceListProps {
     type: 'branches' | 'tags';
     onSelect?: (commit: Commit) => void;
+    selectedCommitId?: string;
 }
 
-const GitReferenceList: React.FC<GitReferenceListProps> = ({ type, onSelect }) => {
+const GitReferenceList: React.FC<GitReferenceListProps> = ({ type, onSelect, selectedCommitId }) => {
     const { state } = useGit();
     const references = type === 'branches' ? state.branches : state.tags;
     const { commits } = state;
@@ -59,33 +60,40 @@ const GitReferenceList: React.FC<GitReferenceListProps> = ({ type, onSelect }) =
                     </tr>
                 </thead>
                 <tbody>
-                    {listItems.map((item) => (
-                        <tr
-                            key={item.name}
-                            onClick={() => item.commit && onSelect && onSelect(item.commit)}
-                            style={{
-                                cursor: 'pointer',
-                                borderBottom: '1px solid var(--border-subtle)',
-                                ':hover': { backgroundColor: 'var(--bg-secondary)' }
-                            } as any}
-                            className="hover:bg-opacity-10 hover:bg-white"
-                        >
-                            <td style={{ padding: '8px 16px', fontWeight: 'bold', color: type === 'branches' ? 'var(--accent-primary)' : 'var(--text-secondary)' }}>
-                                {item.name}
-                            </td>
-                            <td style={{ padding: '8px 16px', color: 'var(--text-tertiary)' }}>
-                                {item.commitId.substring(0, 7)}
-                            </td>
-                            <td style={{ padding: '8px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>
-                                {item.commit?.message || '<unknown commit>'}
-                            </td>
-                            <td style={{ padding: '8px 16px', textAlign: 'right', color: 'var(--text-tertiary)' }}>
-                                {item.commit ? new Date(item.commit.timestamp).toLocaleString('ja-JP', {
-                                    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
-                                }) : '-'}
-                            </td>
-                        </tr>
-                    ))}
+                    {listItems.map((item) => {
+                        const isSelected = item.commitId === selectedCommitId;
+                        return (
+                            <tr
+                                key={item.name}
+                                onClick={() => item.commit && onSelect && onSelect(item.commit)}
+                                style={{
+                                    cursor: 'pointer',
+                                    borderBottom: '1px solid var(--border-subtle)',
+                                    backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                                    // Use box-shadow for left accent border in table row
+                                    boxShadow: isSelected ? 'inset 4px 0 0 var(--accent-primary)' : 'none',
+                                    transition: 'background-color 0.2s',
+                                    ':hover': { backgroundColor: 'var(--bg-secondary)' }
+                                } as any}
+                                className="hover:bg-opacity-10 hover:bg-white"
+                            >
+                                <td style={{ padding: '8px 16px', fontWeight: 'bold', color: type === 'branches' ? 'var(--accent-primary)' : 'var(--text-secondary)' }}>
+                                    {item.name}
+                                </td>
+                                <td style={{ padding: '8px 16px', color: 'var(--text-tertiary)' }}>
+                                    {item.commitId.substring(0, 7)}
+                                </td>
+                                <td style={{ padding: '8px 16px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>
+                                    {item.commit?.message || '<unknown commit>'}
+                                </td>
+                                <td style={{ padding: '8px 16px', textAlign: 'right', color: 'var(--text-tertiary)' }}>
+                                    {item.commit ? new Date(item.commit.timestamp).toLocaleString('ja-JP', {
+                                        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+                                    }) : '-'}
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </table>
         </div>
