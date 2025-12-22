@@ -30,6 +30,11 @@ func Dispatch(ctx context.Context, session *Session, cmdName string, args []stri
 		return "", fmt.Errorf("git: '%s' is not a git command. See 'git --help'", cmdName)
 	}
 
+	// Clear any simulation/potential commits from previous dry-runs
+	session.mu.Lock()
+	session.PotentialCommits = nil
+	session.mu.Unlock()
+
 	cmd := factory()
 	return cmd.Execute(ctx, session, args)
 }

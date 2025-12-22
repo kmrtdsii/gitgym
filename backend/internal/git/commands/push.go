@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -25,11 +26,29 @@ func (c *PushCommand) Execute(ctx context.Context, s *git.Session, args []string
 		return "", fmt.Errorf("fatal: not a git repository")
 	}
 
+	// Parse Flags
+	isForce := false
+	isDryRun := false
+	var positionalArgs []string
+	for i, arg := range args {
+		if i == 0 {
+			continue // skip "push"
+		}
+		if arg == "-f" || arg == "--force" {
+			isForce = true
+		} else if arg == "-n" || arg == "--dry-run" {
+			isDryRun = true
+		} else if strings.HasPrefix(arg, "-") {
+			// ignore other flags for now
+		} else {
+			positionalArgs = append(positionalArgs, arg)
+		}
+	}
+
 	// Syntax: git push [remote] [branch]
-	// Defaults: origin, current branch
 	remoteName := "origin"
-	if len(args) > 1 {
-		remoteName = args[1]
+	if len(positionalArgs) > 0 {
+		remoteName = positionalArgs[0]
 	}
 
 	// Resolve Remote URL
@@ -44,24 +63,15 @@ func (c *PushCommand) Execute(ctx context.Context, s *git.Session, args []string
 	}
 	url := cfg.URLs[0]
 
-	// Check if this is a local simulated remote (in Session.Repos)
-	// We matched cleanPath in init.go, so we should look for matches.
-	// URLs in config might be relative or absolute.
-	// Simplify: Check if `url` exists in s.Repos map directly or relative to CurrentDir keys.
-	// But `url` usually is just the path.
+	// Resolve local simulated remote path
+	lookupKey := strings.TrimPrefix(url, "/")
 
-	targetRepo, ok := s.Repos[url]
+	targetRepo, ok := s.Repos[lookupKey]
 	if !ok {
-		// Try resolving relative to current dir?
-		// If current dir is /, and url is remote.git, key is remote.git.
-		// If current dir is /work, key is work.
-		// If init --bare remote.git was called at root, key is "remote.git".
-		// So strict match is fine for now.
 		return "", fmt.Errorf("remote repository '%s' not found in simulation session (only local simulation supported)", url)
 	}
 
 	// Determined Branch to Push
-	// For simplicity, push current HEAD to same branch name on remote
 	headRef, err := repo.Head()
 	if err != nil {
 		return "", fmt.Errorf("failed to get HEAD: %w", err)
@@ -72,66 +82,39 @@ func (c *PushCommand) Execute(ctx context.Context, s *git.Session, args []string
 	}
 	branchName := headRef.Name()
 
-	// SIMULATE PUSH: Copy Objects + Update Ref
-
-	// 1. Copy Objects (Naive: Copy ALL? or Walk?)
-	// Walking is better.
-	// We need to copy commit object and everything reachable that doesn't exist in target.
-
-	// Local Commit
-	// (We use headRef.Hash() directly now for recursion, commit object fetch is done inside if needed)
-
-	// 1. Copy Objects (Recursive)
-	// We pass *gogit.Repository, not *git.Repository (wrapper)
-	// But s.Repos stores *gogit.Repository ?
-	// s.Repos map[string]*git.Repository ? No, gogit.Repository?
-	// Check session.go or init.go
-	// init.go: s.Repos[cleanPath] = repo (repo is *gogit.Repository)
-	// state.go: repo := session.GetRepo() -> *gogit.Repository
-
-	// Better strategy: Use ObjectWalker if available? No.
-	// Manual recursion:
-	// Note: CommitWalker ForEach just iterates. We need custom walker or manual recursion?
-	// go-git CommitWalker iterates commits.
-	// We need to traverse Trees/Blobs too.
-
-	// Better strategy: Use ObjectWalker if available? No.
-	// Manual recursion:
-	// 1. Copy Objects (Recursive)
-	// We pass *gogit.Repository, not *git.Repository (wrapper)
-	// But s.Repos stores *gogit.Repository ?
-	// s.Repos map[string]*git.Repository ? No, gogit.Repository?
-	// Check session.go or init.go
-	// init.go: s.Repos[cleanPath] = repo (repo is *gogit.Repository)
-	// state.go: repo := session.GetRepo() -> *gogit.Repository
-
-	err = copyCommitRecursive(repo, targetRepo, headRef.Hash())
-	if err != nil {
-		return "", fmt.Errorf("failed to push objects: %w", err)
-	}
-
-	// 2. Update Remote Ref
-	// git push updates refs/heads/<branch> on remote
-	// Also need to handle fast-forward check?
-	// Simulation: Force update for now or simple check.
-	// Standard: verify target ref is ancestor of new ref.
-
+	// Check Fast-Forward (unless Force)
 	targetRef, err := targetRepo.Reference(branchName, true)
-	if err == nil {
-		// Ref exists, check fast-forward
-		// If we can reach old hash from new hash, it is FF.
+	if err == nil && !isForce {
 		isFF, err := isFastForward(repo, targetRef.Hash(), headRef.Hash())
 		if err != nil {
 			return "", err
 		}
 		if !isFF {
-			return "", fmt.Errorf("non-fast-forward update rejected (simulation)")
+			return "", fmt.Errorf("non-fast-forward update rejected (use --force to override)")
 		}
+	}
+
+	if isDryRun {
+		return fmt.Sprintf("[dry-run] Would push %s to %s at %s", branchName.Short(), remoteName, url), nil
+	}
+
+	// SIMULATE PUSH: Copy Objects + Update Ref
+	err = copyCommitRecursive(repo, targetRepo, headRef.Hash())
+	if err != nil {
+		return "", fmt.Errorf("failed to push objects: %w", err)
 	}
 
 	err = targetRepo.Storer.SetReference(headRef)
 	if err != nil {
 		return "", err
+	}
+
+	// 2. Update Local Remote-Tracking Reference: refs/remotes/<remote>/<branch>
+	localRemoteRefName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/%s/%s", remoteName, branchName.Short()))
+	newLocalRemoteRef := plumbing.NewHashReference(localRemoteRefName, headRef.Hash())
+	err = repo.Storer.SetReference(newLocalRemoteRef)
+	if err != nil {
+		return "", fmt.Errorf("failed to update remote-tracking reference: %w", err)
 	}
 
 	return fmt.Sprintf("To %s\n   %s -> %s", url, headRef.Hash().String()[:7], branchName.Short()), nil

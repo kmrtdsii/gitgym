@@ -60,16 +60,42 @@ func TestGitCloneAndPushRestriction(t *testing.T) {
 		}
 	})
 
-	// 2. Test Push Simulation Error (it exists now, but should fail for real URLs)
-	t.Run("PushSimulationCheck", func(t *testing.T) {
-		_, err := exec("push", "origin", "main")
-		if err == nil {
-			t.Error("push command succeeded unexpectedly for external URL")
+	// 2. Test Push Simulation (Should succeed for simulated remotes)
+	t.Run("PushSimulation", func(t *testing.T) {
+		// Get current branch name
+		session, _ := GetSession(sessionID)
+		headRef, _ := session.GetRepo().Head()
+		branchName := headRef.Name().Short()
+
+		// Create a small change to push
+		if _, err := exec("commit", "--allow-empty", "-m", "Simulation push test"); err != nil {
+			t.Fatalf("failed to create commit for push: %v", err)
 		}
 
-		expectedError := "only local simulation supported"
-		if !strings.Contains(err.Error(), expectedError) {
-			t.Errorf("unexpected error message: %v (expected to contain %q)", err, expectedError)
+		out, err := exec("push", "origin", branchName)
+		if err != nil {
+			t.Fatalf("push command failed unexpectedly: %v", err)
+		}
+
+		if !strings.Contains(out, "To /remotes/basic.git") {
+			t.Errorf("unexpected push output: %s", out)
+		}
+
+		// Verify that the remote repo (simulated) now has the commit
+		remoteRepo := session.Repos["remotes/basic.git"]
+		if remoteRepo == nil {
+			t.Fatal("simulated remote repo not found in session")
+		}
+
+		// Check if remote branch matches local HEAD
+		localRef, _ := session.GetRepo().Head()
+		remoteRef, err := remoteRepo.Reference(headRef.Name(), true)
+		if err != nil {
+			t.Fatalf("failed to find branch %s in remote: %v", branchName, err)
+		}
+
+		if remoteRef.Hash() != localRef.Hash() {
+			t.Errorf("remote hash %s does not match local hash %s", remoteRef.Hash(), localRef.Hash())
 		}
 	})
 }

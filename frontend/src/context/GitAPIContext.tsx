@@ -35,6 +35,7 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         untracked: [],
         fileStatuses: {},
         files: [],
+        potentialCommits: [],
         output: [],
         commandCount: 0
     });

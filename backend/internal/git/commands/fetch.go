@@ -3,6 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -25,10 +26,26 @@ func (c *FetchCommand) Execute(ctx context.Context, s *git.Session, args []strin
 		return "", fmt.Errorf("fatal: not a git repository")
 	}
 
+	// Parse Flags
+	isDryRun := false
+	var positionalArgs []string
+	for i, arg := range args {
+		if i == 0 {
+			continue // skip "fetch"
+		}
+		if arg == "-n" || arg == "--dry-run" {
+			isDryRun = true
+		} else if strings.HasPrefix(arg, "-") {
+			// ignore other flags
+		} else {
+			positionalArgs = append(positionalArgs, arg)
+		}
+	}
+
 	// Syntax: git fetch [remote]
 	remoteName := "origin"
-	if len(args) > 1 {
-		remoteName = args[1]
+	if len(positionalArgs) > 0 {
+		remoteName = positionalArgs[0]
 	}
 
 	rem, err := repo.Remote(remoteName)
@@ -43,44 +60,59 @@ func (c *FetchCommand) Execute(ctx context.Context, s *git.Session, args []strin
 	url := cfg.URLs[0]
 
 	// Look up simulated remote
-	srcRepo, ok := s.Repos[url]
+	lookupKey := strings.TrimPrefix(url, "/")
+
+	srcRepo, ok := s.Repos[lookupKey]
 	if !ok {
-		return "", fmt.Errorf("remote repository '%s' not found in simulation session", url)
+		return "", fmt.Errorf("remote repository '%s' not found (simulated path or URL required)", url)
 	}
 
 	// Scan remote refs (branches) and fetch them
-	// We map remote branch refs/heads/X to local refs/remotes/<remote>/X
-
 	refs, err := srcRepo.References()
 	if err != nil {
 		return "", err
 	}
 
 	updated := 0
+	results := []string{fmt.Sprintf("From %s", url)}
 
 	err = refs.ForEach(func(r *plumbing.Reference) error {
 		if r.Name().IsBranch() {
 			branchName := r.Name().Short()
-			// Fetch Logic
+			localRefName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/%s/%s", remoteName, branchName))
 
-			// 1. Copy Objects (Src -> Dst)
-			// Using shared helpers (need to export or dup)
-			// For now, duplicate copyCommitRecursive logic or move to shared util?
-			// Duplicating for speed, minimal diff.
-			err := fetchCopyCommitRecursive(srcRepo, repo, r.Hash())
+			// Check if update needed
+			currentLocal, err := repo.Reference(localRefName, true)
+			if err == nil && currentLocal.Hash() == r.Hash() {
+				return nil // up to date
+			}
+
+			if isDryRun {
+				results = append(results, fmt.Sprintf(" * [dry-run] %s -> %s/%s", branchName, remoteName, branchName))
+				return nil
+			}
+
+			// 1. Copy Objects
+			err = fetchCopyCommitRecursive(srcRepo, repo, r.Hash())
 			if err != nil {
 				return err
 			}
 
 			// 2. Update Local Reference: refs/remotes/<remote>/<branch>
-			localRefName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/%s/%s", remoteName, branchName))
-
-			// Update logic (force update for fetch)
 			newRef := plumbing.NewHashReference(localRefName, r.Hash())
 			err = repo.Storer.SetReference(newRef)
 			if err != nil {
 				return err
 			}
+
+			results = append(results, fmt.Sprintf(" * [%s] %s -> %s/%s",
+				func() string {
+					if err != nil {
+						return "new branch"
+					}
+					return "updated"
+				}(),
+				branchName, remoteName, branchName))
 			updated++
 		}
 		return nil
@@ -90,7 +122,11 @@ func (c *FetchCommand) Execute(ctx context.Context, s *git.Session, args []strin
 		return "", err
 	}
 
-	return fmt.Sprintf("From %s\n * [new branch/tag] -> %s/*", url, remoteName), nil
+	if updated == 0 && !isDryRun {
+		return results[0] + "\nAlready up to date.", nil
+	}
+
+	return strings.Join(results, "\n"), nil
 }
 
 func (c *FetchCommand) Help() string {

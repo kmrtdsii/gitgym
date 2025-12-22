@@ -15,13 +15,14 @@ import (
 
 // Session holds the state of a user's simulated git repo
 type Session struct {
-	ID         string
-	Filesystem billy.Filesystem
-	Repos      map[string]*git.Repository // Map path (e.g., "repo1") to Repository
-	CurrentDir string                     // e.g., "/", "/repo1"
-	CreatedAt  time.Time
-	Reflog     []ReflogEntry
-	mu         sync.RWMutex
+	ID               string
+	Filesystem       billy.Filesystem
+	Repos            map[string]*git.Repository // Map path (e.g., "repo1") to Repository
+	CurrentDir       string                     // e.g., "/", "/repo1"
+	CreatedAt        time.Time
+	Reflog           []ReflogEntry
+	PotentialCommits []Commit
+	mu               sync.RWMutex
 }
 
 // SessionManager handles concurrent access to sessions
