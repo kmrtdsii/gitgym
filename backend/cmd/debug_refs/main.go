@@ -10,7 +10,12 @@ import (
 )
 
 func main() {
-	path := "/workspaces/playwithantigravity/temp_repro/json-server"
+	if len(os.Args) < 2 {
+		fmt.Printf("Usage: %s <repo-path>\n", os.Args[0])
+		os.Exit(1)
+	}
+	path := os.Args[1]
+
 	repo, err := git.PlainOpen(path)
 	if err != nil {
 		log.Fatal(err)
@@ -29,8 +34,8 @@ func main() {
 		fmt.Println(r.Name(), r.Hash())
 		return nil
 	})
-    
-    fmt.Println("--- HEAD ---")
-    h, _ := repo.Head()
-    fmt.Println(h.Name(), h.Hash())
+
+	fmt.Println("--- HEAD ---")
+	h, _ := repo.Head()
+	fmt.Println(h.Name(), h.Hash())
 }

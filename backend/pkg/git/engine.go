@@ -27,7 +27,7 @@ func Dispatch(ctx context.Context, session *Session, cmdName string, args []stri
 	// Simple aliasing/handling could go here
 	factory, ok := registry[cmdName]
 	if !ok {
-		return "", fmt.Errorf("git: '%s' is not a git command. See 'git --help'.", cmdName)
+		return "", fmt.Errorf("git: '%s' is not a git command. See 'git --help'", cmdName)
 	}
 
 	cmd := factory()
@@ -69,15 +69,15 @@ func ParseCommand(input string) (string, []string) {
 	case "add":
 		return "add", append([]string{"add"}, parts[1:]...)
 	case "commit":
-		// commit -m ... -> commit -m ... 
-        // Original alias was "git commit -m". The command expects "commit" as args[0].
-        // However, we need to inject "-m" if it was part of the simplification?
-        // simple alias: commit "msg" -> git commit -m "msg"
-        // Let's stick to simple normalization: args[0] = "commit".
-        // If the alias logic added flags (like -m), we should add them.
-        // Previous logic: newParts := []string{"git", "commit", "-m"}
-        // So args (for Dispatch) was ["git", "commit", "-m", ...]
-        // Removing "git": ["commit", "-m", ...]
+		// commit -m ... -> commit -m ...
+		// Original alias was "git commit -m". The command expects "commit" as args[0].
+		// However, we need to inject "-m" if it was part of the simplification?
+		// simple alias: commit "msg" -> git commit -m "msg"
+		// Let's stick to simple normalization: args[0] = "commit".
+		// If the alias logic added flags (like -m), we should add them.
+		// Previous logic: newParts := []string{"git", "commit", "-m"}
+		// So args (for Dispatch) was ["git", "commit", "-m", ...]
+		// Removing "git": ["commit", "-m", ...]
 		return "commit", append([]string{"commit", "-m"}, parts[1:]...)
 	case "merge":
 		return "merge", append([]string{"merge"}, parts[1:]...)
@@ -107,16 +107,16 @@ func ParseCommand(input string) (string, []string) {
 		//
 		// To unify this, ParseCommand should return the REGISTRY key and the FULL args.
 	}
-    
-    // Default handling
-    // If it starts with "git", the registry key is parts[1] (e.g. "git clone" -> "clone")
-    if parts[0] == "git" && len(parts) > 1 {
-        // Return parts[1] as name, and parts[1:] as args (so args[0] == name)
-        return parts[1], parts[1:]
-    }
-    
-    // Otherwise, assume the first word is the command (e.g. "ls", "rm", "cd")
-    return parts[0], parts
+
+	// Default handling
+	// If it starts with "git", the registry key is parts[1] (e.g. "git clone" -> "clone")
+	if parts[0] == "git" && len(parts) > 1 {
+		// Return parts[1] as name, and parts[1:] as args (so args[0] == name)
+		return parts[1], parts[1:]
+	}
+
+	// Otherwise, assume the first word is the command (e.g. "ls", "rm", "cd")
+	return parts[0], parts
 }
 
 // Helper to parse args somewhat consistently if needed
