@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/kmrtdsii/playwithantigravity/backend/pkg/git"
+	"github.com/kmrtdsii/playwithantigravity/backend/internal/git"
 )
 
 func init() {
