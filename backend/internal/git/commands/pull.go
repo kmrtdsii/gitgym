@@ -18,14 +18,27 @@ type PullCommand struct{}
 func (c *PullCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
 	// git pull = git fetch + git merge
 
-	// 1. Fetch
-	// Construct args for FetchCommand
-	// git pull [remote] [branch] -> fetch [remote]
+	isDryRun := false
+	var cleanArgs []string
+	for i, arg := range args {
+		if i == 0 {
+			continue
+		}
+		if arg == "-n" || arg == "--dry-run" {
+			isDryRun = true
+		} else {
+			cleanArgs = append(cleanArgs, arg)
+		}
+	}
 
+	// 1. Fetch
 	fetchArgs := []string{"fetch"}
+	if isDryRun {
+		fetchArgs = append(fetchArgs, "--dry-run")
+	}
 	remoteName := "origin"
-	if len(args) > 1 {
-		remoteName = args[1]
+	if len(cleanArgs) > 0 {
+		remoteName = cleanArgs[0]
 		fetchArgs = append(fetchArgs, remoteName)
 	}
 
@@ -35,10 +48,11 @@ func (c *PullCommand) Execute(ctx context.Context, s *git.Session, args []string
 		return "", fmt.Errorf("pull (fetch failed): %w", err)
 	}
 
-	// 2. Determine upstream branch to merge
-	// Default: matches current branch name?
-	// or from args? git pull origin main -> merge origin/main
+	if isDryRun {
+		return fmt.Sprintf("%s\n[dry-run] Pull would continue with merge/rebase.", fetchOutput), nil
+	}
 
+	// 2. Determine upstream branch to merge
 	s.Lock()
 	defer s.Unlock()
 
@@ -52,38 +66,25 @@ func (c *PullCommand) Execute(ctx context.Context, s *git.Session, args []string
 		return "", err
 	}
 
-	// Logic to finding what to merge
 	var mergeRefName string
-
-	if len(args) > 2 {
+	if len(cleanArgs) > 1 {
 		// git pull origin main
-		branchName := args[2]
+		branchName := cleanArgs[1]
 		mergeRefName = fmt.Sprintf("refs/remotes/%s/%s", remoteName, branchName)
 	} else {
-		// git pull (implicit) or git pull origin
-		// derive from current branch
 		if headRef.Name().IsBranch() {
 			currentBranch := headRef.Name().Short()
-			mergeRefName = fmt.Sprintf("refs/remotes/%s/%s", remoteName, currentBranch) // Assuming 1:1 mapping
+			mergeRefName = fmt.Sprintf("refs/remotes/%s/%s", remoteName, currentBranch)
 		} else {
 			return "", fmt.Errorf("HEAD is detached, please specify remote ref to merge")
 		}
 	}
 
 	// 3. Merge (Fast-Forward only for now)
-	// We check if we can FF.
-
-	// Resolve mergeRef
 	mergeRef, err := repo.Reference(plumbing.ReferenceName(mergeRefName), true)
 	if err != nil {
-		// If ref doesn't exist, maybe it wasn't fetched or typo
 		return fmt.Sprintf("%s\n(merge skipped: ref %s not found)", fetchOutput, mergeRefName), nil
 	}
-
-	// Check Ancestry
-	// If HEAD is ancestor of MergeRef -> Fast Forward
-	// If MergeRef is ancestor of HEAD -> Already up to date
-	// If Diverged -> Conflict (not implemented)
 
 	headHash := headRef.Hash()
 	targetHash := mergeRef.Hash()
@@ -99,10 +100,6 @@ func (c *PullCommand) Execute(ctx context.Context, s *git.Session, args []string
 
 	if isFF {
 		// Perform FF Merge
-		// Update HEAD to targetHash
-		// And update Worktree?
-
-		// Update HEAD Ref
 		name := headRef.Name()
 		newRef := plumbing.NewHashReference(name, targetHash)
 		err = repo.Storer.SetReference(newRef)
@@ -110,8 +107,6 @@ func (c *PullCommand) Execute(ctx context.Context, s *git.Session, args []string
 			return "", err
 		}
 
-		// Update Worktree to match new HEAD
-		// Naive: Checkout?
 		w, err := repo.Worktree()
 		if err != nil {
 			return "", err
@@ -119,7 +114,7 @@ func (c *PullCommand) Execute(ctx context.Context, s *git.Session, args []string
 
 		err = w.Reset(&gogit.ResetOptions{
 			Commit: targetHash,
-			Mode:   gogit.HardReset, // For Simulation, Hard Reset is easiest Update
+			Mode:   gogit.HardReset,
 		})
 		if err != nil {
 			return "", fmt.Errorf("failed to update worktree: %w", err)
@@ -128,7 +123,6 @@ func (c *PullCommand) Execute(ctx context.Context, s *git.Session, args []string
 		return fmt.Sprintf("%s\nUpdating %s..%s\nFast-forward", fetchOutput, headHash.String()[:7], targetHash.String()[:7]), nil
 	}
 
-	// Check reverse (Already up to date check more formally)
 	isUpToDate, err := isFastForward(repo, targetHash, headHash)
 	if err != nil {
 		return "", err

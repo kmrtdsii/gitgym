@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import './AppLayout.css';
 import { useGit } from '../../context/GitAPIContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -7,7 +7,8 @@ import GitGraphViz from '../visualization/GitGraphViz';
 import GitReferenceList from '../visualization/GitReferenceList';
 import BranchingStrategies from '../visualization/BranchingStrategies';
 import FileExplorer from './FileExplorer';
-import ObjectInspector from './ObjectInspector';
+import RemoteRepoView from './RemoteRepoView';
+import type { GitState } from '../../types/gitTypes';
 
 export interface SelectedObject {
     type: 'commit' | 'file';
@@ -23,6 +24,38 @@ const AppLayout = () => {
     const [selectedObject, setSelectedObject] = useState<SelectedObject | null>(null);
     const [isLeftPaneOpen, setIsLeftPaneOpen] = useState(true);
     const [viewMode, setViewMode] = useState<ViewMode>('graph');
+
+    // Remote State Derivation (Simulating the Remote Repository)
+    const remoteState: GitState = useMemo(() => {
+        const transformedBranches: Record<string, string> = {};
+        Object.entries(state.remoteBranches).forEach(([name, hash]) => {
+            const parts = name.split('/');
+            const shortName = parts.length > 1 ? parts.slice(1).join('/') : name;
+            transformedBranches[shortName] = hash;
+        });
+
+        let remoteHead: GitState['HEAD'] = { type: 'none', ref: null };
+        const headCandidate = transformedBranches['main'] || transformedBranches['master'] || Object.keys(transformedBranches)[0];
+        if (headCandidate) {
+            remoteHead = {
+                type: 'branch',
+                ref: transformedBranches['main'] ? 'main' : (transformedBranches['master'] ? 'master' : Object.keys(transformedBranches)[0]),
+                id: transformedBranches[transformedBranches['main'] ? 'main' : (transformedBranches['master'] ? 'master' : Object.keys(transformedBranches)[0])]
+            };
+        }
+
+        return {
+            ...state,
+            branches: transformedBranches,
+            HEAD: remoteHead,
+            potentialCommits: [],
+            remoteBranches: {},
+            staging: [],
+            modified: [],
+            untracked: [],
+            fileStatuses: {}
+        };
+    }, [state]);
 
     // Resizable Pane State (Vertical - Side Panes)
     const [leftPaneWidth, setLeftPaneWidth] = useState(250);
@@ -305,10 +338,23 @@ const AppLayout = () => {
                     >
                         {state.HEAD && state.HEAD.type !== 'none' || viewMode === 'strategies' ? (
                             viewMode === 'graph' ? (
-                                <GitGraphViz
-                                    onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
-                                    selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
-                                />
+                                <div style={{ display: 'flex', height: '100%', gap: '1px', background: 'var(--border-subtle)' }}>
+                                    <div style={{ flex: 1, minWidth: 0, background: 'var(--bg-primary)' }}>
+                                        <GitGraphViz
+                                            title="LOCAL REPOSITORY"
+                                            onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
+                                            selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
+                                        />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0, background: 'var(--bg-primary)' }}>
+                                        <GitGraphViz
+                                            title="REMOTE REPOSITORY (ORIGIN)"
+                                            state={remoteState}
+                                            onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
+                                            selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
+                                        />
+                                    </div>
+                                </div>
                             ) : viewMode === 'strategies' ? (
                                 <BranchingStrategies />
                             ) : (
@@ -347,16 +393,14 @@ const AppLayout = () => {
             {/* Resizer Right */}
             <div className="resizer-vertical" onMouseDown={startResizingRight} />
 
-            {/* RIGHT PANE: Object Inspector */}
+            {/* RIGHT PANE: Remote Repository Inspector */}
             <aside
                 className="right-pane"
                 style={{ width: rightPaneWidth }}
             >
-                <div className="pane-header">Object Inspector</div>
+                <div className="pane-header">SERVER (REMOTE)</div>
                 <div className="pane-content">
-                    <ObjectInspector
-                        selectedObject={selectedObject}
-                    />
+                    <RemoteRepoView />
                 </div>
             </aside>
         </div>

@@ -32,6 +32,7 @@ export const gitService = {
             remoteBranches: data.remoteBranches || {},
             HEAD: data.HEAD || { type: 'none' },
             files: data.files || [],
+            potentialCommits: data.potentialCommits || [],
             staging: data.staging || [],
             modified: data.modified || [],
             untracked: data.untracked || [],

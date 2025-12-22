@@ -75,7 +75,14 @@ const GitTerminal = () => {
         if (state.output.length > lastOutputLen.current) {
             const newLines = state.output.slice(lastOutputLen.current);
             newLines.forEach(line => {
-                xtermRef.current?.writeln(line);
+                let formattedLine = line;
+                // Highlight simulation/dry-run
+                if (line.includes('[dry-run]') || line.includes('[simulation]')) {
+                    const ORANGE = '\x1b[38;5;214m';
+                    const RESET = '\x1b[0m';
+                    formattedLine = `${ORANGE}${line}${RESET}`;
+                }
+                xtermRef.current?.writeln(formattedLine);
             });
             lastOutputLen.current = state.output.length;
         }

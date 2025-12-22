@@ -21,14 +21,15 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 	defer session.mu.RUnlock()
 
 	state := &GraphState{
-		Commits:        []Commit{},
-		Branches:       make(map[string]string),
-		RemoteBranches: make(map[string]string),
-		Tags:           make(map[string]string),
-		References:     make(map[string]string),
-		FileStatuses:   make(map[string]string),
-		CurrentPath:    session.CurrentDir,
-		Remotes:        []Remote{},
+		Commits:          []Commit{},
+		PotentialCommits: session.PotentialCommits,
+		Branches:         make(map[string]string),
+		RemoteBranches:   make(map[string]string),
+		Tags:             make(map[string]string),
+		References:       make(map[string]string),
+		FileStatuses:     make(map[string]string),
+		CurrentPath:      session.CurrentDir,
+		Remotes:          []Remote{},
 	}
 
 	repo := session.GetRepo()

@@ -28,18 +28,26 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 	}
 
 	w, _ := repo.Worktree()
-	if len(args) < 2 {
-		return "", fmt.Errorf("usage: git merge [--squash] <branch>")
+	// Parse Flags
+	targetName := ""
+	squash := false
+	isDryRun := false
+
+	for i, arg := range args {
+		if i == 0 {
+			continue
+		}
+		if arg == "--squash" {
+			squash = true
+		} else if arg == "--dry-run" || arg == "-n" {
+			isDryRun = true
+		} else if targetName == "" {
+			targetName = arg
+		}
 	}
 
-	targetName := args[1]
-	squash := false
-	if args[1] == "--squash" {
-		if len(args) < 3 {
-			return "", fmt.Errorf("usage: git merge --squash <branch>")
-		}
-		squash = true
-		targetName = args[2]
+	if targetName == "" {
+		return "", fmt.Errorf("usage: git merge [--squash] [--dry-run] <branch>")
 	}
 
 	// 1. Resolve HEAD
@@ -73,6 +81,9 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 
 	// --- SQUASH HANDLING ---
 	if squash {
+		if isDryRun {
+			return fmt.Sprintf("[dry-run] Would squash-merge %s into current branch (worktree would be updated but no commit created)", targetName), nil
+		}
 		// 1. Apply changes from target to worktree (Simplified: Overwrite/Add from Target)
 		tree, err := targetCommit.Tree()
 		if err != nil {
@@ -119,6 +130,9 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 
 		// Check for Fast-Forward
 		if base[0].Hash == headCommit.Hash {
+			if isDryRun {
+				return fmt.Sprintf("[dry-run] Would perform fast-forward merge of %s", targetName), nil
+			}
 			if headRef.Name().IsBranch() {
 				// We are on a branch. Use Reset --hard
 				s.UpdateOrigHead()
@@ -145,6 +159,19 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 				return fmt.Sprintf("Fast-forward to %s", targetName), nil
 			}
 		}
+	}
+
+	if isDryRun {
+		s.PotentialCommits = []git.Commit{
+			{
+				ID:             "sim-merge",
+				Message:        fmt.Sprintf("Merge branch '%s' (simulation)", targetName),
+				ParentID:       headCommit.Hash.String(),
+				SecondParentID: targetCommit.Hash.String(),
+				Timestamp:      time.Now().Format(time.RFC3339),
+			},
+		}
+		return fmt.Sprintf("[dry-run] Would create merge commit for %s (strategy 'ort')", targetName), nil
 	}
 
 	// 4. Merge Commit

@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	gogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/kmrtdsii/playwithantigravity/backend/internal/git"
 )
@@ -33,7 +35,6 @@ func (c *CloneCommand) Execute(ctx context.Context, s *git.Session, args []strin
 	url := args[1]
 
 	// Extract repo name from URL
-	// Simple parsing: last part of path, strip .git
 	parts := strings.Split(url, "/")
 	if len(parts) == 0 {
 		return "", fmt.Errorf("invalid url")
@@ -45,7 +46,23 @@ func (c *CloneCommand) Execute(ctx context.Context, s *git.Session, args []strin
 		return "", fmt.Errorf("repository '%s' already exists", repoName)
 	}
 
-	// Create chrooted filesystem for the repo
+	// 1. Create Simulated Remote (Bare Repository)
+	remotePath := fmt.Sprintf("remotes/%s.git", repoName)
+	if err := s.Filesystem.MkdirAll("remotes", 0755); err != nil {
+		return "", fmt.Errorf("failed to create remotes directory: %w", err)
+	}
+
+	remoteSt := memory.NewStorage()
+	remoteRepo, err := gogit.Clone(remoteSt, nil, &gogit.CloneOptions{
+		URL:      url,
+		Progress: os.Stdout,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create simulated remote: %w", err)
+	}
+	s.Repos[remotePath] = remoteRepo
+
+	// 2. Create Local Working Copy
 	if err := s.Filesystem.MkdirAll(repoName, 0755); err != nil {
 		return "", fmt.Errorf("failed to create directory: %w", err)
 	}
@@ -55,19 +72,38 @@ func (c *CloneCommand) Execute(ctx context.Context, s *git.Session, args []strin
 		return "", fmt.Errorf("failed to chroot: %w", err)
 	}
 
-	st := memory.NewStorage()
-	repo, err := gogit.Clone(st, repoFS, &gogit.CloneOptions{
-		URL:      url,
-		Progress: os.Stdout,
-	})
+	localSt := memory.NewStorage()
+	localRepo, err := gogit.Init(localSt, repoFS)
 	if err != nil {
-		// Clean up on failure?
-		return "", fmt.Errorf("clone failed: %w", err)
+		return "", fmt.Errorf("failed to init local repo: %w", err)
 	}
 
-	s.Repos[repoName] = repo
+	// Copy Objects from remote to local
+	iter, _ := remoteSt.IterEncodedObjects(plumbing.AnyObject)
+	iter.ForEach(func(obj plumbing.EncodedObject) error {
+		localSt.SetEncodedObject(obj)
+		return nil
+	})
 
-	return fmt.Sprintf("Cloned into '%s'...", repoName), nil
+	// Copy References
+	refs, _ := remoteRepo.References()
+	refs.ForEach(func(ref *plumbing.Reference) error {
+		localRepo.Storer.SetReference(ref)
+		return nil
+	})
+
+	// Set Origin to point to our simulated remote path
+	_, err = localRepo.CreateRemote(&config.RemoteConfig{
+		Name: "origin",
+		URLs: []string{"/" + remotePath},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to configure origin: %w", err)
+	}
+
+	s.Repos[repoName] = localRepo
+
+	return fmt.Sprintf("Cloned into '%s'... (Simulated remote created at /%s)", repoName, remotePath), nil
 }
 
 func (c *CloneCommand) Help() string {

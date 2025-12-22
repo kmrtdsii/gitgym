@@ -21,6 +21,7 @@ export interface GitState {
     tags: Record<string, string>; // tagName -> commitId
     references: Record<string, string>; // references like ORIG_HEAD -> commitId
     HEAD: { type: 'branch' | 'commit' | 'none', ref: string | null, id?: string };
+    potentialCommits: Commit[];
     staging: string[];
     modified: string[];
     untracked: string[];
