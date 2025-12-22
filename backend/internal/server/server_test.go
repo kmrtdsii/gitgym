@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/kmrtdsii/playwithantigravity/backend/pkg/git"
+	"github.com/kmrtdsii/playwithantigravity/backend/internal/git"
 )
 
 func TestServerEndpoints(t *testing.T) {

@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/kmrtdsii/playwithantigravity/backend/pkg/git"
+	"github.com/kmrtdsii/playwithantigravity/backend/internal/git"
 )
 
 type Server struct {

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/kmrtdsii/playwithantigravity/backend/pkg/git"
+	"github.com/kmrtdsii/playwithantigravity/backend/internal/git"
 )
 
 func init() {
