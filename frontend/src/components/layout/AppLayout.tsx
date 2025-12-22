@@ -20,7 +20,7 @@ type ViewMode = 'graph' | 'branches' | 'tags' | 'strategies';
 const AppLayout = () => {
     const {
         state, showAllCommits, toggleShowAllCommits,
-        developers, activeDeveloper, switchDeveloper
+        developers, activeDeveloper, switchDeveloper, addDeveloper
     } = useGit();
 
     // Theme removed from UI
@@ -37,35 +37,27 @@ const AppLayout = () => {
     }, [state]);
 
     // --- Layout State ---
-    // [Left Pane] | [Main Area (Shared Header + Split Content)]
     const [leftPaneWidth, setLeftPaneWidth] = useState(33); // Percentage
-    // Within Main Area: [Center] | [Right]
-    const [centerPaneWidth, setCenterPaneWidth] = useState(50); // Percentage of Main Area
-
     const [vizHeight, setVizHeight] = useState(500); // Height of Top Graph in Center
     const [remoteGraphHeight, setRemoteGraphHeight] = useState(500); // Height of Top Graph in Left (Synced with Center)
 
     const containerRef = useRef<HTMLDivElement>(null);
-    const mainAreaRef = useRef<HTMLDivElement>(null);
     const centerContentRef = useRef<HTMLDivElement>(null);
     const leftContentRef = useRef<HTMLDivElement>(null);
 
     // Resize Refs
     const isResizingLeft = useRef(false); // Between Left & Main
-    const isResizingRight = useRef(false); // Between Center & Right (inside Main)
     const isResizingCenterVertical = useRef(false); // Center Pane Split
     const isResizingLeftVertical = useRef(false); // Left Pane Split
 
     // --- Resize Handlers ---
 
     const startResizeLeft = useCallback(() => { isResizingLeft.current = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }, []);
-    const startResizeRight = useCallback(() => { isResizingRight.current = true; document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }, []);
     const startResizeCenterVert = useCallback(() => { isResizingCenterVertical.current = true; document.body.style.cursor = 'row-resize'; document.body.style.userSelect = 'none'; }, []);
     const startResizeLeftVert = useCallback(() => { isResizingLeftVertical.current = true; document.body.style.cursor = 'row-resize'; document.body.style.userSelect = 'none'; }, []);
 
     const stopResizing = useCallback(() => {
         isResizingLeft.current = false;
-        isResizingRight.current = false;
         isResizingCenterVertical.current = false;
         isResizingLeftVertical.current = false;
         document.body.style.cursor = '';
@@ -84,24 +76,14 @@ const AppLayout = () => {
             }
         }
 
-        // 2. Resize Center vs Right (Inside Main Area)
-        if (isResizingRight.current && mainAreaRef.current) {
-            const mainRect = mainAreaRef.current.getBoundingClientRect();
-            // Relative to Main Area
-            const newCenterPct = ((e.clientX - mainRect.left) / mainRect.width) * 100;
-            if (newCenterPct > 10 && newCenterPct < 90) {
-                setCenterPaneWidth(newCenterPct);
-            }
-        }
-
-        // 3. Vertical Resize (Center Pane)
+        // 2. Vertical Resize (Center Pane)
         if (isResizingCenterVertical.current && centerContentRef.current) {
             const rect = centerContentRef.current.getBoundingClientRect();
             const newH = e.clientY - rect.top;
             if (newH > 100 && newH < rect.height - 100) setVizHeight(newH);
         }
 
-        // 4. Vertical Resize (Left Pane)
+        // 3. Vertical Resize (Left Pane)
         if (isResizingLeftVertical.current && leftContentRef.current) {
             const rect = leftContentRef.current.getBoundingClientRect();
             const newH = e.clientY - rect.top;
@@ -126,7 +108,7 @@ const AppLayout = () => {
     const modes: ViewMode[] = ['graph', 'branches', 'tags', 'strategies'];
 
     return (
-        <div className="layout-container" ref={containerRef} style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden' }}>
+        <div className="layout-container" ref={containerRef} style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: '#0d1117' }}>
 
             {/* --- COLUMN 1: REMOTE SERVER --- */}
             <aside
@@ -134,10 +116,6 @@ const AppLayout = () => {
                 style={{ width: `${leftPaneWidth}%`, display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-subtle)' }}
                 ref={leftContentRef}
             >
-                {/* Header */}
-                {/* Header Removed as per user request */}
-
-                {/* Content Split: Graph (Top) / Operations (Bottom) */}
                 <div className="pane-content" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
                     <RemoteRepoView
                         topHeight={remoteGraphHeight}
@@ -146,154 +124,147 @@ const AppLayout = () => {
                 </div>
             </aside>
 
-            {/* Main Resizer (Left vs Main) */}
+            {/* Main Resizer (Left vs Local) */}
             <div
                 className="resizer-vertical"
                 onMouseDown={startResizeLeft}
                 style={{ cursor: 'col-resize', width: '4px', background: 'var(--border-subtle)', flexShrink: 0, zIndex: 20 }}
             />
 
-            {/* --- MAIN AREA: SHARED HEADER + [Center | Right] --- */}
-            <div ref={mainAreaRef} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+            {/* --- COLUMN 2: LOCAL WORKSPACE (Merged Center & Right) --- */}
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
-                {/* SHARED HEADER */}
-                <div className="pane-header" style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-subtle)', padding: '0 12px', height: '36px', alignItems: 'center', background: 'var(--bg-secondary)' }}>
-                    {/* Controls Group */}
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        {/* View Mode Selectors */}
-                        <div style={{ display: 'flex', gap: '4px', background: 'var(--bg-tertiary)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-subtle)' }}>
-                            {modes.map(mode => (
-                                <button
-                                    key={mode}
-                                    onClick={() => setViewMode(mode)}
-                                    style={{
-                                        background: viewMode === mode ? 'var(--accent-primary)' : 'transparent',
-                                        color: viewMode === mode ? 'white' : 'var(--text-secondary)',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        padding: '4px 12px',
-                                        fontSize: '11px',
-                                        cursor: 'pointer',
-                                        fontWeight: 600,
-                                        textTransform: 'capitalize'
-                                    }}
-                                >
-                                    {mode}
-                                </button>
-                            ))}
-                        </div>
+                {/* ROW 1: User Tabs (Alice / Bob) */}
+                <div style={{
+                    height: '32px',
+                    background: 'var(--bg-secondary)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    borderBottom: '1px solid var(--border-subtle)'
+                }}>
+                    {developers.map(dev => {
+                        const isActive = dev === activeDeveloper;
+                        return (
+                            <button
+                                key={dev}
+                                onClick={() => switchDeveloper(dev)}
+                                style={{
+                                    height: '100%',
+                                    padding: '0 16px',
+                                    background: isActive ? '#1e1e1e' : 'transparent', // Tab active color
+                                    color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                                    border: 'none',
+                                    borderTop: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent', // Top accent
+                                    borderRight: '1px solid var(--border-subtle)',
+                                    fontSize: '12px',
+                                    fontWeight: isActive ? 600 : 400,
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                }}
+                            >
+                                <span>{dev}</span>
+                            </button>
+                        );
+                    })}
+                    {/* Add User Button */}
+                    <button
+                        style={{
+                            height: '100%', padding: '0 12px', background: 'transparent', border: 'none',
+                            color: 'var(--text-tertiary)', cursor: 'pointer', fontSize: '14px'
+                        }}
+                        onClick={() => { const name = prompt('Name?'); if (name) addDeveloper(name); }}
+                    >
+                        +
+                    </button>
+                </div>
 
-                        {/* Developer Switcher */}
-                        {developers.length > 0 && (
-                            <div style={{ display: 'flex', gap: '2px', padding: '2px', background: 'rgba(0,0,0,0.1)', borderRadius: '6px' }}>
-                                {developers.map(dev => (
-                                    <button
-                                        key={dev}
-                                        onClick={() => switchDeveloper(dev)}
-                                        style={{
-                                            background: activeDeveloper === dev ? 'var(--bg-primary)' : 'transparent',
-                                            color: activeDeveloper === dev ? 'var(--accent-primary)' : 'var(--text-tertiary)',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            padding: '4px 8px',
-                                            fontSize: '10px',
-                                            fontWeight: 700,
-                                            cursor: 'pointer',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                            opacity: activeDeveloper === dev ? 1 : 0.6
-                                        }}
-                                    >
-                                        👤 {dev.toUpperCase()}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
+                {/* ROW 2: View Toggles (Graph, Branches...) & Global Controls */}
+                <div style={{
+                    height: '40px',
+                    background: '#1e1e1e', // Darker to separate from Tabs
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0 16px',
+                    borderBottom: '1px solid var(--border-subtle)'
+                }}>
+                    {/* View Modes */}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        {modes.map(mode => (
+                            <button
+                                key={mode}
+                                onClick={() => setViewMode(mode)}
+                                style={{
+                                    background: viewMode === mode ? 'var(--accent-primary)' : 'rgba(255,255,255,0.05)',
+                                    color: viewMode === mode ? 'white' : 'var(--text-secondary)',
+                                    border: '1px solid transparent',
+                                    borderRadius: '4px',
+                                    padding: '4px 12px',
+                                    fontSize: '11px',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                    textTransform: 'capitalize'
+                                }}
+                            >
+                                {mode}
+                            </button>
+                        ))}
                     </div>
 
-                    {/* Right Side Controls & Banner */}
+                    {/* Right Side Controls */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        {/* Show All Toggle */}
-                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '6px', fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '6px', fontSize: '10px', color: 'var(--text-secondary)' }}>
                             <input
                                 type="checkbox"
                                 checked={showAllCommits}
                                 onChange={toggleShowAllCommits}
-                                style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer', width: '12px', height: '12px' }}
+                                style={{ accentColor: 'var(--accent-primary)' }}
                             />
-                            Show All
+                            SHOW ALL
                         </label>
-
-                        {/* Sandbox - REMOVED */}
-
-
-                        {/* Terminal Label */}
-                        <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', paddingLeft: '12px', borderLeft: '1px solid var(--border-subtle)' }}>TERMINAL</span>
                     </div>
                 </div>
 
-                {/* Main Content Area (Split Center/Right) */}
-                <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+                {/* ROW 3: Stacked Content (Graph Top, Terminal Bottom) */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
-                    {/* --- CENTER PANE (Local Graph & Files) --- */}
-                    <main
-                        style={{ width: `${centerPaneWidth}%`, display: 'flex', flexDirection: 'column', minWidth: 0, position: 'relative' }}
-                    >
-                        {/* Sandbox Banner - REMOVED */}
+                    {/* Top: Graph / Visualization */}
+                    <div ref={centerContentRef} style={{ height: vizHeight, minHeight: '100px', display: 'flex', flexDirection: 'column', borderBottom: '1px solid var(--border-subtle)' }}>
+                        {state.HEAD && state.HEAD.type !== 'none' || viewMode === 'strategies' ? (
+                            viewMode === 'graph' ? (
+                                <GitGraphViz
+                                    title="LOCAL GRAPH"
+                                    state={localState}
+                                    onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
+                                    selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
+                                />
+                            ) : viewMode === 'strategies' ? (
+                                <BranchingStrategies />
+                            ) : (
+                                <GitReferenceList
+                                    type={viewMode === 'branches' ? 'branches' : 'tags'}
+                                    onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
+                                    selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
+                                />
+                            )
+                        ) : (
+                            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}>No Repository Loaded</div>
+                        )}
+                    </div>
 
-                        {/* Content Split: Graph (Top) / Explore (Bottom) */}
-                        <div className="center-content" ref={centerContentRef} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-                            {/* Top: Graph */}
-                            <div style={{ height: vizHeight, flex: 'none', position: 'relative', overflow: 'hidden', borderBottom: '1px solid var(--border-subtle)' }}>
-                                {state.HEAD && state.HEAD.type !== 'none' || viewMode === 'strategies' ? (
-                                    viewMode === 'graph' ? (
-                                        <GitGraphViz
-                                            title="LOCAL GRAPH"
-                                            state={localState}
-                                            onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
-                                            selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
-                                        />
-                                    ) : viewMode === 'strategies' ? (
-                                        <BranchingStrategies />
-                                    ) : (
-                                        <GitReferenceList
-                                            type={viewMode === 'branches' ? 'branches' : 'tags'}
-                                            onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
-                                            selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
-                                        />
-                                    )
-                                ) : (
-                                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}>No Repository Loaded</div>
-                                )}
-                            </div>
-
-                            {/* Resizer Center Viz */}
-                            <div className="resizer" onMouseDown={startResizeCenterVert} style={{ height: '4px', cursor: 'row-resize', background: 'var(--border-subtle)', width: '100%', zIndex: 10 }} />
-
-                            {/* Bottom: Explore (File Explorer) */}
-                            <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
-                                <FileExplorer onSelect={(fileObj: SelectedObject) => handleObjectSelect(fileObj)} />
-                            </div>
-                        </div>
-                    </main>
-
-                    {/* Resizer 2 (Center vs Right) */}
+                    {/* Resizer Local Vert */}
                     <div
-                        className="resizer-vertical"
-                        onMouseDown={startResizeRight}
-                        style={{ cursor: 'col-resize', width: '4px', background: 'var(--border-subtle)', flexShrink: 0, zIndex: 10 }}
+                        className="resizer"
+                        onMouseDown={startResizeCenterVert}
+                        style={{ height: '4px', cursor: 'row-resize', background: 'var(--border-subtle)', width: '100%', zIndex: 10, flexShrink: 0 }}
                     />
 
-                    {/* --- RIGHT PANE (Terminal) --- */}
-                    <aside
-                        style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', borderLeft: '1px solid var(--border-subtle)' }}
-                    >
-                        <div style={{ flex: 1, minHeight: 0, background: '#1e1e1e' }}>
-                            <GitTerminal />
-                        </div>
-                    </aside>
-
+                    {/* Bottom: Terminal */}
+                    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+                        <GitTerminal />
+                    </div>
                 </div>
 
             </div>

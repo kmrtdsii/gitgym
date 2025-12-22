@@ -45,10 +45,14 @@ func (c *PushCommand) Execute(ctx context.Context, s *git.Session, args []string
 		}
 	}
 
-	// Syntax: git push [remote] [branch]
+	// Syntax: git push [remote] [refspec]
 	remoteName := "origin"
+	refspec := ""
 	if len(positionalArgs) > 0 {
 		remoteName = positionalArgs[0]
+	}
+	if len(positionalArgs) > 1 {
+		refspec = positionalArgs[1]
 	}
 
 	// Resolve Remote URL
@@ -80,53 +84,127 @@ func (c *PushCommand) Execute(ctx context.Context, s *git.Session, args []string
 		return "", fmt.Errorf("remote repository '%s' not found (only local simulation supported)", url)
 	}
 
-	// Determined Branch to Push
-	headRef, err := repo.Head()
-	if err != nil {
-		return "", fmt.Errorf("failed to get HEAD: %w", err)
-	}
+	// Determined Ref to Push
+	var refToPush *plumbing.Reference
 
-	if !headRef.Name().IsBranch() {
-		return "", fmt.Errorf("HEAD is not on a branch (detached?)")
-	}
-	branchName := headRef.Name()
-
-	// Check Fast-Forward (unless Force)
-	targetRef, err := targetRepo.Reference(branchName, true)
-	if err == nil && !isForce {
-		isFF, err := isFastForward(repo, targetRef.Hash(), headRef.Hash())
-		if err != nil {
-			return "", err
+	if refspec != "" {
+		// Try to resolve refspec (Branch or Tag)
+		// 1. Try exact match
+		ref, err := repo.Reference(plumbing.ReferenceName(refspec), true)
+		if err == nil {
+			refToPush = ref
+		} else {
+			// 2. Try refs/heads/
+			ref, err = repo.Reference(plumbing.ReferenceName("refs/heads/"+refspec), true)
+			if err == nil {
+				refToPush = ref
+			} else {
+				// 3. Try refs/tags/
+				ref, err = repo.Reference(plumbing.ReferenceName("refs/tags/"+refspec), true)
+				if err == nil {
+					refToPush = ref
+				} else {
+					return "", fmt.Errorf("src refspec '%s' does not match any", refspec)
+				}
+			}
 		}
-		if !isFF {
-			return "", fmt.Errorf("non-fast-forward update rejected (use --force to override)")
+	} else {
+		// Default: Push HEAD
+		headRef, err := repo.Head()
+		if err != nil {
+			return "", fmt.Errorf("failed to get HEAD: %w", err)
+		}
+		if !headRef.Name().IsBranch() {
+			return "", fmt.Errorf("HEAD is not on a branch (detached?)")
+		}
+		refToPush = headRef
+	}
+
+	// Check Fast-Forward (only for branches)
+	if refToPush.Name().IsBranch() && !isForce {
+		targetRef, err := targetRepo.Reference(refToPush.Name(), true)
+		if err == nil {
+			isFF, err := isFastForward(repo, targetRef.Hash(), refToPush.Hash())
+			if err != nil {
+				return "", err
+			}
+			if !isFF {
+				return "", fmt.Errorf("non-fast-forward update rejected (use --force to override)")
+			}
+		}
+	} else if refToPush.Name().IsTag() {
+		// For tags, check if it exists and differs (conflict) unless force?
+		// Git usually rejects existing tag overwrite unless force.
+		_, err := targetRepo.Reference(refToPush.Name(), true)
+		if err == nil && !isForce {
+			return "", fmt.Errorf("tag '%s' already exists (use --force to override)", refToPush.Name().Short())
 		}
 	}
 
 	if isDryRun {
-		return fmt.Sprintf("[dry-run] Would push %s to %s at %s", branchName.Short(), remoteName, url), nil
+		return fmt.Sprintf("[dry-run] Would push %s to %s at %s", refToPush.Name().Short(), remoteName, url), nil
 	}
 
 	// SIMULATE PUSH: Copy Objects + Update Ref
-	err = copyCommitRecursive(repo, targetRepo, headRef.Hash())
-	if err != nil {
-		return "", fmt.Errorf("failed to push objects: %w", err)
-	}
+	// If it's a tag, we might need to copy the Tag Object itself + the Commit it points to.
+	// copyCommitRecursive calls copyTreeRecursive.
+	// If it's an annotated tag, the Ref points to a Tag Object -> Commit.
 
-	err = targetRepo.Storer.SetReference(headRef)
+	// We need generic Object Copy logic that follows dependencies.
+	// Current copyCommitRecursive starts at a Commit Hash.
+
+	hashToSync := refToPush.Hash()
+
+	// Check object type
+	obj, err := repo.Storer.EncodedObject(plumbing.AnyObject, hashToSync)
 	if err != nil {
 		return "", err
 	}
 
-	// 2. Update Local Remote-Tracking Reference: refs/remotes/<remote>/<branch>
-	localRemoteRefName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/%s/%s", remoteName, branchName.Short()))
-	newLocalRemoteRef := plumbing.NewHashReference(localRemoteRefName, headRef.Hash())
-	err = repo.Storer.SetReference(newLocalRemoteRef)
-	if err != nil {
-		return "", fmt.Errorf("failed to update remote-tracking reference: %w", err)
+	if obj.Type() == plumbing.TagObject {
+		// It's an annotated tag.
+		// Copy tag object
+		if !hasObject(targetRepo, hashToSync) {
+			_, err = targetRepo.Storer.SetEncodedObject(obj)
+			if err != nil {
+				return "", err
+			}
+		}
+		// Decode tag to find target commit
+		tagObj, err := object.DecodeTag(repo.Storer, obj)
+		if err != nil {
+			return "", err
+		}
+
+		// Recursively copy the commit it points to
+		if err := copyCommitRecursive(repo, targetRepo, tagObj.Target); err != nil {
+			return "", err
+		}
+	} else if obj.Type() == plumbing.CommitObject {
+		if err := copyCommitRecursive(repo, targetRepo, hashToSync); err != nil {
+			return "", err
+		}
+	} else {
+		// Blob or Tree? Unlikely for a ref push but possible.
+		return "", fmt.Errorf("unsupported object type to push: %s", obj.Type())
 	}
 
-	return fmt.Sprintf("To %s\n   %s -> %s", url, headRef.Hash().String()[:7], branchName.Short()), nil
+	// Update Remote Reference
+	err = targetRepo.Storer.SetReference(refToPush)
+	if err != nil {
+		return "", err
+	}
+
+	// Update Local Remote-Tracking Reference (ONLY for branches)
+	// e.g. refs/remotes/origin/main
+	if refToPush.Name().IsBranch() {
+		localRemoteRefName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/%s/%s", remoteName, refToPush.Name().Short()))
+		newLocalRemoteRef := plumbing.NewHashReference(localRemoteRefName, refToPush.Hash())
+		_ = repo.Storer.SetReference(newLocalRemoteRef) // Ignore error if fails?
+	}
+	// For tags, we don't usually create "remote-tracking tags" in refs/remotes. Tags are shared.
+
+	return fmt.Sprintf("To %s\n   %s -> %s", url, hashToSync.String()[:7], refToPush.Name().Short()), nil
 }
 
 func (c *PushCommand) Help() string {
