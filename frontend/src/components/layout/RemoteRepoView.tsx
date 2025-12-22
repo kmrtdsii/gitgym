@@ -152,12 +152,29 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
         setSetupUrl(state.remotes?.[0]?.urls?.[0] || '');
     };
 
-    const handleCreatePR = () => {
-        const title = prompt('PR Title');
-        const source = prompt('Source Branch', 'feature');
-        const target = prompt('Target Branch', 'main');
-        if (title && source && target) {
-            createPullRequest(title, '', source, target);
+    const [isCompareMode, setIsCompareMode] = React.useState(false);
+    const [compareBase, setCompareBase] = React.useState('main');
+    const [compareCompare, setCompareCompare] = React.useState('');
+
+    // Set default compare branch when branches load
+    React.useEffect(() => {
+        const branches = Object.keys(remoteGraphState.branches);
+        if (branches.length > 0) {
+            if (!branches.includes(compareBase)) setCompareBase(branches[0]);
+            if (!compareCompare && branches.length > 1) {
+                setCompareCompare(branches.find(b => b !== 'main') || branches[1]);
+            } else if (!compareCompare) {
+                setCompareCompare(branches[0]);
+            }
+        }
+    }, [remoteGraphState.branches, compareBase, compareCompare]);
+
+
+    const handleCreatePRSubmit = () => {
+        const title = prompt('PR Title', `Merge ${compareCompare} into ${compareBase}`);
+        if (title) {
+            createPullRequest(title, '', compareCompare, compareBase);
+            setIsCompareMode(false);
         }
     };
 
@@ -329,41 +346,99 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
                 <div style={{ padding: '16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                         <div style={sectionLabelStyle}>PULL REQUESTS</div>
-                        <button onClick={handleCreatePR} style={{ ...actionButtonStyle, background: '#238636' }}>
-                            + NEW
-                        </button>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {pullRequests.length === 0 ? (
-                            <div style={emptyStyle}>No active PRs</div>
-                        ) : (
-                            pullRequests.map(pr => (
-                                <div key={pr.id} style={prCardStyle}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                                        <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>#{pr.id} {pr.title}</div>
-                                        <span style={{ fontSize: '0.7rem', padding: '2px 6px', background: pr.status === 'OPEN' ? '#238636' : '#8957e5', color: 'white', borderRadius: '10px' }}>
-                                            {pr.status}
-                                        </span>
-                                    </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                                        {pr.sourceBranch} ➜ {pr.targetBranch}
-                                    </div>
-                                    <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                                        opened by {pr.creator}
-                                    </div>
-                                    {pr.status === 'OPEN' && (
-                                        <button
-                                            onClick={() => mergePullRequest(pr.id)}
-                                            style={mergeButtonStyle}
-                                        >
-                                            Merge Pull Request
-                                        </button>
-                                    )}
-                                </div>
-                            ))
+                        {!isCompareMode && (
+                            <button onClick={() => setIsCompareMode(true)} style={{ ...actionButtonStyle, background: '#238636' }}>
+                                New Pull Request
+                            </button>
                         )}
                     </div>
+
+                    {isCompareMode ? (
+                        <div style={{ background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border-subtle)', marginBottom: '16px', overflow: 'hidden' }}>
+                            <div style={{ padding: '12px', borderBottom: '1px solid var(--border-subtle)', background: 'var(--bg-primary)' }}>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '4px' }}>Comparing changes</div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                    Choose two branches to see what’s changed or to start a new pull request.
+                                </div>
+                            </div>
+
+                            <div style={{ padding: '12px', display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-subtle)' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
+                                    <span style={{ color: 'var(--text-tertiary)' }}>base:</span>
+                                    <select
+                                        value={compareBase}
+                                        onChange={e => setCompareBase(e.target.value)}
+                                        style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '4px 8px' }}
+                                    >
+                                        {Object.keys(remoteGraphState.branches).map(b => <option key={b} value={b}>{b}</option>)}
+                                    </select>
+                                </div>
+                                <span style={{ color: 'var(--text-tertiary)' }}>←</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
+                                    <span style={{ color: 'var(--text-tertiary)' }}>compare:</span>
+                                    <select
+                                        value={compareCompare}
+                                        onChange={e => setCompareCompare(e.target.value)}
+                                        style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)', borderRadius: '6px', padding: '4px 8px' }}
+                                    >
+                                        {Object.keys(remoteGraphState.branches).map(b => <option key={b} value={b}>{b}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style={{ padding: '12px', background: '#e6ffec', color: '#1a7f37', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px', borderBottom: '1px solid var(--border-subtle)' }}>
+                                <span>✓</span>
+                                <strong>Able to merge.</strong>
+                                <span>These branches can be automatically merged.</span>
+                            </div>
+
+                            <div style={{ padding: '12px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                <button
+                                    onClick={() => setIsCompareMode(false)}
+                                    style={{ padding: '6px 12px', background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleCreatePRSubmit}
+                                    style={{ ...actionButtonStyle, background: '#238636', fontSize: '0.9rem', padding: '6px 16px' }}
+                                >
+                                    Create pull request
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {pullRequests.length === 0 ? (
+                                <div style={emptyStyle}>No active PRs</div>
+                            ) : (
+                                pullRequests.map(pr => (
+                                    <div key={pr.id} style={prCardStyle}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                            <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>#{pr.id} {pr.title}</div>
+                                            <span style={{ fontSize: '0.7rem', padding: '2px 6px', background: pr.status === 'OPEN' ? '#238636' : '#8957e5', color: 'white', borderRadius: '10px' }}>
+                                                {pr.status}
+                                            </span>
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                                            {pr.sourceBranch} ➜ {pr.targetBranch}
+                                        </div>
+                                        <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
+                                            opened by {pr.creator}
+                                        </div>
+                                        {pr.status === 'OPEN' && (
+                                            <button
+                                                onClick={() => mergePullRequest(pr.id)}
+                                                style={mergeButtonStyle}
+                                            >
+                                                Merge Pull Request
+                                            </button>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Remote Branches Section */}
