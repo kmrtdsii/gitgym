@@ -7,7 +7,7 @@ import { useGit } from '../../context/GitAPIContext';
 const GitTerminal = () => {
     const terminalRef = useRef<HTMLDivElement>(null);
     const xtermRef = useRef<Terminal | null>(null);
-    const { runCommand, state, developers, activeDeveloper, switchDeveloper, addDeveloper } = useGit();
+    const { runCommand, state, activeDeveloper } = useGit();
     const runCommandRef = useRef(runCommand);
     const lastOutputLen = useRef(0);
     const lastCommandCount = useRef(0);
@@ -28,9 +28,6 @@ const GitTerminal = () => {
             if (xtermRef.current) {
                 xtermRef.current.clear(); // Clear visual buffer
                 xtermRef.current.writeln(`\x1b[1;32mSwitched to user: ${activeDeveloper}\x1b[0m`);
-                // Do NOT write prompt here immediately if we are going to replay history.
-                // The history output effect will run next. 
-                // We need to ensure it triggers the prompt printing at the END of history.
             }
             lastOutputLen.current = 0; // Reset output to trigger replay
             lastCommandCount.current = -1; // Reset command count to ensure (current > last) triggers prompt
@@ -53,10 +50,8 @@ const GitTerminal = () => {
         const BRANCH_ICON = '\ue0a0';
 
         const path = currentState.currentPath || '/';
-        // Format path: if empty, show /
         const displayPath = (path === '') ? '/' : path;
 
-        // Check if no project is selected (root path)
         if (displayPath === '/') {
             return `${RESET}${displayPath} > `;
         }
@@ -66,7 +61,6 @@ const GitTerminal = () => {
         let p = '';
 
         // SEGMENT 1: Path
-        // Use Nerd Font folder icon (\uf07c) instead of Emoji to avoid width issues
         p += `${BLUE_BG}${WHITE_FG} \uf07c ${displayPath} `;
 
         if (hasRepo) {
@@ -142,9 +136,6 @@ const GitTerminal = () => {
         term.writeln('\x1b[1;32mGitGym Terminal\x1b[0m v1.0.0');
         term.writeln('Type "git clone <url>" to start.');
 
-        // Initial Prompt
-        // Need to use current state, but effect might run before state is populated?
-        // Use default initial state implied prompt.
         term.write(getPrompt(stateRef.current));
 
         xtermRef.current = term;
@@ -158,20 +149,17 @@ const GitTerminal = () => {
             if (code === 13) {
                 term.write('\r\n');
                 const cmd = currentLine.trim();
-                setTimeout(() => { // Small delay to allow react command dispatch if needed, usually direct is fine
+                setTimeout(() => {
                     if (cmd) {
                         if (cmd === 'clear') {
                             term.clear();
                             term.write(getPrompt(stateRef.current));
                         } else {
-                            // Run command
                             if (runCommandRef.current) {
                                 runCommandRef.current(cmd);
                             }
-                            // The prompt will be written by the useEffect when commandCount increases
                         }
                     } else {
-                        // Empty command, just new prompt
                         term.write(getPrompt(stateRef.current));
                     }
                 }, 0);
@@ -181,12 +169,10 @@ const GitTerminal = () => {
             else if (code === 127) { // Backspace
                 if (currentLine.length > 0) {
                     const charToRemove = currentLine.slice(-1);
-                    // Simple CJK detection (incomplete but covers most common cases)
-                    // Regular expression for Full-width characters
                     const isWide = !!charToRemove.match(/[\u3000-\u303f\u3040-\u309f\u30a0-\u30ff\uff00-\uff9f\u4e00-\u9faf\u3400-\u4dbf]/);
 
                     if (isWide) {
-                        term.write('\b\b  \b\b'); // Move back 2, clear 2, move back 2
+                        term.write('\b\b  \b\b');
                     } else {
                         term.write('\b \b');
                     }
@@ -210,64 +196,10 @@ const GitTerminal = () => {
             resizeObserver.disconnect();
             term.dispose();
         };
-    }, []); // Run once on mount
-
-    const handleAddTab = () => {
-        const name = prompt('Enter new developer name:', `Dev ${developers.length + 1}`);
-        if (name) addDeveloper(name);
-    };
+    }, []);
 
     return (
         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
-            {/* TAB BAR */}
-            <div style={{
-                height: '32px',
-                background: 'var(--bg-secondary)',
-                display: 'flex',
-                alignItems: 'center',
-                paddingLeft: '8px',
-                gap: '2px',
-                borderBottom: '1px solid var(--border-subtle)'
-            }}>
-                {developers.map(dev => {
-                    const isActive = dev === activeDeveloper;
-                    return (
-                        <div
-                            key={dev}
-                            onClick={() => switchDeveloper(dev)}
-                            style={{
-                                padding: '0 12px',
-                                height: '100%',
-                                display: 'flex',
-                                alignItems: 'center',
-                                fontSize: '12px',
-                                fontWeight: isActive ? 600 : 400,
-                                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                background: isActive ? 'var(--bg-primary)' : 'transparent',
-                                borderTop: isActive ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                                cursor: 'pointer',
-                                userSelect: 'none'
-                            }}
-                        >
-                            {dev}
-                        </div>
-                    );
-                })}
-                <div
-                    onClick={handleAddTab}
-                    style={{
-                        padding: '0 8px',
-                        cursor: 'pointer',
-                        color: 'var(--text-tertiary)',
-                        fontSize: '14px',
-                        display: 'flex', alignItems: 'center', height: '100%'
-                    }}
-                    title="Add new developer terminal"
-                >
-                    +
-                </div>
-            </div>
-
             <div
                 ref={terminalRef}
                 style={{ width: '100%', flex: 1, minHeight: 0 }}
