@@ -171,6 +171,7 @@
     background: transparent;
     color: var(--text-tertiary);
     border: none;
+    outline: none;
     font-size: 13px;
     cursor: pointer;
     display: flex;
@@ -189,9 +190,25 @@
 
 .user-tab.active {
     background-color: transparent;
-    /* Removed overall highlight per request */
     color: var(--text-primary);
     font-weight: 500;
+}
+
+.user-tab:focus,
+.user-tab:focus-visible {
+    outline: none;
+}
+
+/* Active indicator line on bottom */
+.user-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    /* Distinct underline */
+    background-color: var(--accent-primary);
 }
 
 
