@@ -294,14 +294,14 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
                                     whiteSpace: 'nowrap'
                                 }}
                             >
-                                {remoteUrl ? 'Configure' : 'Setup Remote'}
+                                {remoteUrl ? 'Configure' : 'Connect Repository'}
                             </button>
                         </div>
                     )}
                 </div>
 
                 {/* Graph Area */}
-                <div style={{ flex: 1, minHeight: 0, position: 'relative', background: '#0d1117' }}>
+                <div style={{ flex: 1, minHeight: 0, position: 'relative', background: 'var(--bg-primary)' }}>
                     {hasSharedRemotes || (serverState) ? (
                         <GitGraphViz
                             state={remoteGraphState}
