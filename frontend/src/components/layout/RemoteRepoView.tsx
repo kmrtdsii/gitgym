@@ -78,7 +78,7 @@ const emptyStyle: React.CSSProperties = {
 };
 
 const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStart }) => {
-    const { state, pullRequests, mergePullRequest, refreshPullRequests, createPullRequest, ingestRemote, addDeveloper, resetRemote, runCommand, refreshState } = useGit();
+    const { state, pullRequests, mergePullRequest, refreshPullRequests, createPullRequest, ingestRemote, addDeveloper, runCommand, refreshState } = useGit();
     const { remoteBranches } = state;
 
     const remoteState: GitState = useMemo(() => {
@@ -159,6 +159,7 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
             setSetupSuccess(true);
 
             await new Promise(resolve => setTimeout(resolve, 1200));
+            setIsEditMode(false); // EXIT Edit Mode explicitly
         } catch (e) {
             console.error(e);
             setSetupLog(prev => [...prev, 'Error: Failed to initialize remote.']);
@@ -175,20 +176,6 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
     const handleCancelEdit = () => {
         setIsEditMode(false);
         setSetupUrl('');
-    };
-
-    const handleResetRemote = async () => {
-        if (!confirm('本当にリモートリポジトリをリセットしますか？全てのリモートデータと関連するPRが失われます。')) {
-            return;
-        }
-        try {
-            await resetRemote('origin');
-            setIsEditMode(false);
-            setSetupUrl('');
-        } catch (e) {
-            console.error('Failed to reset remote:', e);
-            alert('リモートのリセットに失敗しました');
-        }
     };
 
     const handleCreatePR = () => {
@@ -250,7 +237,7 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
                             </div>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: '1.4' }}>
                                 {isEditMode
-                                    ? 'Update the remote repository URL or reset to start fresh.'
+                                    ? 'Update the remote repository URL.'
                                     : 'Initialize a shared remote to start collaborative simulation.'}
                             </p>
                             <form onSubmit={handleInitialSetup}>
@@ -311,22 +298,6 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
                                     </button>
                                 </div>
                             </form>
-                            {isEditMode && (
-                                <button
-                                    onClick={handleResetRemote}
-                                    style={{
-                                        marginTop: '16px',
-                                        fontSize: '10px',
-                                        color: '#f85149',
-                                        background: 'transparent',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        textDecoration: 'underline'
-                                    }}
-                                >
-                                    🗑️ Reset Remote (Dangerous)
-                                </button>
-                            )}
                         </>
                     )}
                 </div>
