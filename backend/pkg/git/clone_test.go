@@ -29,14 +29,19 @@ func TestGitCloneAndPushRestriction(t *testing.T) {
 			t.Errorf("unexpected output: %s", out)
 		}
 
+		// Change directory to the cloned repository
+		if _, err := exec("cd", "basic"); err != nil {
+			t.Fatalf("cd failed: %v", err)
+		}
+
 		// Verify repo state
 		session, _ := GetSession(sessionID)
-		if session.Repo == nil {
-			t.Fatal("session.Repo is nil after clone")
+		if session.GetRepo() == nil {
+			t.Fatal("session.GetRepo() is nil after clone")
 		}
 
 		// Verify HEAD exists
-		ref, err := session.Repo.Head()
+		ref, err := session.GetRepo().Head()
 		if err != nil {
 			t.Fatalf("failed to get HEAD: %v", err)
 		}
