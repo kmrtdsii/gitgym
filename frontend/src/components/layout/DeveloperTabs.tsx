@@ -1,4 +1,5 @@
 import React from 'react';
+import { Monitor } from 'lucide-react';
 
 interface DeveloperTabsProps {
     developers: string[];
@@ -69,7 +70,10 @@ const DeveloperTabs: React.FC<DeveloperTabsProps> = ({
                             onKeyDown={(e) => handleKeyDown(e, index)}
                             className={`user-tab ${isActive ? 'active' : ''}`}
                         >
-                            <span>🖥️ {dev}</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <Monitor size={14} />
+                                {dev}
+                            </span>
                         </button>
                     );
                 })}
