@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import type { GitState, PullRequest, BranchingStrategy } from '../types/gitTypes';
+import type { GitState, PullRequest } from '../types/gitTypes';
 import { gitService } from '../services/gitService';
 import { filterReachableCommits } from '../utils/graphUtils';
 
@@ -23,7 +23,7 @@ interface GitContextType {
     toggleShowAllCommits: () => void;
     stageFile: (file: string) => Promise<void>;
     unstageFile: (file: string) => Promise<void>;
-    strategies: BranchingStrategy[];
+
     developers: string[];
     activeDeveloper: string;
     switchDeveloper: (name: string) => Promise<void>;
@@ -67,7 +67,6 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const [sessionId, setSessionId] = useState<string>('');
     const [showAllCommits, setShowAllCommits] = useState<boolean>(false);
-    const [strategies, setStrategies] = useState<BranchingStrategy[]>([]); // Typing fixed
 
     const [developers, setDevelopers] = useState<string[]>([]);
     const [developerSessions, setDeveloperSessions] = useState<Record<string, string>>({});
@@ -86,13 +85,8 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             // 2. Create Bob
             await addDeveloper('Bob');
 
-            // 3. Load Strategies
-            try {
-                const stratData = await gitService.fetchStrategies();
-                setStrategies(stratData);
-            } catch (e) {
-                console.error("Failed to load strategies", e);
-            }
+            // 2. Create Bob
+            await addDeveloper('Bob');
         };
         init();
     }, []);
@@ -370,7 +364,7 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             toggleShowAllCommits,
             stageFile,
             unstageFile,
-            strategies,
+
             developers,
             activeDeveloper,
             switchDeveloper,
