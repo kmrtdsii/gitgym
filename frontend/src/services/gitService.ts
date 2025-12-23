@@ -84,12 +84,6 @@ export const gitService = {
         return res.json();
     },
 
-    async fetchStrategies(): Promise<any[]> {
-        const res = await fetch('/api/strategies');
-        if (!res.ok) throw new Error('Failed to fetch strategies');
-        return res.json();
-    },
-
     async ingestRemote(name: string, url: string): Promise<void> {
         const res = await fetch('/api/remote/ingest', {
             method: 'POST',

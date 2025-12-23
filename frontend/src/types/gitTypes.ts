@@ -38,13 +38,7 @@ export interface GitState {
     _sessionId?: string;
 }
 
-export interface BranchingStrategy {
-    id: string;
-    name: string;
-    description: string;
-    mainBranch: string;
-    flowSteps: string[];
-}
+
 
 export type PullRequestStatus = 'OPEN' | 'MERGED' | 'CLOSED';
 

@@ -4,7 +4,7 @@ import { useGit } from '../../context/GitAPIContext';
 
 import GitGraphViz from '../visualization/GitGraphViz';
 import GitReferenceList from '../visualization/GitReferenceList';
-import BranchingStrategies from '../visualization/BranchingStrategies';
+
 import RemoteRepoView from './RemoteRepoView';
 import DeveloperTabs from './DeveloperTabs';
 import BottomPanel from './BottomPanel';
@@ -13,7 +13,7 @@ import type { GitState } from '../../types/gitTypes';
 import type { SelectedObject } from '../../types/layoutTypes';
 import { useTheme } from '../../context/ThemeContext';
 
-type ViewMode = 'graph' | 'branches' | 'tags' | 'strategies';
+type ViewMode = 'graph' | 'branches' | 'tags';
 
 const AppLayout = () => {
     const {
@@ -110,7 +110,7 @@ const AppLayout = () => {
         setSelectedObject(obj);
     };
 
-    const modes: ViewMode[] = ['graph', 'branches', 'tags', 'strategies'];
+    const modes: ViewMode[] = ['graph', 'branches', 'tags'];
 
     return (
         <div className="layout-container" ref={containerRef} style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--bg-primary)' }}>
@@ -214,15 +214,13 @@ const AppLayout = () => {
 
                     {/* Top: Graph / Visualization */}
                     <div ref={centerContentRef} style={{ height: vizHeight, minHeight: '100px', display: 'flex', flexDirection: 'column', borderBottom: '1px solid var(--border-subtle)' }}>
-                        {state.HEAD && state.HEAD.type !== 'none' || viewMode === 'strategies' ? (
+                        {state.HEAD && state.HEAD.type !== 'none' ? (
                             viewMode === 'graph' ? (
                                 <GitGraphViz
                                     state={localState}
                                     onSelect={(commitData) => handleObjectSelect({ type: 'commit', id: commitData.id, data: commitData })}
                                     selectedCommitId={selectedObject?.type === 'commit' ? selectedObject.id : undefined}
                                 />
-                            ) : viewMode === 'strategies' ? (
-                                <BranchingStrategies />
                             ) : (
                                 <GitReferenceList
                                     type={viewMode === 'branches' ? 'branches' : 'tags'}
