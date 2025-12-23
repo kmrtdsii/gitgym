@@ -65,18 +65,18 @@ export const emptyStyle: React.CSSProperties = {
 
 export const inputStyle: React.CSSProperties = {
     flex: 1,
-    padding: '4px 8px',
+    padding: '6px 10px',
     borderRadius: '4px',
     border: '1px solid var(--accent-primary)',
     background: 'var(--bg-primary)',
     color: 'var(--text-primary)',
-    fontSize: '11px',
+    fontSize: '13px',
     outline: 'none'
 };
 
 export const cancelButtonStyle: React.CSSProperties = {
-    padding: '4px 8px',
-    fontSize: '10px',
+    padding: '6px 10px',
+    fontSize: '12px',
     background: 'transparent',
     color: 'var(--text-secondary)',
     border: '1px solid var(--border-subtle)',
@@ -85,8 +85,8 @@ export const cancelButtonStyle: React.CSSProperties = {
 };
 
 export const submitButtonStyle: React.CSSProperties = {
-    padding: '4px 12px',
-    fontSize: '10px',
+    padding: '6px 14px',
+    fontSize: '12px',
     fontWeight: 700,
     background: 'var(--accent-primary)',
     color: 'white',
