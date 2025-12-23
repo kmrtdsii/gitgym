@@ -32,7 +32,9 @@ const GitTerminal = () => {
             // Only clear visual buffer if we really switched users (not initial load)
             // This prevents wiping the "Welcome" message on first mount
             if (xtermRef.current && lastActiveDeveloper.current) {
-                xtermRef.current.clear();
+                // Clear scrollback AND current screen content
+                // \x1bc = Full terminal reset (like 'reset' command) 
+                xtermRef.current.write('\x1bc');
             }
 
             lastOutputLen.current = 0; // Reset output to trigger replay
