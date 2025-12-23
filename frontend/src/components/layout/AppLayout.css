@@ -234,3 +234,18 @@
     background-color: var(--bg-tertiary);
     color: var(--text-secondary);
 }
+
+/* Horizontal Resize Handle (react-resizable-panels) */
+.resize-handle-horizontal {
+    width: 4px;
+    background: var(--border-subtle);
+    cursor: col-resize;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+}
+
+.resize-handle-horizontal:hover,
+.resize-handle-horizontal:active,
+.resize-handle-horizontal[data-resize-handle-state="drag"] {
+    background: var(--accent-primary);
+}

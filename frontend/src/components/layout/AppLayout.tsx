@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Group as PanelGroup, Panel, Separator as PanelResizeHandle } from 'react-resizable-panels';
 import './AppLayout.css';
 import { useGit } from '../../context/GitAPIContext';
 import GitTerminal from '../terminal/GitTerminal';
@@ -248,19 +249,21 @@ const AppLayout = () => {
                         style={{ height: '4px', cursor: 'row-resize', background: 'var(--border-subtle)', width: '100%', zIndex: 10, flexShrink: 0 }}
                     />
 
-                    {/* Bottom Area: Explorer | Terminal */}
-                    <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
-
-                        {/* File Explorer (Left side of Bottom) */}
-                        <div style={{ width: '40%', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-subtle)' }}>
+                    {/* Bottom Area: Explorer | Terminal (Resizable) */}
+                    <PanelGroup orientation="horizontal" style={{ flex: 1, minHeight: 0 }}>
+                        {/* File Explorer Panel */}
+                        <Panel defaultSize={40} minSize={20} style={{ display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-subtle)' }}>
                             <FileExplorer onSelect={(fileObj: SelectedObject) => handleObjectSelect(fileObj)} />
-                        </div>
+                        </Panel>
 
-                        {/* Terminal (Right side of Bottom) */}
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        {/* Resize Handle */}
+                        <PanelResizeHandle className="resize-handle-horizontal" />
+
+                        {/* Terminal Panel */}
+                        <Panel defaultSize={60} minSize={30} style={{ display: 'flex', flexDirection: 'column' }}>
                             <GitTerminal />
-                        </div>
-                    </div>
+                        </Panel>
+                    </PanelGroup>
                 </div>
 
             </div>
