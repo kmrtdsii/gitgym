@@ -34,10 +34,11 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
     const [isSettingUp, setIsSettingUp] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
 
-    // Refresh PRs on mount
+    // Refresh PRs on mount only
     useEffect(() => {
         refreshPullRequests();
-    }, [refreshPullRequests]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // --- Computed Values ---
     const remoteGraphState: GitState = useMemo(() => {
