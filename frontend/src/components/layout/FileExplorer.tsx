@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useGit } from '../../context/GitAPIContext';
+import { GitBranch, Check } from 'lucide-react';
 import type { SelectedObject } from './AppLayout';
 
 interface FileExplorerProps {
@@ -17,16 +18,24 @@ interface FileNode {
 const FileExplorer: React.FC<FileExplorerProps> = ({ onSelect }) => {
     const { state, runCommand } = useGit();
     const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+    const [showBranches, setShowBranches] = useState(true);
 
     // Active Project Detection
     const currentPathClean = state.currentPath ? state.currentPath.replace(/^\//, '') : '';
     const isRoot = !currentPathClean;
     const activeProject = isRoot ? null : currentPathClean.split('/')[0];
 
+    // Get current branch from HEAD
+    const currentBranch = state.HEAD?.ref || null;
+
+    // Get local branches
+    const localBranches = useMemo(() => {
+        return Object.keys(state.branches || {}).sort();
+    }, [state.branches]);
+
     // Build Entry Tree from flat file list (Working Tree)
-    // For this split view, the LEFT side is the general file explorer (which implicitly shows unstaged changes via status colors).
     const fileTree = useMemo(() => {
-        if (isRoot) return []; // Don't show files at root, relying on projects list
+        if (isRoot) return [];
 
         const root: FileNode = { name: 'ROOT', path: '', isDir: true, children: [] };
         const allFiles = state.files || [];
@@ -76,6 +85,13 @@ const FileExplorer: React.FC<FileExplorerProps> = ({ onSelect }) => {
             runCommand(`cd /`);
         } else {
             runCommand(`cd /${projectName}`);
+        }
+    };
+
+    const handleBranchClick = (branchName: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (branchName !== currentBranch) {
+            runCommand(`git checkout ${branchName}`);
         }
     };
 
@@ -177,9 +193,49 @@ const FileExplorer: React.FC<FileExplorerProps> = ({ onSelect }) => {
                                             <span className="delete-btn" onClick={(e) => handleDeleteProject(project, e)} style={{ marginLeft: 'auto', cursor: 'pointer', opacity: 0.5 }}>🗑️</span>
                                         </div>
 
-                                        {/* File Tree (Only if active) */}
+                                        {/* Expanded Content (Only if active) */}
                                         {isActive && (
                                             <div style={{ marginLeft: '0px' }}>
+                                                {/* Branches Section */}
+                                                {localBranches.length > 0 && (
+                                                    <div style={{ borderBottom: '1px solid var(--border-subtle)', marginBottom: '4px' }}>
+                                                        <div
+                                                            className="explorer-row"
+                                                            onClick={() => setShowBranches(!showBranches)}
+                                                            style={{ padding: '4px 24px', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}
+                                                        >
+                                                            <GitBranch size={12} style={{ marginRight: '6px', opacity: 0.8 }} />
+                                                            <span>BRANCHES</span>
+                                                            <span style={{ marginLeft: 'auto', fontSize: '10px', opacity: 0.6 }}>{showBranches ? '▼' : '▶'}</span>
+                                                        </div>
+                                                        {showBranches && (
+                                                            <div style={{ paddingBottom: '4px' }}>
+                                                                {localBranches.map(branch => {
+                                                                    const isCurrent = branch === currentBranch;
+                                                                    return (
+                                                                        <div
+                                                                            key={branch}
+                                                                            className="explorer-row branch-row"
+                                                                            onClick={(e) => handleBranchClick(branch, e)}
+                                                                            style={{
+                                                                                padding: '3px 36px',
+                                                                                color: isCurrent ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                                                                                fontWeight: isCurrent ? 600 : 400,
+                                                                                cursor: isCurrent ? 'default' : 'pointer'
+                                                                            }}
+                                                                            title={isCurrent ? 'Current branch' : `Checkout ${branch}`}
+                                                                        >
+                                                                            {isCurrent && <Check size={12} style={{ marginRight: '4px', color: 'var(--accent-primary)' }} />}
+                                                                            <span>{branch}</span>
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {/* File Tree */}
                                                 {renderTree(fileTree)}
                                             </div>
                                         )}
@@ -192,8 +248,9 @@ const FileExplorer: React.FC<FileExplorerProps> = ({ onSelect }) => {
             </div>
 
             <style>{`
-                .explorer-row { display: flex; alignItems: center; padding-top: 5px; padding-bottom: 5px; cursor: pointer; border-radius: 4px; }
+                .explorer-row { display: flex; align-items: center; padding-top: 5px; padding-bottom: 5px; cursor: pointer; border-radius: 4px; }
                 .explorer-row:hover { background-color: var(--bg-button-inactive); }
+                .branch-row:hover { background-color: var(--bg-tertiary); }
                 .icon { margin-right: 6px; opacity: 0.9; }
                 .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
                 .status-badge { font-size: 10px; opacity: 0.7; margin-right: 8px; font-family: monospace; }
@@ -203,3 +260,4 @@ const FileExplorer: React.FC<FileExplorerProps> = ({ onSelect }) => {
 };
 
 export default FileExplorer;
+
