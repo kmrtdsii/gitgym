@@ -11,7 +11,7 @@ const GitTerminal = () => {
     const { runCommand, state, activeDeveloper, sessionId } = useGit();
     const runCommandRef = useRef(runCommand);
     const lastOutputLen = useRef(0);
-    const lastCommandCount = useRef(0);
+    const lastCommandCount = useRef(-1); // Start at -1 to ensure initial prompt renders
     const stateRef = useRef(state);
     const { theme } = useTheme();
     const fitAddonRef = useRef<FitAddon | null>(null);
@@ -124,8 +124,19 @@ const GitTerminal = () => {
             lastOutputLen.current = state.output.length;
         }
 
-        // Check if a command finished execution
+        // Check if a command finished execution OR initial load/reset
         if (state.commandCount > lastCommandCount.current) {
+            // If this is a fresh session (0 commands) and empty output, show Welcome
+            if (state.commandCount === 0 && state.output.length === 0) {
+                const t = xtermRef.current;
+                t.writeln('\x1b[1;36mWelcome to GitGym!\x1b[0m 🚀');
+                t.writeln('To get started, please clone a repository using:');
+                t.writeln('  \x1b[33mgit clone <url>\x1b[0m');
+                t.writeln('');
+                t.writeln('Type \x1b[32m\'git help\'\x1b[0m to see available commands.');
+                t.writeln('');
+            }
+
             const prompt = getPrompt(state);
             xtermRef.current.write(`\r\n${prompt}`);
             lastCommandCount.current = state.commandCount;
@@ -171,14 +182,7 @@ const GitTerminal = () => {
             };
         }
 
-        term.writeln('\x1b[1;36mWelcome to GitGym!\x1b[0m 🚀');
-        term.writeln('To get started, please clone a repository using:');
-        term.writeln('  \x1b[33mgit clone <url>\x1b[0m');
-        term.writeln('');
-        term.writeln('Type \x1b[32m\'git help\'\x1b[0m to see available commands.');
-        term.writeln('');
-
-        term.write(getPrompt(stateRef.current));
+        // Initial prompt handled by sync effect now
 
         xtermRef.current = term;
 
