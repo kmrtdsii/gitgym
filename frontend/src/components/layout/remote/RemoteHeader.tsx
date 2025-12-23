@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Cloud, Database } from 'lucide-react';
 import { headerStyle, inputStyle, cancelButtonStyle, submitButtonStyle } from './remoteStyles';
 
 interface RemoteHeaderProps {
@@ -76,9 +77,9 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden' }}>
                     <div style={{ fontWeight: 700, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-primary)' }}>
                         {remoteUrl ? (
-                            <div style={{ position: 'relative', width: '24px', height: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <span style={{ fontSize: '1.2rem', position: 'absolute', top: '-4px', left: '0', zIndex: 1 }}>☁️</span>
-                                <span style={{ fontSize: '0.7rem', position: 'absolute', bottom: '-2px', right: '2px', zIndex: 2 }}>🛢️</span>
+                            <div style={{ position: 'relative', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Cloud size={20} strokeWidth={2} style={{ position: 'absolute', top: 0, left: 0, color: 'var(--text-primary)' }} />
+                                <Database size={10} strokeWidth={2} fill="var(--bg-secondary)" style={{ position: 'absolute', bottom: 2, right: 2, color: 'var(--text-primary)', background: 'var(--bg-secondary)', borderRadius: '50%' }} />
                             </div>
                         ) : null}
                         <span>{displayTitle}</span>
