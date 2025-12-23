@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { GitState, PullRequest, BranchingStrategy } from '../types/gitTypes';
 import { gitService } from '../services/gitService';
 import { filterReachableCommits } from '../utils/graphUtils';
@@ -88,6 +88,20 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const [sessionOutputs, setSessionOutputs] = useState<Record<string, string[]>>({});
     const [sessionCmdCounts, setSessionCmdCounts] = useState<Record<string, number>>({});
 
+    // FIX: Use refs to avoid stale closure issues in async callbacks
+    // These refs always hold the latest value
+    const sessionOutputsRef = useRef<Record<string, string[]>>({});
+    const sessionCmdCountsRef = useRef<Record<string, number>>({});
+
+    // Keep refs in sync with state
+    useEffect(() => {
+        sessionOutputsRef.current = sessionOutputs;
+    }, [sessionOutputs]);
+
+    useEffect(() => {
+        sessionCmdCountsRef.current = sessionCmdCounts;
+    }, [sessionCmdCounts]);
+
 
 
     const fetchState = async (sid: string) => {
@@ -98,8 +112,9 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             // Since this function is async, by the time it returns, sessionId state might match sid.
 
             setState(prev => {
-                const storedOutput = sessionOutputs[sid] || [];
-                const storedCount = sessionCmdCounts[sid] || 0;
+                // FIX: Use refs instead of state to get latest values (avoids stale closure)
+                const storedOutput = sessionOutputsRef.current[sid] || [];
+                const storedCount = sessionCmdCountsRef.current[sid] || 0;
 
                 // Client-side filtering:
                 // If showAllCommits is FALSE, filter out unreachable commits
