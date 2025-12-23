@@ -322,7 +322,7 @@ const GitTerminal = () => {
                 </div>
             </div>
 
-            <div style={{ flex: 1, minHeight: 0, padding: '12px 16px' }}>
+            <div style={{ flex: 1, minHeight: 0, paddingLeft: '16px', paddingTop: '12px', paddingBottom: '12px' }}>
                 <div
                     ref={terminalRef}
                     style={{ width: '100%', height: '100%' }}

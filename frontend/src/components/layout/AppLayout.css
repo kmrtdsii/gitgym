@@ -243,10 +243,51 @@
     cursor: col-resize;
     transition: background-color 0.2s;
     flex-shrink: 0;
+    position: relative;
 }
 
 .resize-handle-horizontal:hover,
 .resize-handle-horizontal:active,
 .resize-handle-horizontal[data-resize-handle-state="drag"] {
     background: var(--accent-primary);
+}
+
+/* Arrow indicators for horizontal resize handle */
+.resize-handle-horizontal::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-right: 5px solid var(--text-tertiary);
+    margin-left: -4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.resize-handle-horizontal::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+    border-left: 5px solid var(--text-tertiary);
+    margin-left: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.resize-handle-horizontal:hover::before,
+.resize-handle-horizontal:hover::after,
+.resize-handle-horizontal[data-resize-handle-state="drag"]::before,
+.resize-handle-horizontal[data-resize-handle-state="drag"]::after {
+    opacity: 1;
 }
