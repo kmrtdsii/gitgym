@@ -99,9 +99,19 @@ func populateHEAD(repo *gogit.Repository, state *GraphState) {
 	ref, err := repo.Head()
 	if err != nil {
 		if err.Error() == "reference not found" {
-			state.HEAD = Head{Type: "branch", Ref: "main"} // Default
+			// Unborn branch (orphan): HEAD is a symbolic ref to a non-existent branch
+			// Read the symbolic reference directly to get the branch name
+			headRef, symErr := repo.Reference(plumbing.HEAD, false)
+			if symErr == nil && headRef.Type() == plumbing.SymbolicReference {
+				// Extract branch name from refs/heads/<name>
+				branchName := headRef.Target().Short()
+				state.HEAD = Head{Type: "branch", Ref: branchName}
+				return
+			}
+			// Fallback to main if we can't read HEAD
+			state.HEAD = Head{Type: "branch", Ref: "main"}
 		} else {
-			// Log error or set to none?
+			// Log error or set to none
 			state.HEAD = Head{Type: "none"}
 		}
 	} else {
