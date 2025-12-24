@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { useGit } from '../../context/GitAPIContext';
 import { GitBranch, Check } from 'lucide-react';
 import type { SelectedObject } from '../../types/layoutTypes';
+import Modal from '../common/Modal';
+import { Button } from '../common/Button';
 
 interface FileExplorerProps {
     onSelect: (obj: SelectedObject) => void;
@@ -11,6 +13,11 @@ interface FileExplorerProps {
 const FileExplorer: React.FC<FileExplorerProps> = () => {
     const { state, runCommand } = useGit();
     const [showBranches, setShowBranches] = useState(true);
+
+    // Modal State
+    const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
     // Active Project Detection
     const currentPathClean = state.currentPath ? state.currentPath.replace(/^\//, '') : '';
     const isRoot = !currentPathClean;
@@ -39,17 +46,23 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
         }
     };
 
-    const handleDeleteProject = async (projectName: string, e: React.MouseEvent) => {
+    const handleDeleteClick = (projectName: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        if (confirm(`Are you sure you want to delete project '${projectName}'? This cannot be undone.`)) {
-            if (activeProject === projectName) {
-                await runCommand('cd /', { silent: true });
-            }
-            await runCommand(`rm -rf /${projectName}`, { silent: true });
-        }
+        setProjectToDelete(projectName);
+        setIsDeleteModalOpen(true);
     };
 
-    // const renderTree = (nodes: FileNode[], depth: number = 0) => { ... } // Removed
+    const confirmDelete = async () => {
+        if (!projectToDelete) return;
+
+        if (activeProject === projectToDelete) {
+            await runCommand('cd /', { silent: true });
+        }
+        await runCommand(`rm -rf /${projectToDelete}`, { silent: true });
+
+        setIsDeleteModalOpen(false);
+        setProjectToDelete(null);
+    };
 
     const projects = state.projects || [];
 
@@ -97,7 +110,14 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                                         >
                                             <span className="icon">{isActive ? '📂' : '📦'}</span>
                                             <span className="name">{project}</span>
-                                            <span className="delete-btn" onClick={(e) => handleDeleteProject(project, e)} style={{ marginLeft: 'auto', cursor: 'pointer', opacity: 0.5 }}>🗑️</span>
+                                            <span
+                                                className="delete-btn"
+                                                onClick={(e) => handleDeleteClick(project, e)}
+                                                style={{ marginLeft: 'auto', cursor: 'pointer', opacity: 0.5 }}
+                                                title="Delete Project"
+                                            >
+                                                🗑️
+                                            </span>
                                         </div>
 
                                         {/* Expanded Content (Only if active) */}
@@ -141,8 +161,6 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                                                         )}
                                                     </div>
                                                 )}
-
-                                                {/* File Tree Removed */}
                                             </div>
                                         )}
                                     </div>
@@ -153,6 +171,26 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                 </div>
             </div>
 
+            <Modal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                title="Delete Project"
+            >
+                <div>
+                    Are you sure you want to delete project <strong>{projectToDelete}</strong>?
+                    <br />
+                    This action cannot be undone.
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+                    <Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button variant="danger" onClick={confirmDelete}>
+                        Delete
+                    </Button>
+                </div>
+            </Modal>
+
             <style>{`
                 .explorer-row { display: flex; align-items: center; padding-top: 5px; padding-bottom: 5px; cursor: pointer; border-radius: 4px; }
                 .explorer-row:hover { background-color: var(--bg-button-inactive); }
@@ -160,6 +198,7 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                 .icon { margin-right: 6px; opacity: 0.9; }
                 .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
                 .status-badge { font-size: 10px; opacity: 0.7; margin-right: 8px; font-family: monospace; }
+                .delete-btn:hover { opacity: 1 !important; color: var(--text-danger); transform: scale(1.1); transition: all 0.2s; }
             `}</style>
         </div>
     );
