@@ -15,10 +15,9 @@ const GitReferenceList: React.FC<GitReferenceListProps> = ({ type, onSelect, sel
     const references = type === 'branches' ? state.branches : state.tags;
     const { commits } = state;
 
-    // Create a map of Commit ID -> Commit Object for easy lookup
-    const commitMap = new Map(commits.map(c => [c.id, c]));
-
     const listItems = useMemo(() => {
+        // Create a map of Commit ID -> Commit Object for easy lookup
+        const commitMap = new Map(commits.map(c => [c.id, c]));
         const items: { name: string; commitId: string; commit: Commit | undefined; isRemote: boolean }[] = [];
 
         // 1. Local Branches / Tags
@@ -89,7 +88,7 @@ const GitReferenceList: React.FC<GitReferenceListProps> = ({ type, onSelect, sel
                                     boxShadow: isSelected ? 'inset 4px 0 0 var(--accent-primary)' : 'none',
                                     transition: 'background-color 0.2s',
                                     ':hover': { backgroundColor: 'var(--bg-secondary)' }
-                                } as any}
+                                } as React.CSSProperties}
                                 className="hover:bg-opacity-10 hover:bg-white"
                             >
                                 <td style={{ padding: '8px 16px', fontWeight: 'bold', color: type === 'branches' ? (item.isRemote ? 'var(--text-secondary)' : 'var(--accent-primary)') : 'var(--text-secondary)' }}>

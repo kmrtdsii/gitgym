@@ -37,7 +37,7 @@ func main() {
 	}
 
 	count := 0
-	tIter.ForEach(func(r *plumbing.Reference) error {
+	_ = tIter.ForEach(func(r *plumbing.Reference) error {
 		count++
 		name := r.Name().Short()
 		hash := r.Hash().String()

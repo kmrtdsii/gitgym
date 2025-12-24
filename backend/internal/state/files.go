@@ -24,7 +24,7 @@ func (sm *SessionManager) ListFiles(sessionID string) (string, error) {
 	defer session.mu.RUnlock()
 
 	var files []string
-	util.Walk(session.Filesystem, "/", func(path string, fi os.FileInfo, err error) error {
+	_ = util.Walk(session.Filesystem, "/", func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}

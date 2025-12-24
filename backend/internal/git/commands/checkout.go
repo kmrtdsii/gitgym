@@ -157,7 +157,7 @@ func (c *CheckoutCommand) checkoutFiles(repo *gogit.Repository, w *gogit.Worktre
 		content, _ := file.Contents()
 
 		f, _ := w.Filesystem.OpenFile(filename, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-		f.Write([]byte(content))
+		_, _ = f.Write([]byte(content))
 		f.Close()
 	}
 

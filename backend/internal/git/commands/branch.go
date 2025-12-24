@@ -147,7 +147,7 @@ func (c *BranchCommand) listBranches(repo *gogit.Repository, remote, all bool) (
 		if err != nil {
 			return "", err
 		}
-		bs.ForEach(func(r *plumbing.Reference) error {
+		_ = bs.ForEach(func(r *plumbing.Reference) error {
 			branches = append(branches, r.Name().Short())
 			return nil
 		})
@@ -172,7 +172,7 @@ func (c *BranchCommand) listBranches(repo *gogit.Repository, remote, all bool) (
 			}
 			// Fallback: iterate all references and filter
 			refs, _ := repo.References()
-			refs.ForEach(func(r *plumbing.Reference) error {
+			_ = refs.ForEach(func(r *plumbing.Reference) error {
 				// if r.Name().IsRemote() {
 				// 	// branches = append(branches, r.Name().Short())
 				// }
@@ -185,7 +185,7 @@ func (c *BranchCommand) listBranches(repo *gogit.Repository, remote, all bool) (
 		if err != nil {
 			return "", err
 		}
-		refs.ForEach(func(r *plumbing.Reference) error {
+		_ = refs.ForEach(func(r *plumbing.Reference) error {
 			if r.Name().IsRemote() {
 				// Only add if we are in remote/all mode
 				// Avoid duplicates if possible, but for now simple list

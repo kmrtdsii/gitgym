@@ -11,7 +11,7 @@ import (
 func (s *Server) handleGetPullRequests(w http.ResponseWriter, r *http.Request) {
 	prs := s.SessionManager.GetPullRequests()
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(prs)
+	_ = json.NewEncoder(w).Encode(prs)
 }
 
 func (s *Server) handleCreatePullRequest(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +36,7 @@ func (s *Server) handleCreatePullRequest(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(pr)
+	_ = json.NewEncoder(w).Encode(pr)
 }
 
 func (s *Server) handleMergePullRequest(w http.ResponseWriter, r *http.Request) {

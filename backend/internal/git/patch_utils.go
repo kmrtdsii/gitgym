@@ -162,7 +162,7 @@ func ResolveRevision(repo *gogit.Repository, rev string) (*plumbing.Hash, error)
 			found := false
 			ambiguous := false
 
-			cIter.ForEach(func(c *object.Commit) error {
+			forEachErr := cIter.ForEach(func(c *object.Commit) error {
 				hashStr := c.Hash.String()
 				if len(hashStr) >= len(rev) && hashStr[:len(rev)] == rev {
 					if found {
@@ -175,6 +175,9 @@ func ResolveRevision(repo *gogit.Repository, rev string) (*plumbing.Hash, error)
 				}
 				return nil
 			})
+			if forEachErr != nil && forEachErr.Error() != "stop iteration" {
+				return nil, forEachErr
+			}
 
 			if ambiguous {
 				return nil, fmt.Errorf("short commit hash '%s' is ambiguous", rev)

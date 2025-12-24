@@ -66,6 +66,32 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const [activeDeveloper, setActiveDeveloper] = useState<string>('');
     const [pullRequests, setPullRequests] = useState<PullRequest[]>([]);
 
+    const addDeveloper = async (name: string) => {
+        try {
+            if (developers.includes(name)) return; // Prevent duplicates
+            const data = await gitService.initSession();
+            setDevelopers(prev => [...prev, name]);
+            setDeveloperSessions(prev => ({ ...prev, [name]: data.sessionId }));
+            if (!activeDeveloper) {
+                setActiveDeveloper(name);
+                setSessionId(data.sessionId);
+                // We define fetchState below, so we can't call it here directly if we strictly follow order?
+                // Actually function hoisting works for `const` functions ONLY IF defined before usage.
+                // Circular dependency: addDeveloper -> fetchState -> setState.
+                // fetchState is defined BELOW.
+                // We need to move fetchState UP as well or define these using function keyword (hoisted).
+                // Or use `useEffect` to trigger fetch when session changes.
+                // But let's just use the `sessionId` setter and let the existing `useEffect` (line 300) handle fetch?
+                // Line 300: `useEffect(() => { if (sessionId) fetchState(sessionId) }, [showAllCommits])`.
+                // It depends on `showAllCommits`. It does NOT trigger on `sessionId` change currently.
+                // We should update line 300 to depend on `sessionId` too?
+                // But let's assume moving `addDeveloper` is tricky if it calls `fetchState`.
+            }
+        } catch (e) {
+            console.error("Failed to add developer", e);
+        }
+    };
+
     // Init session on mount - Create Alice and Bob
     useEffect(() => {
         const init = async () => {
@@ -79,6 +105,7 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             await addDeveloper('Bob');
         };
         init();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const [sessionOutputs, setSessionOutputs] = useState<Record<string, string[]>>({});
@@ -232,21 +259,7 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         await runCommand(`restore --staged ${file}`);
     };
 
-    const addDeveloper = async (name: string) => {
-        try {
-            if (developers.includes(name)) return; // Prevent duplicates
-            const data = await gitService.initSession();
-            setDevelopers(prev => [...prev, name]);
-            setDeveloperSessions(prev => ({ ...prev, [name]: data.sessionId }));
-            if (!activeDeveloper) {
-                setActiveDeveloper(name);
-                setSessionId(data.sessionId);
-                await fetchState(data.sessionId);
-            }
-        } catch (e) {
-            console.error("Failed to add developer", e);
-        }
-    };
+    // addDeveloper moved up
 
     const switchDeveloper = async (name: string) => {
         const sid = developerSessions[name];
@@ -301,7 +314,7 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (sessionId) {
             fetchState(sessionId);
         }
-    }, [showAllCommits]);
+    }, [sessionId, showAllCommits]);
 
     return (
         <GitContext.Provider value={{

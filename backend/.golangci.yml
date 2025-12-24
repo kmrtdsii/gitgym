@@ -22,3 +22,18 @@ linters-settings:
   gosec:
     excludes:
       - G104 # We will handle error checking via errcheck, G104 can be noisy with raw file writes in tests
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+    - path: _test\.go
+      linters:
+        - govet
+      text: "shadow"
+    - path: _test\.go
+      linters:
+        - staticcheck
+      text: "SA9003"

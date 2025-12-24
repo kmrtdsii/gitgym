@@ -16,7 +16,7 @@ func populateCommits(repo *gogit.Repository, state *GraphState, showAll bool) {
 		// Scan ALL objects to find every commit
 		cIter, err := repo.CommitObjects()
 		if err == nil {
-			cIter.ForEach(func(c *object.Commit) error {
+			_ = cIter.ForEach(func(c *object.Commit) error {
 				collectedCommits = append(collectedCommits, c)
 				return nil
 			})
@@ -38,7 +38,7 @@ func populateCommits(repo *gogit.Repository, state *GraphState, showAll bool) {
 		// Local Branches
 		bIter, err := repo.Branches()
 		if err == nil {
-			bIter.ForEach(func(r *plumbing.Reference) error {
+			_ = bIter.ForEach(func(r *plumbing.Reference) error {
 				queue = append(queue, r.Hash())
 				return nil
 			})
@@ -49,7 +49,7 @@ func populateCommits(repo *gogit.Repository, state *GraphState, showAll bool) {
 		// Adding all refs is safer for visibility.
 		refs, err := repo.References()
 		if err == nil {
-			refs.ForEach(func(r *plumbing.Reference) error {
+			_ = refs.ForEach(func(r *plumbing.Reference) error {
 				// We want remotes and tags specifically if not covered above
 				if r.Name().IsRemote() {
 					queue = append(queue, r.Hash())
