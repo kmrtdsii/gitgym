@@ -84,6 +84,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--bg-primary);
+  color: var(--text-primary);
   /* Ensure body uses variable */
 }
 

@@ -36,6 +36,7 @@ export const prCardStyle: React.CSSProperties = {
     gap: '4px',
     padding: '10px 12px',
     background: 'var(--bg-secondary)',
+    color: 'var(--text-primary)',
     borderRadius: '10px',
     border: '1px solid var(--border-subtle)',
 };
