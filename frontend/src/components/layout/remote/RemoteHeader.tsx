@@ -151,23 +151,45 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                         }}
                         onClick={(e) => (e.target as HTMLInputElement).select()}
                     />
-                    <button
-                        onClick={handleCopyUrl}
-                        title={isCopied ? 'Copied!' : 'Copy URL to clipboard'}
-                        style={{
-                            padding: 'var(--space-1)',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: isCopied ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                            transition: 'color 0.15s'
-                        }}
-                    >
-                        {isCopied ? <Check size={16} /> : <Copy size={16} />}
-                    </button>
+                    <div style={{ position: 'relative' }}>
+                        <button
+                            onClick={handleCopyUrl}
+                            title="Copy URL to clipboard"
+                            style={{
+                                padding: 'var(--space-1)',
+                                background: 'transparent',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: isCopied ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                                transition: 'color 0.15s'
+                            }}
+                        >
+                            {isCopied ? <Check size={16} /> : <Copy size={16} />}
+                        </button>
+                        {/* Copied! tooltip */}
+                        {isCopied && (
+                            <div style={{
+                                position: 'absolute',
+                                top: '100%',
+                                right: 0,
+                                marginTop: '4px',
+                                padding: '4px 8px',
+                                background: 'var(--accent-primary)',
+                                color: 'white',
+                                fontSize: 'var(--text-xs)',
+                                fontWeight: 600,
+                                borderRadius: 'var(--radius-sm)',
+                                whiteSpace: 'nowrap',
+                                zIndex: 100,
+                                animation: 'fadeIn 0.15s ease-out'
+                            }}>
+                                Copied!
+                            </div>
+                        )}
+                    </div>
                 </div>
             ) : (
                 <div style={{
