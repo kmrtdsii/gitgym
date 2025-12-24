@@ -250,7 +250,7 @@ func (c *CloneCommand) Execute(ctx context.Context, s *git.Session, args []strin
 	}
 
 	log.Printf("Clone: Success. Cloned into %s", repoName)
-	return fmt.Sprintf("Cloned into '%s'... (Using shared remote %s)", repoName, remotePath), nil
+	return fmt.Sprintf("Cloned into '%s'... (Using shared remote)", repoName), nil
 }
 
 func (c *CloneCommand) Help() string {
