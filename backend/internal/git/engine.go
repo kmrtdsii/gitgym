@@ -69,48 +69,14 @@ func ParseCommand(input string) (string, []string) {
 
 	// Handle Aliases
 	switch parts[0] {
-	case "reset":
-		return "reset", append([]string{"reset"}, parts[1:]...)
-	case "add":
-		return "add", append([]string{"add"}, parts[1:]...)
+	case "reset", "add", "merge", "tag", "rebase", "checkout", "branch", "switch":
+		// Standard git commands that might be typed without 'git' prefix in some contexts
+		// or just passed directly.
+		return parts[0], append([]string{parts[0]}, parts[1:]...)
 	case "commit":
-		// commit -m ... -> commit -m ...
-		// Original alias was "git commit -m". The command expects "commit" as args[0].
-		// However, we need to inject "-m" if it was part of the simplification?
-		// simple alias: commit "msg" -> git commit -m "msg"
-		// Let's stick to simple normalization: args[0] = "commit".
-		// If the alias logic added flags (like -m), we should add them.
-		// Previous logic: newParts := []string{"git", "commit", "-m"}
-		// So args (for Dispatch) was ["git", "commit", "-m", ...]
-		// Removing "git": ["commit", "-m", ...]
-		return "commit", append([]string{"commit", "-m"}, parts[1:]...)
-	case "merge":
-		return "merge", append([]string{"merge"}, parts[1:]...)
-	case "tag":
-		return "tag", append([]string{"tag"}, parts[1:]...)
-	case "rebase":
-		return "rebase", append([]string{"rebase"}, parts[1:]...)
-	case "checkout":
-		return "checkout", append([]string{"checkout"}, parts[1:]...)
-	case "branch":
-		return "branch", append([]string{"branch"}, parts[1:]...)
-	case "switch":
-		return "switch", append([]string{"switch"}, parts[1:]...)
-		// Note: The original handler mapped these to "git <cmd>".
-		// However, the Dispatch function expects "cmdName" to be the key in the registry.
-		// Most git commands are registered as their name (e.g. "add", "commit")?
-		// Let's check init() in commands.
-		// e.g. commands/add.go -> RegisterCommand("add", ...)
-		// So "git add" -> args[0]="git", args[1]="add".
-		//
-		// Wait, the previous handler logic was:
-		// case "add": newParts := []string{"git", "add"}
-		// then: if parts[0] == "git" { cmdName = parts[1] }
-		//
-		// So the Dispatcher expects the *subcommand* name if it is a git command.
-		// BUT, non-git commands like "ls" are registered as "ls".
-		//
-		// To unify this, ParseCommand should return the REGISTRY key and the FULL args.
+		// commit -m ... -> git commit -m ...
+		// ensure args[0] is "commit"
+		return "commit", append([]string{"commit"}, parts[1:]...)
 	}
 
 	// Default handling
