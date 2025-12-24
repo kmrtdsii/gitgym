@@ -347,7 +347,7 @@ export const useTerminal = (
             resizeObserver.disconnect();
             term.dispose();
         };
-    }, [appendToTranscript, clearTranscript, fitAddonRef, runCommand, state, theme, terminalRef, writeAndRecord, xtermRef]);
+    }, [theme, terminalRef, writeAndRecord, xtermRef, fitAddonRef]);
 
     // Theme Update
     useEffect(() => {

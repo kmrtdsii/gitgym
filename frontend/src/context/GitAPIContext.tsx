@@ -316,33 +316,54 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
     }, [sessionId, showAllCommits]);
 
-    return (
-        <GitContext.Provider value={{
-            state,
-            sessionId, // Expose current session ID
-            runCommand,
-            appendToTranscript,
-            getTranscript,
-            clearTranscript,
-            showAllCommits,
-            toggleShowAllCommits,
-            stageFile,
-            unstageFile,
+    const contextValue = React.useMemo(() => ({
+        state,
+        sessionId,
+        runCommand,
+        appendToTranscript,
+        getTranscript,
+        clearTranscript,
+        showAllCommits,
+        toggleShowAllCommits,
+        stageFile,
+        unstageFile,
+        developers,
+        activeDeveloper,
+        switchDeveloper,
+        addDeveloper,
+        pullRequests,
+        refreshPullRequests,
+        ingestRemote,
+        createPullRequest,
+        mergePullRequest,
+        resetRemote,
+        refreshState: async () => { if (sessionId) await fetchState(sessionId); },
+        serverState,
+        fetchServerState
+    }), [
+        state,
+        sessionId,
+        runCommand, // Unstable but necessary
+        appendToTranscript,
+        getTranscript,
+        clearTranscript,
+        showAllCommits,
+        developers,
+        activeDeveloper,
+        switchDeveloper,
+        addDeveloper,
+        pullRequests,
+        refreshPullRequests,
+        ingestRemote,
+        createPullRequest,
+        mergePullRequest,
+        resetRemote,
+        serverState,
+        fetchServerState
+    ]);
 
-            developers,
-            activeDeveloper,
-            switchDeveloper,
-            addDeveloper,
-            pullRequests,
-            refreshPullRequests,
-            ingestRemote,
-            createPullRequest,
-            mergePullRequest,
-            resetRemote,
-            refreshState: async () => { if (sessionId) await fetchState(sessionId); },
-            serverState,
-            fetchServerState
-        }}>
+    return (
+        <GitContext.Provider value={contextValue}>
             {children}
         </GitContext.Provider>
     );
