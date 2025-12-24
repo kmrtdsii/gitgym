@@ -55,7 +55,7 @@ type Commit struct {
 
 // PullRequest structure
 type PullRequest struct {
-	ID          string    `json:"id"`
+	ID          int       `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	State       string    `json:"status"`       // "OPEN", "CLOSED", "MERGED"
