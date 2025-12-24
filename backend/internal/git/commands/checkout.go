@@ -31,6 +31,7 @@ func (c *CheckoutCommand) Execute(ctx context.Context, s *git.Session, args []st
 	var (
 		newBranch      string
 		forceNewBranch string
+		orphanBranch   string
 		force          bool
 		detach         bool // Not explicitly flagged often, but logic might support
 		target         string
@@ -53,6 +54,12 @@ func (c *CheckoutCommand) Execute(ctx context.Context, s *git.Session, args []st
 			}
 			forceNewBranch = cmdArgs[i+1]
 			i++
+		case "--orphan":
+			if i+1 >= len(cmdArgs) {
+				return "", fmt.Errorf("fatal: missing branch name for --orphan")
+			}
+			orphanBranch = cmdArgs[i+1]
+			i++
 		case "-f", "--force":
 			force = true
 		case "--detach":
@@ -71,15 +78,16 @@ func (c *CheckoutCommand) Execute(ctx context.Context, s *git.Session, args []st
 				target = arg
 			} else {
 				// multiple args not supported for branch checkout unless paths
-				// If target already set, treat as paths?
-				// For simulation, we simplify. "git checkout <commit> <file>" is complex.
-				// Assume "git checkout <target>" or "git checkout <paths>..."
-				// If we have flags -b/-B, target is implied HEAD or start point.
+				// For simulation, we simplify.
 			}
 		}
 	}
 
 	// Logic Dispatch
+
+	if orphanBranch != "" {
+		return c.checkoutOrphan(repo, s, orphanBranch)
+	}
 
 	if newBranch != "" || forceNewBranch != "" {
 		name := newBranch
@@ -103,6 +111,30 @@ func (c *CheckoutCommand) Execute(ctx context.Context, s *git.Session, args []st
 
 	// Try checking out target as reference/commit
 	return c.checkoutRefOrPath(repo, w, s, target, force, detach)
+}
+
+func (c *CheckoutCommand) checkoutOrphan(repo *gogit.Repository, s *git.Session, branchName string) (string, error) {
+	// orphan branch = unborn branch.
+	// We point HEAD to refs/heads/<branchName> but do NOT create the ref.
+	// We also strictly preserve index and working tree (which go-git does by default if we don't call Checkout).
+
+	refName := plumbing.ReferenceName("refs/heads/" + branchName)
+
+	// Verify it doesn't exist
+	_, err := repo.Reference(refName, true)
+	if err == nil {
+		return "", fmt.Errorf("fatal: A branch named '%s' already exists.", branchName)
+	}
+
+	// Set HEAD to symbolic ref (unborn)
+	headRef := plumbing.NewSymbolicReference(plumbing.HEAD, refName)
+	if err := repo.Storer.SetReference(headRef); err != nil {
+		return "", fmt.Errorf("failed to set HEAD for orphan: %w", err)
+	}
+
+	s.RecordReflog(fmt.Sprintf("checkout: moving from %s to %s (orphan)", "HEAD", branchName))
+
+	return fmt.Sprintf("Switched to a new branch '%s' (orphan)", branchName), nil
 }
 
 func (c *CheckoutCommand) checkoutFiles(repo *gogit.Repository, w *gogit.Worktree, files []string) (string, error) {
