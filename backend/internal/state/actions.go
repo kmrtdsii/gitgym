@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	gogit "github.com/go-git/go-git/v5"
@@ -183,7 +182,7 @@ func (sm *SessionManager) CreatePullRequest(title, description, sourceBranch, ta
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
-	id := strconv.Itoa(len(sm.PullRequests) + 1)
+	id := len(sm.PullRequests) + 1
 	pr := &PullRequest{
 		ID:          id,
 		Title:       title,
@@ -203,10 +202,9 @@ func (sm *SessionManager) MergePullRequest(id int, remoteName string) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
-	idStr := strconv.Itoa(id)
 	var pr *PullRequest
 	for _, p := range sm.PullRequests {
-		if p.ID == idStr {
+		if p.ID == id {
 			pr = p
 			break
 		}
