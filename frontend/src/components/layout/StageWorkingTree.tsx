@@ -4,7 +4,7 @@ import './AppLayout.css'; // Re-use layout styles or create specific ones if nee
 
 // Interface for the prop
 interface StageWorkingTreeProps {
-    onSelect?: (file: { type: 'file', id: string, data: any }) => void;
+    onSelect?: (file: { type: 'file', id: string, data: unknown }) => void;
 }
 
 const StageWorkingTree: React.FC<StageWorkingTreeProps> = ({ onSelect }) => {
@@ -41,7 +41,7 @@ const StageWorkingTree: React.FC<StageWorkingTreeProps> = ({ onSelect }) => {
                 }}
             >
                 <span
-                    onClick={() => onSelect && onSelect({ type: 'file', id: name, data: { status } })}
+                    onClick={() => { if (onSelect) onSelect({ type: 'file', id: name, data: { status } }); }}
                     style={{ color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer' }}
                 >
                     {name}
@@ -52,7 +52,7 @@ const StageWorkingTree: React.FC<StageWorkingTreeProps> = ({ onSelect }) => {
                     <span
                         onClick={(e) => {
                             e.stopPropagation();
-                            onSelect && onSelect({ type: 'file', id: name, data: { status, view: 'staged' } })
+                            if (onSelect) onSelect({ type: 'file', id: name, data: { status, view: 'staged' } });
                         }}
                         style={{
                             fontSize: '0.75rem',
@@ -74,7 +74,7 @@ const StageWorkingTree: React.FC<StageWorkingTreeProps> = ({ onSelect }) => {
                     <span
                         onClick={(e) => {
                             e.stopPropagation();
-                            onSelect && onSelect({ type: 'file', id: name, data: { status, view: 'worktree' } })
+                            if (onSelect) onSelect({ type: 'file', id: name, data: { status, view: 'worktree' } });
                         }}
                         style={{
                             fontSize: '0.75rem',

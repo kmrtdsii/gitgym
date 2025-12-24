@@ -23,14 +23,14 @@ func main() {
 
 	fmt.Println("--- Branches ---")
 	iter, _ := repo.Branches()
-	iter.ForEach(func(r *plumbing.Reference) error {
+	_ = iter.ForEach(func(r *plumbing.Reference) error {
 		fmt.Println(r.Name(), r.Hash())
 		return nil
 	})
 
 	fmt.Println("--- Tags ---")
 	tIter, _ := repo.Tags()
-	tIter.ForEach(func(r *plumbing.Reference) error {
+	_ = tIter.ForEach(func(r *plumbing.Reference) error {
 		fmt.Println(r.Name(), r.Hash())
 		return nil
 	})

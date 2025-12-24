@@ -129,17 +129,18 @@ func populateBranchesAndTags(repo *gogit.Repository, state *GraphState) error {
 	if err != nil {
 		return err
 	}
-	iter.ForEach(func(r *plumbing.Reference) error {
+	err = iter.ForEach(func(r *plumbing.Reference) error {
 		state.Branches[r.Name().Short()] = r.Hash().String()
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
-	// Get Remote Branches and Tags from References
-	// Note: repo.Tags() sometimes fails while repo.References() works.
 	// We do a single pass for robustness.
 	refs, err := repo.References()
 	if err == nil {
-		refs.ForEach(func(r *plumbing.Reference) error {
+		_ = refs.ForEach(func(r *plumbing.Reference) error {
 			if r.Name().IsRemote() {
 				state.RemoteBranches[r.Name().Short()] = r.Hash().String()
 			} else if r.Name().IsTag() {

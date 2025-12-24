@@ -47,7 +47,7 @@ func (s *Server) handleExecCommand(w http.ResponseWriter, r *http.Request) {
 	if cmdName == "" {
 		// Empty command
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"output": ""})
+		_ = json.NewEncoder(w).Encode(map[string]string{"output": ""})
 		return
 	}
 
@@ -59,7 +59,7 @@ func (s *Server) handleExecCommand(w http.ResponseWriter, r *http.Request) {
 		session, createErr = s.SessionManager.CreateSession(req.SessionID)
 		if createErr != nil {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(map[string]string{"error": "failed to restore session: " + createErr.Error()})
+			_ = json.NewEncoder(w).Encode(map[string]string{"error": "failed to restore session: " + createErr.Error()})
 			return
 		}
 	}
@@ -69,12 +69,12 @@ func (s *Server) handleExecCommand(w http.ResponseWriter, r *http.Request) {
 	output, err := git.Dispatch(r.Context(), session, cmdName, args)
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"output": output})
+	_ = json.NewEncoder(w).Encode(map[string]string{"output": output})
 }
 
 func (s *Server) handleGetGraphState(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +94,7 @@ func (s *Server) handleGetGraphState(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err.Error() == "session not found" {
 			// Auto-restore session for graph view as well
-			s.SessionManager.CreateSession(sessionID)
+			_, _ = s.SessionManager.CreateSession(sessionID)
 			state, err = s.SessionManager.GetGraphState(sessionID, showAll)
 		}
 
@@ -105,5 +105,5 @@ func (s *Server) handleGetGraphState(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(state)
+	_ = json.NewEncoder(w).Encode(state)
 }

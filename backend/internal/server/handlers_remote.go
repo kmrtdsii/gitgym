@@ -41,7 +41,7 @@ func (s *Server) handleGetRemoteState(w http.ResponseWriter, r *http.Request) {
 	stateObj.RemoteBranches = make(map[string]string) // Clear remote tracking branches
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(stateObj)
+	_ = json.NewEncoder(w).Encode(stateObj)
 }
 
 func (s *Server) handleSimulateRemoteCommit(w http.ResponseWriter, r *http.Request) {
@@ -96,7 +96,7 @@ func (s *Server) handleSimulateRemoteCommit(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
 
 func (s *Server) handleIngestRemote(w http.ResponseWriter, r *http.Request) {
@@ -140,7 +140,7 @@ func (s *Server) handleResetRemote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]bool{"success": true})
+	_ = json.NewEncoder(w).Encode(map[string]bool{"success": true})
 }
 
 func (s *Server) handleGetRemoteInfo(w http.ResponseWriter, r *http.Request) {
@@ -159,16 +159,16 @@ func (s *Server) handleGetRemoteInfo(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		_ = json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(estimate)
+	_ = json.NewEncoder(w).Encode(estimate)
 }
 
 func (s *Server) handleGetStrategies(w http.ResponseWriter, r *http.Request) {
 	strategies := state.GetBranchingStrategies()
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(strategies)
+	_ = json.NewEncoder(w).Encode(strategies)
 }

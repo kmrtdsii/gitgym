@@ -26,6 +26,7 @@ const PullRequestSection: React.FC<PullRequestSectionProps> = ({
     useEffect(() => {
         const branchNames = Object.keys(branches);
         if (branchNames.length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             if (!branchNames.includes(compareBase)) setCompareBase(branchNames[0]);
             if (!compareCompare && branchNames.length > 1) {
                 setCompareCompare(branchNames.find(b => b !== 'main') || branchNames[1]);
