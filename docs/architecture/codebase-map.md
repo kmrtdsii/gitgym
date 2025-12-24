@@ -45,4 +45,4 @@ The backend is a Go service using standard layout.
     - **`session.go`**: Managing User Sessions (in-memory/temp dir).
     - **`actions.go`**: "IngestRemote" logic (Pseudo-Remote architecture).
 - **`internal/server/`**: HTTP Handlers.
-    - **`api.go`**: REST Endpoints mapping to Engine calls.
+    - **`handlers.go`**: REST Endpoints mapping to Engine calls.
