@@ -1,3 +1,4 @@
+version: '3.8'
 
 services:
   backend:
@@ -5,6 +6,16 @@ services:
     container_name: gitgym-backend
     ports:
       - "8080:8080" # Optional: expose for direct testing, but Nginx connects internally
+    volumes:
+      - gitgym-data:/app/.gitgym-data
+    networks:
+      - gitgym-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     restart: unless-stopped
 
   frontend:
@@ -13,5 +24,15 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    networks:
+      - gitgym-net
     restart: unless-stopped
+
+volumes:
+  gitgym-data:
+
+networks:
+  gitgym-net:
+    driver: bridge
