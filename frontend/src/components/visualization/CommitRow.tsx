@@ -47,6 +47,20 @@ export const CommitRow: React.FC<CommitRowProps> = ({
         }}
         className="commit-row"
     >
+        {/* Commit ID */}
+        <span style={{
+            color: isSelected ? 'var(--accent-primary, #3b82f6)' : 'var(--text-tertiary)',
+            fontSize: '10px',
+            width: '60px',
+            textAlign: 'left',
+            flexShrink: 0,
+            fontWeight: isSelected ? 'bold' : 'normal',
+            marginRight: '8px',
+            fontFamily: 'var(--font-mono)',
+        }}>
+            {node.id.substring(0, 7)}
+        </span>
+
         {/* Badges */}
         {badges.length > 0 && (
             <div style={{ display: 'flex', gap: '4px' }}>
@@ -88,15 +102,5 @@ export const CommitRow: React.FC<CommitRowProps> = ({
         </span>
 
         {/* Commit ID */}
-        <span style={{
-            color: isSelected ? 'var(--accent-primary, #3b82f6)' : 'var(--text-tertiary)',
-            fontSize: '10px',
-            width: '60px',
-            textAlign: 'right',
-            flexShrink: 0,
-            fontWeight: isSelected ? 'bold' : 'normal',
-        }}>
-            {node.id.substring(0, 7)}
-        </span>
     </div>
 );
