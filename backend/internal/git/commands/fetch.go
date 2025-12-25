@@ -21,7 +21,7 @@ func init() {
 
 type FetchCommand struct{}
 
-func (c *FetchCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
+func (c *FetchCommand) Execute(_ context.Context, s *git.Session, args []string) (string, error) {
 	s.Lock()
 	defer s.Unlock()
 
