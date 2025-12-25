@@ -2,7 +2,7 @@
 import React, { useMemo } from 'react';
 import { useGit } from '../../context/GitAPIContext';
 import type { Commit } from '../../types/gitTypes';
-import { Cloud, GitBranch } from 'lucide-react';
+import { Cloud, GitBranch, Tag } from 'lucide-react';
 
 interface GitReferenceListProps {
     type: 'branches' | 'tags';
@@ -51,14 +51,18 @@ const GitReferenceList: React.FC<GitReferenceListProps> = ({ type, onSelect }) =
         return (
             <div style={{
                 height: '100%',
+                width: '100%',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: 'var(--text-tertiary)',
                 fontSize: '14px',
-                fontFamily: 'var(--font-mono)'
+                fontFamily: 'var(--font-mono)',
+                gap: '8px'
             }}>
-                No {type} found.
+                {type === 'tags' ? <Tag size={24} style={{ opacity: 0.5 }} /> : <GitBranch size={24} style={{ opacity: 0.5 }} />}
+                <span>No {type} found.</span>
             </div>
         );
     }
