@@ -138,7 +138,8 @@ func (sm *SessionManager) CreatePullRequest(title, description, sourceBranch, ta
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
-	id := len(sm.PullRequests) + 1
+	id := sm.NextPRID
+	sm.NextPRID++
 	pr := &PullRequest{
 		ID:          id,
 		Title:       title,

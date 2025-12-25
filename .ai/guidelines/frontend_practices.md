@@ -19,3 +19,10 @@
 ## 3. Component Design
 *   **Separation of Concerns**: Extract complex UI logic into sub-components.
 *   **Event Handling**: Use `e.stopPropagation()` when nesting interactive elements (e.g., a delete button inside a clickable tab).
+
+## 4. Refactoring Patterns
+*   **Components vs Render Functions**:
+    *   **Bad**: `const renderSection = () => { ... }` defined inside a parent component. This causes scope issues and makes it hard to manage local state (hooks).
+    *   **Good**: Extract to a separate functional component: `const SectionView: React.FC<Props> = ({...}) => { ... }`.
+    *   **Effect**: Allows cleaner `useTranslation`, `useState`, and `useEffect` usage within the sub-component.
+
