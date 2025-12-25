@@ -27,6 +27,7 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
         mergePullRequest,
         refreshPullRequests,
         createPullRequest,
+        deletePullRequest,
     } = useGit();
 
     // Custom Hooks
@@ -206,6 +207,7 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
                     branches={remoteGraphState.branches}
                     onCreatePR={createPullRequest}
                     onMergePR={mergePullRequest}
+                    onDeletePR={deletePullRequest}
                 />
                 <RemoteBranchList remoteBranches={remoteGraphState.branches} />
             </div>

@@ -153,6 +153,26 @@ func (sm *SessionManager) CreatePullRequest(title, description, sourceBranch, ta
 	return pr, nil
 }
 
+// DeletePullRequest removes a pull request by ID
+func (sm *SessionManager) DeletePullRequest(id int) error {
+	sm.mu.Lock()
+	defer sm.mu.Unlock()
+
+	for i, pr := range sm.PullRequests {
+		if pr.ID == id {
+			// Delete preserving order not strictly required, but usually good.
+			// Fast delete:
+			// sm.PullRequests[i] = sm.PullRequests[len(sm.PullRequests)-1]
+			// sm.PullRequests = sm.PullRequests[:len(sm.PullRequests)-1]
+			//
+			// Preserving order (better for UI stability):
+			sm.PullRequests = append(sm.PullRequests[:i], sm.PullRequests[i+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("pull request %d not found", id)
+}
+
 // pruneStaleWorkspaces removes local repos that point to deleted shared remotes
 func (sm *SessionManager) pruneStaleWorkspaces(stalePaths map[string]bool) {
 	if len(stalePaths) == 0 {
