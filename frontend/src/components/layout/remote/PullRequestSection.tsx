@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import Modal from '../../common/Modal';
+import { Button } from '../../common/Button';
 import type { PullRequest } from '../../../types/gitTypes';
 import { sectionLabelStyle, actionButtonStyle, prCardStyle, mergeButtonStyle, emptyStyle } from './remoteStyles';
 
@@ -7,6 +10,7 @@ interface PullRequestSectionProps {
     branches: Record<string, string>;
     onCreatePR: (title: string, desc: string, source: string, target: string) => void;
     onMergePR: (id: number) => Promise<void>;
+    onDeletePR: (id: number) => Promise<void>;
 }
 
 /**
@@ -17,10 +21,17 @@ const PullRequestSection: React.FC<PullRequestSectionProps> = ({
     branches,
     onCreatePR,
     onMergePR,
+    onDeletePR,
 }) => {
+    const { t } = useTranslation('common');
     const [isCompareMode, setIsCompareMode] = useState(false);
     const [compareBase, setCompareBase] = useState('main');
     const [compareCompare, setCompareCompare] = useState('');
+
+    // Delete Modal State
+    const [deleteId, setDeleteId] = useState<number | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeletingPR, setIsDeletingPR] = useState(false);
 
     // Set default compare branch when branches load or change
     useEffect(() => {
@@ -64,13 +75,13 @@ const PullRequestSection: React.FC<PullRequestSectionProps> = ({
     return (
         <div style={{ padding: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <div style={sectionLabelStyle}>PULL REQUESTS</div>
+                <div style={sectionLabelStyle}>{t('remote.pullRequests')}</div>
                 {!isCompareMode && (
                     <button
                         onClick={() => setIsCompareMode(true)}
                         style={{ ...actionButtonStyle, background: '#238636' }}
                     >
-                        New Pull Request
+                        {t('remote.newPR')}
                     </button>
                 )}
             </div>
@@ -86,8 +97,49 @@ const PullRequestSection: React.FC<PullRequestSectionProps> = ({
                     onCancel={() => setIsCompareMode(false)}
                 />
             ) : (
-                <PullRequestList pullRequests={pullRequests} onMerge={onMergePR} />
+                <PullRequestList
+                    pullRequests={pullRequests}
+                    onMerge={onMergePR}
+                    onDelete={(id) => {
+                        setDeleteId(id);
+                        setIsDeleteModalOpen(true);
+                    }}
+                />
             )}
+
+            <Modal
+                isOpen={isDeleteModalOpen}
+                onClose={() => !isDeletingPR && setIsDeleteModalOpen(false)}
+                title={t('remote.list.delete')}
+            >
+                <div>
+                    {t('remote.list.deleteConfirm')}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
+                    <Button
+                        variant="ghost"
+                        onClick={() => setIsDeleteModalOpen(false)}
+                        disabled={isDeletingPR}
+                    >
+                        {t('remote.cancel')}
+                    </Button>
+                    <Button
+                        variant="danger"
+                        onClick={async () => {
+                            if (deleteId) {
+                                setIsDeletingPR(true);
+                                await onDeletePR(deleteId);
+                                setIsDeletingPR(false);
+                                setIsDeleteModalOpen(false);
+                                setDeleteId(null);
+                            }
+                        }}
+                        isLoading={isDeletingPR}
+                    >
+                        {isDeletingPR ? t('remote.list.deleting') : t('remote.list.delete')}
+                    </Button>
+                </div>
+            </Modal>
         </div>
     );
 };
@@ -113,6 +165,7 @@ const CompareView: React.FC<CompareViewProps> = ({
     onSubmit,
     onCancel,
 }) => {
+    const { t } = useTranslation('common');
     const branchNames = Object.keys(branches);
     const [title, setTitle] = useState(`Merge ${compareCompare} into ${compareBase}`);
 
@@ -135,10 +188,10 @@ const CompareView: React.FC<CompareViewProps> = ({
                 background: 'var(--bg-primary)'
             }}>
                 <div style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '4px' }}>
-                    Comparing changes
+                    {t('remote.compare.title')}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                    Choose two branches to see what's changed or to start a new pull request.
+                    {t('remote.compare.desc')}
                 </div>
             </div>
 
@@ -150,9 +203,9 @@ const CompareView: React.FC<CompareViewProps> = ({
                 background: 'var(--bg-secondary)',
                 borderBottom: '1px solid var(--border-subtle)'
             }}>
-                <BranchSelector label="base" value={compareBase} onChange={onBaseChange} branches={branchNames} />
+                <BranchSelector label={t('remote.compare.base')} value={compareBase} onChange={onBaseChange} branches={branchNames} />
                 <span style={{ color: 'var(--text-tertiary)' }}>←</span>
-                <BranchSelector label="compare" value={compareCompare} onChange={onCompareChange} branches={branchNames} />
+                <BranchSelector label={t('remote.compare.compare')} value={compareCompare} onChange={onCompareChange} branches={branchNames} />
             </div>
 
             <div style={{
@@ -163,7 +216,7 @@ const CompareView: React.FC<CompareViewProps> = ({
                 <input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Pull Request Title"
+                    placeholder={t('remote.compare.titlePlaceholder')}
                     style={{
                         width: '100%',
                         padding: '8px',
@@ -187,8 +240,8 @@ const CompareView: React.FC<CompareViewProps> = ({
                 borderBottom: '1px solid var(--border-subtle)'
             }}>
                 <span>✓</span>
-                <strong>Able to merge.</strong>
-                <span>These branches can be automatically merged.</span>
+                <strong>{t('remote.compare.ableToMerge')}</strong>
+                <span>{t('remote.compare.ableToMergeDesc')}</span>
             </div>
 
             <div style={{ padding: '12px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
@@ -202,7 +255,7 @@ const CompareView: React.FC<CompareViewProps> = ({
                         cursor: 'pointer'
                     }}
                 >
-                    Cancel
+                    {t('remote.cancel')}
                 </button>
                 <button
                     onClick={() => {
@@ -218,7 +271,7 @@ const CompareView: React.FC<CompareViewProps> = ({
                         cursor: title.trim() ? 'pointer' : 'not-allowed'
                     }}
                 >
-                    Create pull request
+                    {t('remote.compare.create')}
                 </button>
             </div>
         </div>
@@ -254,27 +307,34 @@ const BranchSelector: React.FC<BranchSelectorProps> = ({ label, value, onChange,
 interface PullRequestListProps {
     pullRequests: PullRequest[];
     onMerge: (id: number) => Promise<void>;
+    onDelete: (id: number) => void;
 }
 
-const PullRequestList: React.FC<PullRequestListProps> = ({ pullRequests, onMerge }) => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {pullRequests.length === 0 ? (
-            <div style={emptyStyle}>No active PRs</div>
-        ) : (
-            pullRequests.map(pr => (
-                <PullRequestCard key={pr.id} pr={pr} onMerge={() => onMerge(pr.id)} />
-            ))
-        )}
-    </div>
-);
+const PullRequestList: React.FC<PullRequestListProps> = ({ pullRequests, onMerge, onDelete }) => {
+    const { t } = useTranslation('common');
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {pullRequests.length === 0 ? (
+                <div style={emptyStyle}>{t('remote.list.empty')}</div>
+            ) : (
+                pullRequests.map(pr => (
+                    <PullRequestCard key={pr.id} pr={pr} onMerge={() => onMerge(pr.id)} onDelete={() => onDelete(pr.id)} />
+                ))
+            )}
+        </div>
+    );
+};
 
 interface PullRequestCardProps {
     pr: PullRequest;
     onMerge: () => Promise<void>;
+    onDelete: () => void;
 }
 
-const PullRequestCard: React.FC<PullRequestCardProps> = ({ pr, onMerge }) => {
+const PullRequestCard: React.FC<PullRequestCardProps> = ({ pr, onMerge, onDelete }) => {
+    const { t } = useTranslation('common');
     const [isMerging, setIsMerging] = useState(false);
+    // isDeleting removed, handled by parent Modal
 
     const handleMergeClick = async () => {
         setIsMerging(true);
@@ -308,25 +368,44 @@ const PullRequestCard: React.FC<PullRequestCardProps> = ({ pr, onMerge }) => {
                 {pr.sourceBranch} ➜ {pr.targetBranch}
             </div>
             <div style={{ fontSize: '0.7rem', color: 'var(--text-tertiary)' }}>
-                opened by {pr.creator}
+                {t('remote.list.openedBy', { name: pr.creator })}
             </div>
-            {pr.status === 'OPEN' && (
+            <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                {pr.status === 'OPEN' && (
+                    <button
+                        onClick={handleMergeClick}
+                        style={{
+                            ...mergeButtonStyle,
+                            flex: 1,
+                            opacity: isMerging ? 0.6 : 1,
+                            cursor: isMerging ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px'
+                        }}
+                        disabled={isMerging}
+                    >
+                        {isMerging ? t('remote.list.merging') : t('remote.list.merge')}
+                    </button>
+                )}
                 <button
-                    onClick={handleMergeClick}
-                    style={{
-                        ...mergeButtonStyle,
-                        opacity: isMerging ? 0.6 : 1,
-                        cursor: isMerging ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px'
-                    }}
+                    onClick={() => onDelete()}
                     disabled={isMerging}
+                    style={{
+                        padding: '6px 12px',
+                        background: '#d0d7de',
+                        color: '#cf222e',
+                        border: '1px solid #d0d7de',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                    }}
                 >
-                    {isMerging ? 'Merging...' : 'Merge Pull Request'}
+                    {t('remote.list.delete')}
                 </button>
-            )}
+            </div>
         </div>
     );
 };
