@@ -12,7 +12,6 @@ const GitTerminal = () => {
 
     const { activeDeveloper, state } = useGit();
 
-    // Init Terminal Logic
     useTerminal(terminalRef, xtermRef, fitAddonRef);
 
     const currentBranch = state.HEAD?.ref || (state.HEAD?.id ? state.HEAD.id.substring(0, 7) : 'DETACHED');
@@ -20,7 +19,6 @@ const GitTerminal = () => {
 
     return (
         <div data-testid="git-terminal" style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', background: 'var(--bg-primary)' }}>
-            {/* Persistent Terminal Status Bar */}
             <div style={{
                 height: 'var(--header-height)',
                 display: 'flex',

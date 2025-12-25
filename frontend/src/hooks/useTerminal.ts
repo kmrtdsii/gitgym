@@ -1,14 +1,21 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, type RefObject } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { useGit } from '../context/GitAPIContext';
 import { useTheme } from '../context/ThemeContext';
 import { getPrompt } from '../utils/terminalUtils';
 
+/**
+ * Hook to manage the Git terminal instance and its interaction with the global Git state.
+ *
+ * @param terminalRef - Ref to the DOM element where the terminal should be mounted.
+ * @param xtermRef - Ref to the xterm.js instance.
+ * @param fitAddonRef - Ref to the xterm.js fit addon instance.
+ */
 export const useTerminal = (
-    terminalRef: React.RefObject<HTMLDivElement | null>,
-    xtermRef: React.MutableRefObject<Terminal | null>,
-    fitAddonRef: React.MutableRefObject<FitAddon | null>
+    terminalRef: RefObject<HTMLDivElement | null>,
+    xtermRef: RefObject<Terminal | null>,
+    fitAddonRef: RefObject<FitAddon | null>
 ) => {
     const {
         runCommand,
@@ -23,11 +30,9 @@ export const useTerminal = (
     const { theme } = useTheme();
     const [isReady, setIsReady] = useState(false);
 
-    // Input buffer and cursor position
     const currentLineRef = useRef('');
-    const cursorPosRef = useRef(0); // Position within currentLine (0 = start)
+    const cursorPosRef = useRef(0);
 
-    // Per-developer input persistence
     const inputPerDeveloperRef = useRef<Map<string, { text: string; cursor: number }>>(new Map());
     const prevDeveloperRef = useRef<string | null>(null);
 
@@ -38,7 +43,6 @@ export const useTerminal = (
     const clearTranscriptRef = useRef(clearTranscript);
     const stateRef = useRef(state);
 
-    // Command Syncing Refs
     // State Tracking Refs
     const lastOutputLengthRef = useRef(0);
     const lastPathRef = useRef(state.currentPath);
@@ -75,11 +79,8 @@ export const useTerminal = (
         xtermRef.current.write('\x1bc'); // Full Reset
 
         // Sync ref with current state level to avoid re-printing history via Sync effect.
-        // We defer to Replay logic for what is shown.
-        // Even if transcript is 'stale' vs state, we don't want Sync to double-print or insert newlines during init.
         const transcript = getTranscriptRef.current ? getTranscriptRef.current() : [];
         const stateLen = stateRef.current.output.length;
-        // Use the maximum to ensure we don't trigger "New Output" for things we supposedly already have or skipped.
         lastOutputLengthRef.current = Math.max(transcript.length, stateLen);
 
         if (transcript.length > 0) {
