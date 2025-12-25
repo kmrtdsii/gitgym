@@ -49,7 +49,15 @@ const GitReferenceList: React.FC<GitReferenceListProps> = ({ type, onSelect }) =
 
     if (!listItems.length) {
         return (
-            <div className="flex h-full items-center justify-center text-gray-500 font-mono text-sm">
+            <div style={{
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-tertiary)',
+                fontSize: '14px',
+                fontFamily: 'var(--font-mono)'
+            }}>
                 No {type} found.
             </div>
         );

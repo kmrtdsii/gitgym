@@ -3,7 +3,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 export const useResizablePanes = () => {
     // --- Layout State ---
     const [leftPaneWidth, setLeftPaneWidth] = useState(33); // Percentage
-    const [vizHeight, setVizHeight] = useState(500); // Height of Top Graph in Center
+    const [vizHeight, setVizHeight] = useState(500 - 72); // Height of Top Graph in Center (adjusted for header offset)
     const [remoteGraphHeight, setRemoteGraphHeight] = useState(500); // Height of Top Graph in Left
 
     const containerRef = useRef<HTMLDivElement>(null);
