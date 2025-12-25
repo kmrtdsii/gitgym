@@ -22,16 +22,34 @@ const PullRequestSection: React.FC<PullRequestSectionProps> = ({
     const [compareBase, setCompareBase] = useState('main');
     const [compareCompare, setCompareCompare] = useState('');
 
-    // Set default compare branch when branches load
+    // Set default compare branch when branches load or change
     useEffect(() => {
         const branchNames = Object.keys(branches);
         if (branchNames.length > 0) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            if (!branchNames.includes(compareBase)) setCompareBase(branchNames[0]);
-            if (!compareCompare && branchNames.length > 1) {
-                setCompareCompare(branchNames.find(b => b !== 'main') || branchNames[1]);
-            } else if (!compareCompare) {
-                setCompareCompare(branchNames[0]);
+            // 1. Validate 'compareBase'
+            let newBase = compareBase;
+            if (!branchNames.includes(compareBase)) {
+                // If current base is invalid (e.g. stale from other repo), reset to default
+                if (branchNames.includes('main')) newBase = 'main';
+                else if (branchNames.includes('master')) newBase = 'master';
+                else newBase = branchNames[0];
+                setCompareBase(newBase);
+            }
+
+            // 2. Validate 'compareCompare'
+            // Must be valid AND different from base if possible
+            if (!compareCompare || !branchNames.includes(compareCompare) || compareCompare === newBase) {
+                // Try to find a different branch than newBase
+                let candidate = branchNames.find(b => b !== newBase && b !== 'main' && b !== 'master');
+                if (!candidate) {
+                    candidate = branchNames.find(b => b !== newBase);
+                }
+                // If no other branch exists, just use the first available (even if same as base)
+                if (!candidate) {
+                    candidate = branchNames[0];
+                }
+
+                setCompareCompare(candidate);
             }
         }
     }, [branches, compareBase, compareCompare]);
