@@ -21,8 +21,14 @@
 *   **Event Handling**: Use `e.stopPropagation()` when nesting interactive elements (e.g., a delete button inside a clickable tab).
 
 ## 4. Refactoring Patterns
-*   **Components vs Render Functions**:
-    *   **Bad**: `const renderSection = () => { ... }` defined inside a parent component. This causes scope issues and makes it hard to manage local state (hooks).
     *   **Good**: Extract to a separate functional component: `const SectionView: React.FC<Props> = ({...}) => { ... }`.
     *   **Effect**: Allows cleaner `useTranslation`, `useState`, and `useEffect` usage within the sub-component.
+
+## 5. Linting & Code Quality
+*   **Strictness**: Zero-tolerance for warnings in `npm run lint`.
+*   **Common Issues**:
+    *   **`prefer-const`**: Use `const` for variables not reassigned.
+    *   **`react-hooks/exhaustive-deps`**: Trust the linter. If you think you need to omit a dependency, you likely need `useCallback` or `useRef`.
+    *   **`@typescript-eslint/no-explicit-any`**: Do not use `any`. Define a proper interface.
+    *   **`react-hooks/set-state-in-effect`**: Avoid setting state in effects. If setting derived state (e.g., default form values based on props), use strict conditions or `eslint-disable-next-line` with a comment explaining why.
 
