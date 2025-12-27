@@ -216,5 +216,10 @@ func (c *RestoreCommand) Help() string {
 
  🔗 REFERENCE
     Full documentation: https://git-scm.com/docs/git-restore
+
+ 💡 TIPS
+    ` + "`" + `git restore .` + "`" + ` を実行すると、現在のディレクトリ以下の
+    「まだaddしていない変更」をすべて破棄します（Untrackedなファイルは消えません）。
+    「実験的にいろいろいじったけど、全部なかったことにしてスッキリしたい」時に便利です。
 `
 }
