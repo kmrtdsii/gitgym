@@ -177,7 +177,7 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 	err = refs.ForEach(func(r *plumbing.Reference) error {
 		// 1. Handle Branches
 		if r.Name().IsBranch() {
-			res, count, err := c.handleFetchBranch(s, repo, srcRepo, r, remoteName, isDryRun)
+			res, count, err := c.handleFetchBranch(repo, srcRepo, r, remoteName, isDryRun)
 			if err != nil {
 				return err
 			}
@@ -189,7 +189,7 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 
 		// 2. Handle Tags
 		if fetchTags && r.Name().IsTag() {
-			res, count, err := c.handleFetchTag(s, repo, srcRepo, r, isDryRun)
+			res, count, err := c.handleFetchTag(repo, srcRepo, r, isDryRun)
 			if err != nil {
 				// Warn but don't fail entire fetch?
 				results = append(results, fmt.Sprintf(" ! [error] %s (copy failed)", r.Name().Short()))
@@ -229,7 +229,7 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 	return strings.Join(results, "\n"), nil
 }
 
-func (c *FetchCommand) handleFetchBranch(s *git.Session, repo, srcRepo *gogit.Repository, r *plumbing.Reference, remoteName string, isDryRun bool) (string, int, error) {
+func (c *FetchCommand) handleFetchBranch(repo, srcRepo *gogit.Repository, r *plumbing.Reference, remoteName string, isDryRun bool) (string, int, error) {
 	branchName := r.Name().Short()
 	localRefName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/%s/%s", remoteName, branchName))
 
@@ -264,7 +264,7 @@ func (c *FetchCommand) handleFetchBranch(s *git.Session, repo, srcRepo *gogit.Re
 	return fmt.Sprintf(" * [%s] %s -> %s/%s", status, branchName, remoteName, branchName), 1, nil
 }
 
-func (c *FetchCommand) handleFetchTag(s *git.Session, repo, srcRepo *gogit.Repository, r *plumbing.Reference, isDryRun bool) (string, int, error) {
+func (c *FetchCommand) handleFetchTag(repo, srcRepo *gogit.Repository, r *plumbing.Reference, isDryRun bool) (string, int, error) {
 	tagName := r.Name().Short()
 	localTagRef := r.Name()
 
