@@ -25,13 +25,16 @@ func TestFetchCommand_Tags(t *testing.T) {
 	originURL := "https://example.com/origin-tags.git"
 
 	w, _ := originRepo.Worktree()
-	w.Commit("Init", &gogit.CommitOptions{
+	fs.Create("README.md")
+	w.Add("README.md")
+	// Add Tag on Remote (using hash directly)
+	initHash, err := w.Commit("Init", &gogit.CommitOptions{
 		Author: &object.Signature{Name: "Dev", Email: "dev@example.com", When: time.Now()},
 	})
-
-	// Add Tag on Remote
-	headRef, _ := originRepo.Head()
-	_, err := originRepo.CreateTag("v1.0.0", headRef.Hash(), &gogit.CreateTagOptions{
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = originRepo.CreateTag("v1.0.0", initHash, &gogit.CreateTagOptions{
 		Tagger:  &object.Signature{Name: "Dev", Email: "dev@example.com", When: time.Now()},
 		Message: "Release v1.0.0",
 	})
@@ -87,13 +90,16 @@ func TestFetchCommand_Prune(t *testing.T) {
 	originURL := "https://example.com/origin-prune.git"
 
 	w, _ := originRepo.Worktree()
-	w.Commit("Init", &gogit.CommitOptions{
+	fs.Create("README.md")
+	w.Add("README.md")
+	// Create a branch "feature" on remote
+	initHash, err := w.Commit("Init", &gogit.CommitOptions{
 		Author: &object.Signature{Name: "Dev", Email: "dev@example.com", When: time.Now()},
 	})
-
-	// Create a branch "feature" on remote
-	headRef, _ := originRepo.Head()
-	featureRef := plumbing.NewHashReference("refs/heads/feature", headRef.Hash())
+	if err != nil {
+		t.Fatal(err)
+	}
+	featureRef := plumbing.NewHashReference("refs/heads/feature", initHash)
 	originRepo.Storer.SetReference(featureRef)
 
 	sm.Lock()
@@ -102,15 +108,15 @@ func TestFetchCommand_Prune(t *testing.T) {
 
 	session, _ := sm.CreateSession("test-prune")
 	cloneCmd := &CloneCommand{}
-	_, err := cloneCmd.Execute(context.Background(), session, []string{"clone", originURL})
+	_, err = cloneCmd.Execute(context.Background(), session, []string{"clone", originURL})
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Verify we have origin/feature locally
 	localRepo := session.GetRepo()
-	_, err = localRepo.Reference("refs/remotes/origin/feature", true)
-	if err != nil {
+	_, errPrune := localRepo.Reference("refs/remotes/origin/feature", true)
+	if errPrune != nil {
 		t.Errorf("Pre-condition failed: origin/feature missing")
 	}
 

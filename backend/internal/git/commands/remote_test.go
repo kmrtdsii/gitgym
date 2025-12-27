@@ -57,6 +57,7 @@ func TestRemoteCommand(t *testing.T) {
 func TestFetchCommand(t *testing.T) {
 	// Setup: Session with a local repo and a simulated remote
 	sm := git.NewSessionManager()
+	sm.DataDir = t.TempDir()
 	s, _ := sm.CreateSession("test-fetch")
 
 	// Create "Remote" repo in memory manually

@@ -21,7 +21,15 @@ func init() {
 
 type FetchCommand struct{}
 
-func (c *FetchCommand) Execute(_ context.Context, s *git.Session, args []string) (string, error) {
+type FetchOptions struct {
+	DryRun   bool
+	FetchAll bool
+	Prune    bool
+	Tags     bool
+	Remotes  []string
+}
+
+func (c *FetchCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
 	s.Lock()
 	defer s.Unlock()
 
@@ -30,60 +38,79 @@ func (c *FetchCommand) Execute(_ context.Context, s *git.Session, args []string)
 		return "", fmt.Errorf("fatal: not a git repository")
 	}
 
-	// Parse Flags
-	isDryRun := false
-	fetchAll := false
-	prune := false
-	tags := false
-	var positionalArgs []string
+	// 1. Parse Arguments
+	opts, err := c.parseArgs(args)
+	if err != nil {
+		return "", err
+	}
 
+	// 2. Resolve Targets (List of Remotes)
+	remotes, err := c.resolveFetchTargets(repo, opts)
+	if err != nil {
+		return "", err
+	}
+
+	// 3. Execution (Loop and Fetch)
+	return c.executeFetch(s, repo, remotes, opts)
+}
+
+func (c *FetchCommand) parseArgs(args []string) (*FetchOptions, error) {
+	opts := &FetchOptions{}
 	cmdArgs := args[1:]
-	for i := 0; i < len(cmdArgs); i++ {
-		arg := cmdArgs[i]
+	for i, arg := range cmdArgs {
 		switch arg {
 		case "-n", "--dry-run":
-			isDryRun = true
+			opts.DryRun = true
 		case "--all":
-			fetchAll = true
+			opts.FetchAll = true
 		case "-p", "--prune":
-			prune = true
+			opts.Prune = true
 		case "-t", "--tags":
-			tags = true
+			opts.Tags = true
 		case "-h", "--help":
-			return c.Help(), nil
+			return nil, fmt.Errorf("help requested")
 		default:
 			if strings.HasPrefix(arg, "-") {
-				return "", fmt.Errorf("unknown flag: %s", arg)
+				return nil, fmt.Errorf("unknown flag: %s", arg)
 			}
-			positionalArgs = append(positionalArgs, arg)
+			// Only append positional args if not skipping (handled by index loop if manual, but range is safer here if we don't skip)
+			// Wait, mixed flags/args logic in legacy was strict order? No, loop index i:
+			// legacy: for i := 0; i < len(cmdArgs); i++ ...
+			// Here range is fine unless we need to skip next arg (not needed for boolean flags).
+			// If we had value flags, we'd need manual index handling. All current flags are boolean.
+			opts.Remotes = append(opts.Remotes, arg)
 		}
+		_ = i
+	}
+	return opts, nil
+}
+
+func (c *FetchCommand) resolveFetchTargets(repo *gogit.Repository, opts *FetchOptions) ([]*gogit.Remote, error) {
+	if opts.FetchAll {
+		remotes, err := repo.Remotes()
+		if err != nil {
+			return nil, fmt.Errorf("failed to list remotes: %w", err)
+		}
+		return remotes, nil
 	}
 
-	var remotes []*gogit.Remote
-	var err error
-
-	if fetchAll {
-		remotes, err = repo.Remotes()
-		if err != nil {
-			return "", fmt.Errorf("failed to list remotes: %w", err)
-		}
-	} else {
-		// Single remote
-		remoteName := "origin"
-		if len(positionalArgs) > 0 {
-			remoteName = positionalArgs[0]
-		}
-		rem, err := repo.Remote(remoteName)
-		if err != nil {
-			return "", fmt.Errorf("fatal: '%s' does not appear to be a git repository", remoteName)
-		}
-		remotes = []*gogit.Remote{rem}
+	// Single remote (default origin)
+	remoteName := "origin"
+	if len(opts.Remotes) > 0 {
+		remoteName = opts.Remotes[0]
 	}
+	rem, err := repo.Remote(remoteName)
+	if err != nil {
+		return nil, fmt.Errorf("fatal: '%s' does not appear to be a git repository", remoteName)
+	}
+	return []*gogit.Remote{rem}, nil
+}
 
+func (c *FetchCommand) executeFetch(s *git.Session, repo *gogit.Repository, remotes []*gogit.Remote, opts *FetchOptions) (string, error) {
 	var allResults []string
 
 	for _, rem := range remotes {
-		res, err := c.fetchRemote(s, repo, rem, isDryRun, tags, prune)
+		res, err := c.fetchRemote(s, repo, rem, opts.DryRun, opts.Tags, opts.Prune)
 		if err != nil {
 			allResults = append(allResults, fmt.Sprintf("error: fetching %s: %v", rem.Config().Name, err))
 		} else {
