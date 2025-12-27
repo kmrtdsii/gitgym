@@ -42,7 +42,7 @@
         "updating": "UPDATING...",
         "cancel": "Cancel",
         "noConfigured": "No Remote Configured",
-        "cloneUrlLabel": "Clone using the web URL.",
+        "cloneUrlLabel": "GitHub URL",
         "branches": "REMOTE BRANCHES",
         "pullRequests": "PULL REQUESTS",
         "newPR": "New Pull Request",

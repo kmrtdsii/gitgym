@@ -76,7 +76,7 @@ const CommitDetails: React.FC<CommitDetailsProps> = ({ commitId, onClose }) => {
         }}>
             {/* Header */}
             <div style={{
-                padding: '12px',
+                padding: '8px 16px',
                 borderBottom: '1px solid var(--border-subtle)',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -86,7 +86,16 @@ const CommitDetails: React.FC<CommitDetailsProps> = ({ commitId, onClose }) => {
                 <div style={{ fontWeight: 600, fontSize: '12px' }}>
                     {t('commitDetails.title')}
                 </div>
-                <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                <button onClick={onClose} style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--text-secondary)',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}>
                     <X size={14} />
                 </button>
             </div>

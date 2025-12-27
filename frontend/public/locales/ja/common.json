@@ -42,7 +42,7 @@
         "updating": "更新中...",
         "cancel": "キャンセル",
         "noConfigured": "リモート未設定",
-        "cloneUrlLabel": "Web URLを使用してクローン",
+        "cloneUrlLabel": "GitHub URL",
         "branches": "リモートブランチ",
         "pullRequests": "プルリクエスト",
         "newPR": "新規プルリクエスト",

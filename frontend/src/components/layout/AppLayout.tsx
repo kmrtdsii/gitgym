@@ -11,6 +11,7 @@ import DeveloperTabs from './DeveloperTabs';
 import BottomPanel from './BottomPanel';
 import { Resizer } from '../common';
 import AddDeveloperModal from './AddDeveloperModal';
+import { Sun, Moon } from 'lucide-react';
 
 import type { SelectedObject } from '../../types/layoutTypes';
 import { useTheme } from '../../context/ThemeContext';
@@ -158,44 +159,24 @@ const AppLayout = () => {
                             {t('common.showAll')}
                         </label>
                         {/* Theme Toggle - Segmented Switch */}
-                        <div style={{
-                            display: 'flex',
-                            background: 'var(--bg-tertiary)',
-                            borderRadius: '4px',
-                            border: '1px solid var(--border-subtle)',
-                            overflow: 'hidden'
-                        }}>
+                        <div className="theme-toggle-group">
                             <button
                                 onClick={() => theme === 'dark' && toggleTheme()}
-                                style={{
-                                    background: theme === 'light' ? 'var(--accent-primary)' : 'transparent',
-                                    color: theme === 'light' ? 'white' : 'var(--text-secondary)',
-                                    border: 'none',
-                                    padding: '4px 10px',
-                                    fontSize: '10px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    transition: 'background 0.15s, color 0.15s'
-                                }}
+                                className={`theme-toggle-option ${theme === 'light' ? 'active' : ''}`}
                                 data-testid="theme-light-btn"
+                                title={t('app.theme.light')}
                             >
-                                {t('app.theme.light')}
+                                <Sun size={12} strokeWidth={2.5} />
+                                <span>{t('app.theme.light')}</span>
                             </button>
                             <button
                                 onClick={() => theme === 'light' && toggleTheme()}
-                                style={{
-                                    background: theme === 'dark' ? 'var(--accent-primary)' : 'transparent',
-                                    color: theme === 'dark' ? 'white' : 'var(--text-secondary)',
-                                    border: 'none',
-                                    padding: '4px 10px',
-                                    fontSize: '10px',
-                                    fontWeight: 600,
-                                    cursor: 'pointer',
-                                    transition: 'background 0.15s, color 0.15s'
-                                }}
+                                className={`theme-toggle-option ${theme === 'dark' ? 'active' : ''}`}
                                 data-testid="theme-dark-btn"
+                                title={t('app.theme.dark')}
                             >
-                                {t('app.theme.dark')}
+                                <Moon size={12} strokeWidth={2.5} />
+                                <span>{t('app.theme.dark')}</span>
                             </button>
                         </div>
                     </div>
