@@ -7,7 +7,7 @@ interface CommitRowProps {
     node: VizNode;
     badges: Array<{ text: string; type: string; isActive?: boolean }>;
     isSelected: boolean;
-    onClick: () => void;
+    onClick?: () => void;
 }
 
 export const CommitRow: React.FC<CommitRowProps> = ({
@@ -30,7 +30,7 @@ export const CommitRow: React.FC<CommitRowProps> = ({
             alignItems: 'center',
             whiteSpace: 'nowrap',
             gap: '8px',
-            cursor: 'pointer',
+            cursor: onClick ? 'pointer' : 'default',
             paddingRight: '16px',
             userSelect: 'none',
             opacity: node.opacity,
@@ -53,8 +53,8 @@ export const CommitRow: React.FC<CommitRowProps> = ({
                 marginRight: '8px',
                 fontFamily: 'var(--font-mono)',
                 userSelect: 'text',
-                cursor: 'pointer', // Show pointer
-                textDecoration: 'underline', // Make it look like a link
+                cursor: onClick ? 'pointer' : 'default', // Only show pointer if clickable
+                textDecoration: onClick ? 'underline' : 'none', // Only underline if clickable
                 textUnderlineOffset: '2px'
             }}>
             {node.id.substring(0, 7)}

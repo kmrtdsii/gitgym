@@ -20,6 +20,11 @@
         "message": "Message",
         "date": "Date"
     },
+    "commitDetails": {
+        "title": "Commit Details",
+        "changedFiles": "Changed Files ({{count}})",
+        "loading": "Loading..."
+    },
     "workspace": {
         "title": "WORKSPACES",
         "deleteTitle": "Delete Project",

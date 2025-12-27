@@ -187,7 +187,7 @@ const GitGraphViz: React.FC<GitGraphVizProps> = ({
                         node={node}
                         badges={badgesMap[node.id] || []}
                         isSelected={node.id === selectedCommitId}
-                        onClick={() => onSelect?.(node)}
+                        onClick={onSelect ? () => onSelect(node) : undefined}
                     />
                 ))}
             </div>

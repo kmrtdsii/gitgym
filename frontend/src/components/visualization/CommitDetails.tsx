@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useGit } from '../../context/GitAPIContext';
 import { FileCode, FilePlus, FileMinus, FileDiff, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface CommitDetailsProps {
     commitId: string;
@@ -14,7 +15,7 @@ interface FileChange {
 
 const CommitDetails: React.FC<CommitDetailsProps> = ({ commitId, onClose }) => {
     const { runCommand } = useGit();
-    // const { t } = useTranslation('common');
+    const { t } = useTranslation('common');
     const [changes, setChanges] = useState<FileChange[]>([]);
     // const [commitInfo, setCommitInfo] = useState<any>(null); // To store basic info if needed
     const [loading, setLoading] = useState(false);
@@ -83,7 +84,7 @@ const CommitDetails: React.FC<CommitDetailsProps> = ({ commitId, onClose }) => {
                 background: 'var(--bg-tertiary)'
             }}>
                 <div style={{ fontWeight: 600, fontSize: '12px' }}>
-                    Commit Details
+                    {t('commitDetails.title')}
                 </div>
                 <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                     <X size={14} />
@@ -99,11 +100,11 @@ const CommitDetails: React.FC<CommitDetailsProps> = ({ commitId, onClose }) => {
                 </div>
 
                 <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-tertiary)', marginBottom: '8px', textTransform: 'uppercase' }}>
-                    Changed Files ({changes.length})
+                    {t('commitDetails.changedFiles', { count: changes.length })}
                 </div>
 
                 {loading ? (
-                    <div style={{ padding: '8px', color: 'var(--text-tertiary)' }}>Loading...</div>
+                    <div style={{ padding: '8px', color: 'var(--text-tertiary)' }}>{t('commitDetails.loading')}</div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                         {changes.map((change, idx) => (

@@ -20,6 +20,11 @@
         "message": "メッセージ",
         "date": "日付"
     },
+    "commitDetails": {
+        "title": "コミット詳細",
+        "changedFiles": "変更ファイル ({{count}})",
+        "loading": "読み込み中..."
+    },
     "workspace": {
         "title": "ワークスペース",
         "deleteTitle": "プロジェクトの削除",
