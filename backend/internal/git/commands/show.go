@@ -59,7 +59,7 @@ func (c *ShowCommand) parseArgs(args []string) (*ShowOptions, error) {
 	return opts, nil
 }
 
-func (c *ShowCommand) executeShow(s *git.Session, repo *gogit.Repository, opts *ShowOptions) (string, error) {
+func (c *ShowCommand) executeShow(_ *git.Session, repo *gogit.Repository, opts *ShowOptions) (string, error) {
 	h, err := repo.ResolveRevision(plumbing.Revision(opts.CommitID))
 	if err != nil {
 		return "", err

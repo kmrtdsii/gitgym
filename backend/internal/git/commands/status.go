@@ -49,7 +49,7 @@ func (c *StatusCommand) parseArgs(args []string) (*StatusOptions, error) {
 	return opts, nil
 }
 
-func (c *StatusCommand) executeStatus(s *git.Session, repo *gogit.Repository, opts *StatusOptions) (string, error) {
+func (c *StatusCommand) executeStatus(_ *git.Session, repo *gogit.Repository, _ *StatusOptions) (string, error) {
 	w, err := repo.Worktree()
 	if err != nil {
 		return "", err

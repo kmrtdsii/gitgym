@@ -18,7 +18,7 @@ import (
 // - A local repo "localrepo" with one commit
 // - A simulated remote "remoterepo" (bare) registered as shared remote
 // - The local repo configured with remote "origin" pointing to "/remoterepo"
-func setupPushTestSession(t *testing.T, sm *git.SessionManager, id string) *git.Session {
+func setupPushTestSession(_ *testing.T, sm *git.SessionManager, id string) *git.Session {
 	// Create Session first
 	s, _ := sm.CreateSession(id)
 
@@ -84,7 +84,7 @@ func TestPushCommand_Help(t *testing.T) {
 	if err != nil {
 		t.Fatalf("--help failed: %v", err)
 	}
-	if !strings.Contains(res, "usage:") {
+	if !strings.Contains(res, "SYNOPSIS") {
 		t.Errorf("Expected help text, got: %s", res)
 	}
 	if !strings.Contains(res, "--force") {
@@ -144,8 +144,7 @@ func TestPushCommand_NoRemote(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a repo without remote
-	initCmd := &InitCommand{}
-	_, _ = initCmd.Execute(ctx, s, []string{"init", "norepo"})
+	_, _ = s.InitRepo("norepo")
 	s.CurrentDir = "/norepo"
 
 	touchCmd := &TouchCommand{}

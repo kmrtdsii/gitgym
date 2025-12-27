@@ -238,13 +238,14 @@ func (c *RebaseCommand) prepareRebaseContext(repo *gogit.Repository, opts *Rebas
 	}
 
 	return &rebaseContext{
-		targetHash:      targetHash,
+		targetHash: targetHash,
+
 		commitsToReplay: commitsToReplay,
 		headRef:         headRef,
 	}, nil
 }
 
-func (c *RebaseCommand) performRebase(ctx context.Context, s *git.Session, repo *gogit.Repository, rbCtx *rebaseContext, preserve bool) (string, error) {
+func (c *RebaseCommand) performRebase(_ context.Context, s *git.Session, repo *gogit.Repository, rbCtx *rebaseContext, _ bool) (string, error) {
 	// Hard Reset to Target (NewBase)
 	w, _ := repo.Worktree()
 	if resetErr := w.Reset(&gogit.ResetOptions{Commit: *rbCtx.targetHash, Mode: gogit.HardReset}); resetErr != nil {

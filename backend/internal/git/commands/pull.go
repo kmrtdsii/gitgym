@@ -150,7 +150,7 @@ func (c *PullCommand) resolveContext(s *git.Session, opts *PullOptions, fetchOut
 	}, nil
 }
 
-func (c *PullCommand) performPullMerge(s *git.Session, pCtx *pullContext) (string, error) {
+func (c *PullCommand) performPullMerge(_ *git.Session, pCtx *pullContext) (string, error) {
 	// Need lock for repo operations?
 	// s.GetRepo() returns pointer. Operations on repo are usually thread-safe or s is locked?
 	// Legacy Execute locked s during resolve. Here we unlocked.

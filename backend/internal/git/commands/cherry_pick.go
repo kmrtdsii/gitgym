@@ -128,7 +128,7 @@ func (c *CherryPickCommand) resolveCommits(repo *gogit.Repository, args []string
 	return commitsToPick, nil
 }
 
-func (c *CherryPickCommand) executeCherryPick(s *git.Session, repo *gogit.Repository, commitsToPick []*object.Commit) (string, error) {
+func (c *CherryPickCommand) executeCherryPick(_ *git.Session, repo *gogit.Repository, commitsToPick []*object.Commit) (string, error) {
 	w, err := repo.Worktree()
 	if err != nil {
 		return "", err

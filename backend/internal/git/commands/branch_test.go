@@ -54,7 +54,7 @@ func TestBranchCommand_Help(t *testing.T) {
 	if err != nil {
 		t.Fatalf("--help failed: %v", err)
 	}
-	if !strings.Contains(res, "usage:") {
+	if !strings.Contains(res, "SYNOPSIS") {
 		t.Errorf("Expected help text, got: %s", res)
 	}
 	if !strings.Contains(res, "-d") {

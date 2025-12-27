@@ -11,7 +11,7 @@ import (
 	"github.com/kurobon/gitgym/backend/internal/git"
 )
 
-func (c *CleanCommand) executeClean(s *git.Session, repo *gogit.Repository, opts *CleanOptions) (string, error) {
+func (c *CleanCommand) executeClean(_ *git.Session, repo *gogit.Repository, opts *CleanOptions) (string, error) {
 	if !opts.Force && !opts.DryRun {
 		return "", fmt.Errorf("fatal: clean.requireForce defaults to true and neither -i, -n, nor -f given; refusing to clean")
 	}

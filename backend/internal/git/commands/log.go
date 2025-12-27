@@ -55,7 +55,7 @@ func (c *LogCommand) parseArgs(args []string) (*LogOptions, error) {
 	return opts, nil
 }
 
-func (c *LogCommand) executeLog(s *git.Session, repo *gogit.Repository, opts *LogOptions) (string, error) {
+func (c *LogCommand) executeLog(_ *git.Session, repo *gogit.Repository, opts *LogOptions) (string, error) {
 	// TODO: support revision range in opts.Args if needed.
 	// Current simulation uses default HEAD traversal.
 

@@ -81,8 +81,8 @@ func TestFetchCommand(t *testing.T) {
 	sm.SharedRemotes["test-shared"] = remoteRepo
 
 	// Local repo
-	initCmd := &InitCommand{}
-	initCmd.Execute(context.Background(), s, []string{"init"})
+	s.InitRepo("repo")
+	s.CurrentDir = "/repo"
 	repo := s.GetRepo()
 
 	// Add remote

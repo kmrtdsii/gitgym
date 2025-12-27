@@ -35,6 +35,9 @@ func (c *BranchCommand) Execute(ctx context.Context, s *git.Session, args []stri
 	// 1. Parse Args
 	opts, err := c.parseArgs(args)
 	if err != nil {
+		if err.Error() == "help requested" {
+			return c.Help(), nil
+		}
 		return "", err
 	}
 

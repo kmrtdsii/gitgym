@@ -69,7 +69,7 @@ func (c *RemoteCommand) parseArgs(args []string) (*RemoteOptions, error) {
 	return opts, nil
 }
 
-func (c *RemoteCommand) executeRemote(s *git.Session, repo *gogit.Repository, opts *RemoteOptions) (string, error) {
+func (c *RemoteCommand) executeRemote(_ *git.Session, repo *gogit.Repository, opts *RemoteOptions) (string, error) {
 	if opts.SubCmd == "" {
 		return listRemotes(repo, opts.Verbose)
 	}

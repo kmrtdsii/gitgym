@@ -88,7 +88,7 @@ func (c *DiffCommand) parseArgs(args []string) (*DiffOptions, error) {
 	return opts, nil
 }
 
-func (c *DiffCommand) executeDiff(s *git.Session, repo *gogit.Repository, opts *DiffOptions) (string, error) {
+func (c *DiffCommand) executeDiff(_ *git.Session, repo *gogit.Repository, opts *DiffOptions) (string, error) {
 	// Resolve refs
 	h1, err := repo.ResolveRevision(plumbing.Revision(opts.Ref1))
 	if err != nil {
