@@ -26,6 +26,58 @@ To implement a new Git feature (e.g., `git merge` support):
 -   **Terminal**: Respect the "Recorder Pattern" in `GitTerminal`. Do not bypass the transcript history mechanism.
 -   **State**: Always rely on backend-provided state. Do not perform optimistic updates that might diverge from `go-git`'s reality.
 
+## 2.1 Backend Command Pattern (Standardization)
+All commands in `internal/git/commands/` must follow the **Command Phasing** pattern to ensure consistency and testability.
+
+### Phase 1: Parse Arguments (`parseArgs`)
+-   **Input**: `[]string` args.
+-   **Output**: `*Options` struct, `error`.
+-   **Responsibility**:
+    -   Parse flags (using manual switch or flag set, but consistent).
+    -   Handle `--help` or `-h` by returning the specific error `fmt.Errorf("help requested")`. The `Execute` method must catch this.
+    -   Validate basic inputs (e.g., missing required args).
+
+### Phase 2: Resolve Context (`resolveContext`)
+-   **Input**: `*git.Session`, `*Options`.
+-   **Output**: `*Context` struct (e.g., `pushContext`), `error`.
+-   **Responsibility**:
+    -   Interact with `go-git` to resolve references, commits, or remotes.
+    -   Perform "Read-Only" checks (e.g., does the branch exist? is the remote valid?).
+    -   **No side effects** allowed here.
+
+### Phase 3: Execute Action (`performX`)
+-   **Input**: `*Context`, `*Options`.
+-   **Output**: `string` (user message), `error`.
+-   **Responsibility**:
+    -   Perform the actual write operations (Commit, Push, Reset).
+    -   Return the success message.
+
+### Example `Execute` Implementation
+```go
+func (c *MyCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
+    s.Lock()
+    defer s.Unlock()
+
+    // 1. Parse
+    opts, err := c.parseArgs(args)
+    if err != nil {
+        if err.Error() == "help requested" {
+            return c.Help(), nil
+        }
+        return "", err
+    }
+
+    // 2. Resolve
+    mCtx, err := c.resolveContext(s, opts)
+    if err != nil {
+        return "", err
+    }
+
+    // 3. Perform
+    return c.performAction(s, mCtx)
+}
+```
+
 ## 3. Verification Strategy
 Detailed testing patterns are defined in [Testing Strategy](./testing-strategy.md).
 

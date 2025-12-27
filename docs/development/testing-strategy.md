@@ -29,6 +29,26 @@ func TestCheckout(t *testing.T) {
 }
 ```
 
+### Simulating Remotes
+Since GitGym uses "Simulated Remotes" (local directories in `.gitgym-data`), tests involving network commands (`clone`, `push`, `pull`, `fetch`) must:
+1.  **Initialize Remote**: Create a bare repo to act as remote.
+2.  **Register Remote**: Use `s.Manager.SharedRemotes` or manually map it in `s.Repos` if testing session-local remotes.
+3.  **Panic Guards**: When inspecting references from `go-git` (e.g., `ref.Hash()`), ALWAYS check for `nil` or error first. `go-git` can return nil references in edge cases which cause immediate panics.
+
+#### Example: Remote Setup
+```go
+// Setup "remote"
+remoteSt := memory.NewStorage()
+remoteRepo, _ := gogit.Init(remoteSt, nil) // Bare
+
+// Setup "local" and link
+s.Repos["local"] = localRepo
+_, _ = localRepo.CreateRemote(&config.RemoteConfig{
+    Name: "origin",
+    URLs: []string{"/remote-path"}, // Internal logic maps this
+})
+```
+
 ## 2. Frontend Testing (Playwright)
 We use **Playwright** for End-to-End (E2E) testing.
 
