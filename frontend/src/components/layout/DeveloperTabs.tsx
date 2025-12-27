@@ -1,5 +1,6 @@
 import React from 'react';
-import { Monitor } from 'lucide-react';
+import { Monitor, X, Plus } from 'lucide-react';
+import './DeveloperTabs.css';
 
 interface DeveloperTabsProps {
     developers: string[];
@@ -41,29 +42,20 @@ const DeveloperTabs: React.FC<DeveloperTabsProps> = ({
     };
 
     return (
-        <div
-            className="developer-tabs-container"
-            style={{
-                height: '32px',
-                background: 'var(--bg-secondary)',
-                display: 'flex',
-                alignItems: 'flex-end',
-                borderBottom: 'none',
-            }}
-        >
+        <div className="developer-tabs-container" data-testid="developer-tabs">
             <div
                 className="tab-container"
                 role="tablist"
                 aria-label="Developer tabs"
+                data-testid="tab-list"
                 ref={tabListRef}
-                style={{ display: 'flex', height: '100%', alignItems: 'flex-end' }}
             >
                 {developers.map((dev, index) => {
                     const isActive = dev === activeDeveloper;
                     const isRemovable = dev !== 'Alice' && dev !== 'Bob';
 
                     return (
-                        <div key={dev} style={{ display: 'flex' }} className={`user-tab-wrapper ${isActive ? 'active' : ''}`}>
+                        <div key={dev} className={`user-tab-wrapper ${isActive ? 'active' : ''}`}>
                             <button
                                 role="tab"
                                 aria-selected={isActive}
@@ -73,11 +65,10 @@ const DeveloperTabs: React.FC<DeveloperTabsProps> = ({
                                 onClick={() => onSwitchDeveloper(dev)}
                                 onKeyDown={(e) => handleKeyDown(e, index)}
                                 className={`user-tab ${isActive ? 'active' : ''}`}
+                                data-testid={`tab-${dev}`}
                             >
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <Monitor size={14} />
-                                    {dev}
-                                </span>
+                                <Monitor size={14} />
+                                {dev}
                             </button>
                             {isRemovable && (
                                 <button
@@ -88,18 +79,9 @@ const DeveloperTabs: React.FC<DeveloperTabsProps> = ({
                                     className="tab-close-btn"
                                     aria-label={`Remove ${dev}`}
                                     title={`Remove ${dev}`}
-                                    style={{
-                                        border: 'none',
-                                        background: 'transparent',
-                                        color: 'var(--text-tertiary)',
-                                        cursor: 'pointer',
-                                        padding: '0 6px',
-                                        fontSize: '12px',
-                                        display: 'flex',
-                                        alignItems: 'center'
-                                    }}
+                                    data-testid={`remove-tab-${dev}`}
                                 >
-                                    ✕
+                                    <X size={14} />
                                 </button>
                             )}
                         </div>
@@ -111,8 +93,9 @@ const DeveloperTabs: React.FC<DeveloperTabsProps> = ({
                 title="Add Developer"
                 aria-label="Add new developer"
                 onClick={onAddDeveloper}
+                data-testid="add-developer-btn"
             >
-                +
+                <Plus size={18} />
             </button>
         </div>
     );

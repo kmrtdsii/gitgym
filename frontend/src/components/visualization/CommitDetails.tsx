@@ -67,7 +67,7 @@ const CommitDetails: React.FC<CommitDetailsProps> = ({ commitId, onClose }) => {
     };
 
     return (
-        <div style={{
+        <div data-testid="commit-details-panel" style={{
             display: 'flex',
             flexDirection: 'column',
             height: '100%',

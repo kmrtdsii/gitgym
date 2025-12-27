@@ -29,11 +29,17 @@ When you start a task, follow this retrieval hierarchy:
     -   *Why?* To get user consensus and organize your thoughts.
     -   *Content*: Affected files, proposed logic, verification steps.
 3.  **Execution**: Write code iteratively. Fix Lints immediately.
-4.  **Reflection & Verification**:
     -   *Critique*: "Does my code explain *Why* it exists?"
     -   *Verify*: Run tests. Create `walkthrough.md` with proof of success.
 
-### B. Artifact Management
+### C. Backend Architecture (Command Phasing)
+All `internal/git/commands/` implementations MUST follow the **Command Phasing** pattern:
+1.  `parseArgs`: Validate inputs, handle flags.
+2.  `resolveContext`: Read-only `go-git` lookups (refs, commits).
+3.  `performAction`: State Mutation only.
+*See `docs/development/implementation-guide.md` for details.*
+
+### D. Artifact Management
 -   **Live Artifacts**: Keep `task.md` updated in real-time. It is your short-term memory.
 -   **Permanent Knowledge**: If you discover a new pattern or architectural decision, document it in `docs/` (Project) or `.ai/guidelines/` (Generic Wisdom).
     -   If you learn a generic lesson (e.g., "How to debug Docker containers efficiently"), record it in `.ai/guidelines/`.

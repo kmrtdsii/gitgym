@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	gogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/kurobon/gitgym/backend/internal/git"
 )
 
@@ -29,13 +30,23 @@ type CommitOptions struct {
 	AllowEmpty bool
 }
 
+type commitContext struct {
+	w           *gogit.Worktree
+	repo        *gogit.Repository
+	message     string
+	amendCommit *object.Commit
+}
+
 func (c *CommitCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
 	s.Lock()
 	defer s.Unlock()
 
-	// 1. Parse Args
+	// 1. Parse
 	opts, err := c.parseArgs(args)
 	if err != nil {
+		if err.Error() == "help requested" {
+			return c.Help(), nil
+		}
 		return "", err
 	}
 
@@ -44,13 +55,14 @@ func (c *CommitCommand) Execute(ctx context.Context, s *git.Session, args []stri
 		return "", fmt.Errorf("fatal: not a git repository (or any of the parent directories): .git")
 	}
 
-	w, err := repo.Worktree()
+	// 2. Resolve
+	cCtx, err := c.resolveContext(repo, opts, args)
 	if err != nil {
 		return "", err
 	}
 
-	// 2. Execution
-	return c.executeCommit(s, repo, w, opts, args)
+	// 3. Perform
+	return c.performAction(s, cCtx, opts)
 }
 
 func (c *CommitCommand) parseArgs(args []string) (*CommitOptions, error) {
@@ -77,70 +89,77 @@ func (c *CommitCommand) parseArgs(args []string) (*CommitOptions, error) {
 	return opts, nil
 }
 
-func (c *CommitCommand) executeCommit(s *git.Session, repo *gogit.Repository, w *gogit.Worktree, opts *CommitOptions, originalArgs []string) (string, error) {
-	if opts.Amend {
-		return c.handleAmend(s, repo, w, opts, originalArgs)
+func (c *CommitCommand) resolveContext(repo *gogit.Repository, opts *CommitOptions, originalArgs []string) (*commitContext, error) {
+	w, err := repo.Worktree()
+	if err != nil {
+		return nil, err
 	}
 
-	// Normal commit
-	commit, err := w.Commit(opts.Message, &gogit.CommitOptions{
-		Author:            git.GetDefaultSignature(),
-		AllowEmptyCommits: opts.AllowEmpty,
-	})
+	ctx := &commitContext{
+		w:    w,
+		repo: repo,
+	}
+
+	if opts.Amend {
+		headRef, err := repo.Head()
+		if err != nil {
+			return nil, fmt.Errorf("cannot amend without HEAD: %v", err)
+		}
+		headCommit, err := repo.CommitObject(headRef.Hash())
+		if err != nil {
+			return nil, err
+		}
+		ctx.amendCommit = headCommit
+
+		// Handle message reuse for amend
+		isMsgProvided := false
+		for _, arg := range originalArgs {
+			if arg == "-m" {
+				isMsgProvided = true
+				break
+			}
+		}
+
+		if isMsgProvided {
+			ctx.message = opts.Message
+		} else {
+			ctx.message = headCommit.Message
+		}
+	} else {
+		ctx.message = opts.Message
+	}
+
+	return ctx, nil
+}
+
+func (c *CommitCommand) performAction(s *git.Session, ctx *commitContext, opts *CommitOptions) (string, error) {
+	var commitOpts gogit.CommitOptions
+	commitOpts.Author = git.GetDefaultSignature()
+	commitOpts.AllowEmptyCommits = opts.AllowEmpty
+
+	actionLabel := "commit"
+
+	if opts.Amend {
+		s.UpdateOrigHead()
+		commitOpts.Parents = ctx.amendCommit.ParentHashes
+		commitOpts.AllowEmptyCommits = true // Amending generally allowed
+		actionLabel = "commit (amend)"
+	}
+
+	commitHash, err := ctx.w.Commit(ctx.message, &commitOpts)
 	if err != nil {
 		if strings.Contains(err.Error(), "clean") || strings.Contains(err.Error(), "nothing to commit") {
 			return "", fmt.Errorf("%v\nhint: Use 'git commit --allow-empty -m <message>' to create an empty commit", err)
 		}
 		return "", err
 	}
-	s.RecordReflog(fmt.Sprintf("commit: %s", strings.Split(opts.Message, "\n")[0]))
-	return fmt.Sprintf("Commit created: %s", commit.String()), nil
-}
 
-func (c *CommitCommand) handleAmend(s *git.Session, repo *gogit.Repository, w *gogit.Worktree, opts *CommitOptions, args []string) (string, error) {
-	headRef, err := repo.Head()
-	if err != nil {
-		return "", fmt.Errorf("cannot amend without HEAD: %v", err)
+	s.RecordReflog(fmt.Sprintf("%s: %s", actionLabel, strings.Split(ctx.message, "\n")[0]))
+
+	if opts.Amend {
+		return fmt.Sprintf("Commit amended: %s", commitHash.String()), nil
 	}
-	headCommit, err := repo.CommitObject(headRef.Hash())
-	if err != nil {
-		return "", err
-	}
-
-	parents := headCommit.ParentHashes
-
-	// Reuse message if not provided explicitly
-	// We check if "Message" changed from default?
-	// Or check if -m was present in args?
-	// Naive check: if opts.Message is "Default commit message" AND -m wasn't in args...
-	// Better: parseArgs logic assumes default.
-	// Let's replicate strict logic: check if -m was present in args.
-	isMsgProvided := false
-	for _, arg := range args {
-		if arg == "-m" {
-			isMsgProvided = true
-			break
-		}
-	}
-
-	msg := opts.Message
-	if !isMsgProvided {
-		msg = headCommit.Message
-	}
-
-	s.UpdateOrigHead()
-
-	newCommitHash, err := w.Commit(msg, &gogit.CommitOptions{
-		Parents:           parents,
-		Author:            git.GetDefaultSignature(),
-		AllowEmptyCommits: true, // Amending generally allowed
-	})
-	if err != nil {
-		return "", err
-	}
-	s.RecordReflog("commit (amend): " + strings.Split(msg, "\n")[0])
-
-	return fmt.Sprintf("Commit amended: %s", newCommitHash.String()), nil
+	return fmt.Sprintf("Commit created: %s", commitHash.String()), nil
 }
 
 func (c *CommitCommand) Help() string {

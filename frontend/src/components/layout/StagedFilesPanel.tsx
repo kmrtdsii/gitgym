@@ -12,7 +12,7 @@ export const StagedFilesPanel: React.FC = () => {
     if (stagedFiles.length === 0) return null;
 
     return (
-        <div style={{
+        <div data-testid="staged-files-panel" style={{
             width: '250px',
             display: 'flex',
             flexDirection: 'column',

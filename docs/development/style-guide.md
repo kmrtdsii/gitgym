@@ -53,3 +53,11 @@ var _ git.Command = (*MyCommand)(nil)
     // Good
     var s []string
     ```
+
+## 5. Linting & Static Analysis
+We enforce strict code quality via `golangci-lint`:
+- **Execution**: `scripts/test-all.sh` is the source of truth.
+- **Rule**: No lint warnings are allowed in production code.
+- **Test Exemption**: It is acceptable to use `--tests=false` for `golangci-lint` to avoid over-zealous security checks (like `gosec`) in `_test.go` files, provided the main code is secure.
+- **Unhandled Errors (G104)**: You MUST handle or explicitly ignore errors. `_ = f.Close()` is required, not just `f.Close()`.
+
