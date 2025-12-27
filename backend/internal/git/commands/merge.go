@@ -24,6 +24,19 @@ func init() {
 
 type MergeCommand struct{}
 
+type MergeOptions struct {
+	Target string
+	Squash bool
+	DryRun bool
+}
+
+type mergeContext struct {
+	TargetHash   plumbing.Hash
+	TargetCommit *object.Commit
+	HeadRef      *plumbing.Reference
+	HeadCommit   *object.Commit
+}
+
 func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
 	s.Lock()
 	defer s.Unlock()
@@ -33,159 +46,157 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 		return "", fmt.Errorf("fatal: not a git repository")
 	}
 
-	w, _ := repo.Worktree()
-	// Parse Flags
-	targetName := ""
-	squash := false
-	isDryRun := false
-
-	cmdArgs := args[1:]
-	for i := 0; i < len(cmdArgs); i++ {
-		arg := cmdArgs[i]
-		switch arg {
-		case "--squash":
-			squash = true
-		case "--dry-run", "-n":
-			isDryRun = true
-		case "--help", "-h":
-			return c.Help(), nil
-		default:
-			if targetName == "" {
-				targetName = arg
-			}
-		}
-	}
-
-	if targetName == "" {
-		return "", fmt.Errorf("usage: git merge [--squash] [--dry-run] <branch>")
-	}
-
-	// 1. Resolve HEAD
-	headRef, err := repo.Head()
-	if err != nil {
-		return "", err
-	}
-	headCommit, err := repo.CommitObject(headRef.Hash())
+	// 1. Parse Arguments
+	opts, err := c.parseArgs(args)
 	if err != nil {
 		return "", err
 	}
 
-	// 2. Resolve Target
-	// Use shared ResolveRevision to handle branches, tags, remote refs, and short hashes
-	targetHashPtr, err := git.ResolveRevision(repo, targetName)
+	// 2. Resolve Context
+	mCtx, err := c.resolveContext(repo, opts)
 	if err != nil {
-		return "", fmt.Errorf("merge: %s - not something we can merge", targetName)
-	}
-	targetHash := *targetHashPtr
-
-	targetCommit, err := repo.CommitObject(targetHash)
-	if err != nil {
-		return "", fmt.Errorf("merge: %s - not something we can merge (commit not found)", targetName)
+		return "", err
 	}
 
 	// Update ORIG_HEAD before any merge operation
 	s.UpdateOrigHead()
 
+	// 3. Execution
+	return c.performMerge(s, repo, mCtx, opts)
+}
+
+func (c *MergeCommand) parseArgs(args []string) (*MergeOptions, error) {
+	opts := &MergeOptions{}
+	cmdArgs := args[1:]
+	for i := 0; i < len(cmdArgs); i++ {
+		arg := cmdArgs[i]
+		switch arg {
+		case "--squash":
+			opts.Squash = true
+		case "--dry-run", "-n":
+			opts.DryRun = true
+		case "--help", "-h":
+			return nil, fmt.Errorf("help requested")
+		default:
+			if opts.Target == "" {
+				opts.Target = arg
+			}
+		}
+	}
+
+	if opts.Target == "" {
+		return nil, fmt.Errorf("usage: git merge [--squash] [--dry-run] <branch>")
+	}
+	return opts, nil
+}
+
+func (c *MergeCommand) resolveContext(repo *gogit.Repository, opts *MergeOptions) (*mergeContext, error) {
+	// 1. Resolve HEAD
+	headRef, err := repo.Head()
+	if err != nil {
+		return nil, err
+	}
+	headCommit, err := repo.CommitObject(headRef.Hash())
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Resolve Target
+	targetHashPtr, err := git.ResolveRevision(repo, opts.Target)
+	if err != nil {
+		return nil, fmt.Errorf("merge: %s - not something we can merge", opts.Target)
+	}
+	targetHash := *targetHashPtr
+
+	targetCommit, err := repo.CommitObject(targetHash)
+	if err != nil {
+		// Try resolving as commit if not found? ResolveRevision usually returns hash.
+		return nil, fmt.Errorf("merge: %s - not something we can merge (commit not found)", opts.Target)
+	}
+
+	return &mergeContext{
+		TargetHash:   targetHash,
+		TargetCommit: targetCommit,
+		HeadRef:      headRef,
+		HeadCommit:   headCommit,
+	}, nil
+}
+
+func (c *MergeCommand) performMerge(s *git.Session, repo *gogit.Repository, mCtx *mergeContext, opts *MergeOptions) (string, error) {
+	w, _ := repo.Worktree() // Error unlikely if repo exists
+
 	// --- SQUASH HANDLING ---
-	if squash {
-		if isDryRun {
-			return fmt.Sprintf("[dry-run] Would squash-merge %s into current branch (worktree would be updated but no commit created)", targetName), nil
+	if opts.Squash {
+		if opts.DryRun {
+			return fmt.Sprintf("[dry-run] Would squash-merge %s into current branch (worktree would be updated but no commit created)", opts.Target), nil
 		}
-		// 1. Apply changes from target to worktree (Simplified: Overwrite/Add from Target)
-		tree, treeErr := targetCommit.Tree()
-		if treeErr != nil {
-			return "", treeErr
-		}
-
-		err = tree.Files().ForEach(func(f *object.File) error {
-			// Write content
-			content, contentErr := f.Contents()
-			if contentErr != nil {
-				return contentErr
-			}
-
-			// Identify path
-			path := f.Name
-
-			// Write to FS
-			fsFile, openErr := w.Filesystem.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
-			if openErr != nil {
-				return openErr
-			}
-			defer fsFile.Close()
-			if _, writeErr := fsFile.Write([]byte(content)); writeErr != nil {
-				return writeErr
-			}
-
-			// Stage
-			_, err = w.Add(path)
-			return err
-		})
-		if err != nil {
+		// Apply changes from target (Simplified: Overwrite/Add)
+		// Note: This logic overwrites files. Real squash merge handles deletions and conflicts.
+		if err := c.applyTree(w, mCtx.TargetCommit); err != nil {
 			return "", err
 		}
 
-		// 2. Do NOT commit.
 		return "Squash merge -- not committed", nil
 	}
 
 	// 3. Analyze Ancestry
-	base, err := targetCommit.MergeBase(headCommit)
+	base, err := mCtx.TargetCommit.MergeBase(mCtx.HeadCommit)
 	if err == nil && len(base) > 0 {
-		// Check for "Already up to date"
-		if base[0].Hash == targetCommit.Hash {
+		// Already up to date
+		if base[0].Hash == mCtx.TargetCommit.Hash {
 			return "Already up to date.", nil
 		}
 
-		// Check for Fast-Forward
-		if base[0].Hash == headCommit.Hash {
-			if isDryRun {
-				return fmt.Sprintf("[dry-run] Would perform fast-forward merge of %s", targetName), nil
+		// Fast-Forward
+		if base[0].Hash == mCtx.HeadCommit.Hash {
+			if opts.DryRun {
+				return fmt.Sprintf("[dry-run] Would perform fast-forward merge of %s", opts.Target), nil
 			}
-			if headRef.Name().IsBranch() {
-				// We are on a branch. Use Reset --hard
-				s.UpdateOrigHead()
+			s.UpdateOrigHead() // Ensure checked before mutation
 
+			if mCtx.HeadRef.Name().IsBranch() {
 				err = w.Reset(&gogit.ResetOptions{
-					Commit: targetCommit.Hash,
+					Commit: mCtx.TargetCommit.Hash,
 					Mode:   gogit.HardReset,
 				})
 				if err != nil {
 					return "", err
 				}
-
-				return fmt.Sprintf("Updating %s..%s\nFast-forward", headCommit.Hash.String()[:7], targetCommit.Hash.String()[:7]), nil
+				return fmt.Sprintf("Updating %s..%s\nFast-forward", mCtx.HeadCommit.Hash.String()[:7], mCtx.TargetCommit.Hash.String()[:7]), nil
 			} else {
 				// Detached HEAD
-				s.UpdateOrigHead()
-
 				err = w.Checkout(&gogit.CheckoutOptions{
-					Hash: targetCommit.Hash,
+					Hash: mCtx.TargetCommit.Hash,
 				})
 				if err != nil {
 					return "", err
 				}
-				return fmt.Sprintf("Fast-forward to %s", targetName), nil
+				return fmt.Sprintf("Fast-forward to %s", opts.Target), nil
 			}
 		}
 	}
 
-	if isDryRun {
+	if opts.DryRun {
 		s.PotentialCommits = []git.Commit{
 			{
 				ID:             "sim-merge",
-				Message:        fmt.Sprintf("Merge branch '%s' (simulation)", targetName),
-				ParentID:       headCommit.Hash.String(),
-				SecondParentID: targetCommit.Hash.String(),
+				Message:        fmt.Sprintf("Merge branch '%s' (simulation)", opts.Target),
+				ParentID:       mCtx.HeadCommit.Hash.String(),
+				SecondParentID: mCtx.TargetCommit.Hash.String(),
 				Timestamp:      time.Now().Format(time.RFC3339),
 			},
 		}
-		return fmt.Sprintf("[dry-run] Would create merge commit for %s (strategy 'ort')", targetName), nil
+		return fmt.Sprintf("[dry-run] Would create merge commit for %s (strategy 'ort')", opts.Target), nil
 	}
 
 	// 4. Merge Commit
-	msg := fmt.Sprintf("Merge branch '%s'", targetName)
-	parents := []plumbing.Hash{headCommit.Hash, targetCommit.Hash}
+	// Apply changes from target to worktree (Simulation: Overwrite/Add from Target "Theirs")
+	if err := c.applyTree(w, mCtx.TargetCommit); err != nil {
+		return "", err
+	}
+
+	msg := fmt.Sprintf("Merge branch '%s'", opts.Target)
+	parents := []plumbing.Hash{mCtx.HeadCommit.Hash, mCtx.TargetCommit.Hash}
 
 	s.UpdateOrigHead()
 
@@ -199,6 +210,31 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 	}
 
 	return fmt.Sprintf("Merge made by the 'ort' strategy.\n %s", newCommitHash.String()), nil
+}
+
+func (c *MergeCommand) applyTree(w *gogit.Worktree, commit *object.Commit) error {
+	tree, err := commit.Tree()
+	if err != nil {
+		return err
+	}
+
+	return tree.Files().ForEach(func(f *object.File) error {
+		content, contentErr := f.Contents()
+		if contentErr != nil {
+			return contentErr
+		}
+		path := f.Name
+		fsFile, openErr := w.Filesystem.OpenFile(path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+		if openErr != nil {
+			return openErr
+		}
+		defer fsFile.Close()
+		if _, writeErr := fsFile.Write([]byte(content)); writeErr != nil {
+			return writeErr
+		}
+		_, err := w.Add(path)
+		return err
+	})
 }
 
 func (c *MergeCommand) Help() string {

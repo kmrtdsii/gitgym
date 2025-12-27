@@ -16,6 +16,16 @@ func init() {
 
 type CheckoutCommand struct{}
 
+type CheckoutOptions struct {
+	NewBranch      string
+	ForceNewBranch string
+	OrphanBranch   string
+	Force          bool
+	Detach         bool
+	Target         string
+	Files          []string // For "git checkout -- <file>"
+}
+
 func (c *CheckoutCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
 	s.Lock()
 	defer s.Unlock()
@@ -27,88 +37,100 @@ func (c *CheckoutCommand) Execute(ctx context.Context, s *git.Session, args []st
 
 	w, _ := repo.Worktree()
 
-	// Flags
-	var (
-		newBranch      string
-		forceNewBranch string
-		orphanBranch   string
-		force          bool
-		detach         bool // Not explicitly flagged often, but logic might support
-		target         string
-	)
+	// 1. Parse Arguments
+	opts, err := c.parseArgs(args)
+	if err != nil {
+		return "", err
+	}
 
-	// Parse flags
+	// 2. Dispatch
+	// Handle Files checkout first (if Files are set)
+	if len(opts.Files) > 0 {
+		return c.checkoutFiles(repo, w, opts.Files)
+	}
+
+	// Handle Orphan
+	if opts.OrphanBranch != "" {
+		return c.checkoutOrphan(repo, s, opts.OrphanBranch)
+	}
+
+	// Handle New Branch / Factor New Branch (-b or -B)
+	if opts.NewBranch != "" || opts.ForceNewBranch != "" {
+		name := opts.NewBranch
+		forceCreate := false
+		if opts.ForceNewBranch != "" {
+			name = opts.ForceNewBranch
+			forceCreate = true
+		}
+
+		startPoint := opts.Target
+		if startPoint == "" {
+			startPoint = "HEAD"
+		}
+
+		return c.createAndCheckout(repo, w, s, name, startPoint, forceCreate, opts.Force)
+	}
+
+	if opts.Target == "" {
+		return "", fmt.Errorf("usage: git checkout <branch> | git checkout -b <branch>")
+	}
+
+	// Try checking out target as reference/commit
+	return c.checkoutRefOrPath(repo, w, s, opts.Target, opts.Force, opts.Detach)
+}
+
+func (c *CheckoutCommand) parseArgs(args []string) (*CheckoutOptions, error) {
+	opts := &CheckoutOptions{}
 	cmdArgs := args[1:]
 	for i := 0; i < len(cmdArgs); i++ {
 		arg := cmdArgs[i]
 		switch arg {
 		case "-b":
 			if i+1 >= len(cmdArgs) {
-				return "", fmt.Errorf("fatal: missing branch name for -b")
+				return nil, fmt.Errorf("fatal: missing branch name for -b")
 			}
-			newBranch = cmdArgs[i+1]
+			opts.NewBranch = cmdArgs[i+1]
 			i++
 		case "-B":
 			if i+1 >= len(cmdArgs) {
-				return "", fmt.Errorf("fatal: missing branch name for -B")
+				return nil, fmt.Errorf("fatal: missing branch name for -B")
 			}
-			forceNewBranch = cmdArgs[i+1]
+			opts.ForceNewBranch = cmdArgs[i+1]
 			i++
 		case "--orphan":
 			if i+1 >= len(cmdArgs) {
-				return "", fmt.Errorf("fatal: missing branch name for --orphan")
+				return nil, fmt.Errorf("fatal: missing branch name for --orphan")
 			}
-			orphanBranch = cmdArgs[i+1]
+			opts.OrphanBranch = cmdArgs[i+1]
 			i++
 		case "-f", "--force":
-			force = true
+			opts.Force = true
 		case "--detach":
-			detach = true // Explicit detach
+			opts.Detach = true
 		case "-h", "--help":
-			return c.Help(), nil
+			return nil, fmt.Errorf("help requested")
 		case "--":
-			// End of flags, remainder are paths?
-			// git checkout -- <file>
+			// End of flags, remainder are paths
 			if i+1 >= len(cmdArgs) {
-				return "", fmt.Errorf("fatal: filename required after --")
+				return nil, fmt.Errorf("fatal: filename required after --")
 			}
-			return c.checkoutFiles(repo, w, cmdArgs[i+1:])
+			opts.Files = cmdArgs[i+1:]
+			return opts, nil // Return immediately as loose args are consumed
 		default:
-			if target == "" {
-				target = arg
+			if opts.Target == "" {
+				opts.Target = arg
+			} else {
+				// Treat extra arg as file path if target is already set?
+				// git checkout <branch> <path>? No usually git checkout <path>
+				// But we support parsing first non-flag as Target.
+				// If Target is set, assume remainder are files?
+				// Simplified: Just error or ignore.
+				// Existing logic ignored subsequent args unless '--' was used or it was implicitly files check.
+				// Let's assume strict parsing for now or keep existing behavior (ignore).
 			}
-			// else: multiple args not supported for branch checkout unless paths
 		}
 	}
-
-	// Logic Dispatch
-
-	if orphanBranch != "" {
-		return c.checkoutOrphan(repo, s, orphanBranch)
-	}
-
-	if newBranch != "" || forceNewBranch != "" {
-		name := newBranch
-		forceCreate := false
-		if forceNewBranch != "" {
-			name = forceNewBranch
-			forceCreate = true
-		}
-
-		startPoint := target
-		if startPoint == "" {
-			startPoint = "HEAD"
-		}
-
-		return c.createAndCheckout(repo, w, s, name, startPoint, forceCreate, force)
-	}
-
-	if target == "" {
-		return "", fmt.Errorf("usage: git checkout <branch> | git checkout -b <branch>")
-	}
-
-	// Try checking out target as reference/commit
-	return c.checkoutRefOrPath(repo, w, s, target, force, detach)
+	return opts, nil
 }
 
 func (c *CheckoutCommand) checkoutOrphan(repo *gogit.Repository, s *git.Session, branchName string) (string, error) {
