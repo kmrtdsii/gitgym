@@ -44,8 +44,6 @@ type cloneContext struct {
 
 func (c *CloneCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
 
-	log.Printf("Clone: Starting execution args=%v", args)
-
 	s.Lock()
 	defer s.Unlock()
 
@@ -114,10 +112,7 @@ func (c *CloneCommand) resolveContext(s *git.Session, opts *CloneOptions) (*clon
 
 	if s.Manager != nil {
 		// Check SharedRemotes
-		log.Printf("Clone: Checking shared remotes for %s", opts.URL)
-
 		if r, ok := s.Manager.GetSharedRemote(opts.URL); ok {
-			log.Printf("Clone: Found shared remote for URL %s", opts.URL)
 			remoteRepo = r
 			remoteSt = r.Storer
 
@@ -130,7 +125,6 @@ func (c *CloneCommand) resolveContext(s *git.Session, opts *CloneOptions) (*clon
 				remotePath = opts.URL
 			}
 		} else if r, ok := s.Manager.GetSharedRemote(repoName); ok {
-			log.Printf("Clone: Found shared remote by name %s", repoName)
 			remoteRepo = r
 			remoteSt = r.Storer
 
@@ -158,8 +152,6 @@ func (c *CloneCommand) resolveContext(s *git.Session, opts *CloneOptions) (*clon
 }
 
 func (c *CloneCommand) performClone(s *git.Session, clCtx *cloneContext) (string, error) {
-	log.Printf("Clone: Remote resolved. Path: %s. Starting Local Creation...", clCtx.RemotePath)
-
 	// Create Local Working Copy
 	if errMkdir := s.Filesystem.MkdirAll(clCtx.RepoName, 0755); errMkdir != nil {
 		return "", fmt.Errorf("failed to create directory: %w", errMkdir)
@@ -187,8 +179,6 @@ func (c *CloneCommand) performClone(s *git.Session, clCtx *cloneContext) (string
 		return "", fmt.Errorf("failed to init local repo: %w", err)
 	}
 
-	log.Printf("Clone: Using HybridStorer (Zero-Copy). Local initialized.")
-
 	// Copy References
 	if err := c.copyReferences(localRepo, clCtx.RemoteRepo); err != nil {
 		log.Printf("Clone: Warning - Issue copying references: %v", err)
@@ -215,7 +205,6 @@ func (c *CloneCommand) performClone(s *git.Session, clCtx *cloneContext) (string
 		log.Printf("Clone: Warning - Checkout default branch issue: %v", err)
 	}
 
-	log.Printf("Clone: Success. Cloned into %s", clCtx.RepoName)
 	return fmt.Sprintf("Cloned into '%s'... (Using shared remote)", clCtx.RepoName), nil
 }
 
