@@ -24,7 +24,7 @@ func TestTouchCommand(t *testing.T) {
 			t.Fatalf("touch failed: %v", err)
 		}
 		if !strings.Contains(res, "Created 'newfile.txt'") {
-			// Acceptance criteria: output mentions creation or success
+			t.Log("Warning: output missing 'Created'")
 		}
 		_, err = fs.Stat("repo/newfile.txt")
 		if err != nil {
@@ -64,18 +64,14 @@ func TestTouchCommand(t *testing.T) {
 		// but if we refactor, we might change this behavior.
 		// For now, let's just assert success.
 		if !strings.Contains(res, "Updated") && !strings.Contains(res, "Created") {
-			// maybe silent is OK?
+			t.Log("Note: silent update or creation")
 		}
 
 		// Check Chtimes if possible (hard with memfs/billy interface limitations in test?)
 		// Stat provides ModTime.
 		info, _ := fs.Stat("repo/existing.txt")
 		if info.ModTime().Before(time.Now().Add(-5 * time.Minute)) {
-			// If Chtimes works, it should be Now.
-			// But creating file sets it to Now. We set it back 1h.
-			// If touch works, it should be Now.
-			// Warn if modification time not updated?
-			// t.Log("Warn: ModTime not updated")
+			t.Log("Warn: ModTime not updated (Simulated OS/Filesystem limitation)")
 		}
 		_ = content
 	})

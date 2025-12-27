@@ -17,6 +17,9 @@ func init() {
 
 type MergePRCommand struct{}
 
+// Ensure MergePRCommand implements git.Command
+var _ git.Command = (*MergePRCommand)(nil)
+
 func (c *MergePRCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
 	// Usage: merge-pr <pr-id> <remote-name>
 	// args[0] is "merge-pr"

@@ -17,7 +17,7 @@ func TestCheckoutCommand(t *testing.T) {
 	sm := git.NewSessionManager()
 	s, _ := sm.CreateSession("test-checkout")
 
-	s.InitRepo("repo")
+	_, _ = s.InitRepo("repo")
 	s.CurrentDir = "/repo"
 
 	repo := s.GetRepo()
@@ -25,9 +25,9 @@ func TestCheckoutCommand(t *testing.T) {
 
 	// Need a commit to checkout from
 	f, _ := w.Filesystem.Create("file.txt")
-	f.Write([]byte("base"))
-	f.Close()
-	w.Add("file.txt")
+	_, _ = f.Write([]byte("base"))
+	_ = f.Close()
+	_, _ = w.Add("file.txt")
 	w.Commit("base commit", &gogit.CommitOptions{Author: &object.Signature{Name: "Me", When: time.Now()}})
 
 	cmd := &CheckoutCommand{}

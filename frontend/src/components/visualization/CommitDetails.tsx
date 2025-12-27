@@ -40,7 +40,7 @@ const CommitDetails: React.FC<CommitDetailsProps> = ({ commitId, onClose }) => {
                         const parts = line.split('\t');
                         if (parts.length >= 2) {
                             parsedChanges.push({
-                                status: parts[0][0] as any,
+                                status: parts[0][0] as FileChange['status'],
                                 path: parts[1]
                             });
                         }

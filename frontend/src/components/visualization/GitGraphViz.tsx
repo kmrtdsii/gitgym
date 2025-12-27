@@ -66,7 +66,7 @@ const GitGraphViz: React.FC<GitGraphVizProps> = ({
         const el = containerRef.current;
         if (!el) return;
         const ro = new ResizeObserver(entries => {
-            for (let entry of entries) {
+            for (const entry of entries) {
                 setViewportHeight(entry.contentRect.height);
             }
         });

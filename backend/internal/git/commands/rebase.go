@@ -209,7 +209,7 @@ func (c *RebaseCommand) prepareRebaseContext(repo *gogit.Repository, opts *Rebas
 			return nil, fmt.Errorf("failed to find merge base: %v", mbErr)
 		}
 		if len(mergeBases) == 0 {
-			return nil, fmt.Errorf("fatal: no common ancestor found. Use --root to rebase unrelated histories.")
+			return nil, fmt.Errorf("fatal: no common ancestor found. Use --root to rebase unrelated histories")
 		}
 		base := mergeBases[0]
 

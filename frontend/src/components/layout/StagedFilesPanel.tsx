@@ -55,7 +55,7 @@ export const StagedFilesPanel: React.FC = () => {
                     const indexStatus = fullStatus[0]; // 'A', 'M', 'D', 'R'
 
                     let badgeColor = 'var(--text-secondary)';
-                    let label = indexStatus;
+                    const label = indexStatus;
                     let title = 'Modified';
 
                     switch (indexStatus) {

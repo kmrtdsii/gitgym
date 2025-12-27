@@ -61,6 +61,10 @@ func TestTagCommand(t *testing.T) {
 		}
 
 		res, err = cmd.Execute(context.Background(), s, []string{"tag"})
+		if err != nil {
+			t.Fatalf("List tags failed: %v", err)
+		}
+		_ = res
 		if !strings.Contains(res, "v2.0") {
 			t.Errorf("Tag v2.0 not found in list")
 		}
@@ -76,6 +80,10 @@ func TestTagCommand(t *testing.T) {
 		}
 
 		res, err = cmd.Execute(context.Background(), s, []string{"tag"})
+		if err != nil {
+			t.Fatalf("List tags failed: %v", err)
+		}
+		_ = res
 		if strings.Contains(res, "v1.0") {
 			t.Errorf("Tag v1.0 still found in list")
 		}

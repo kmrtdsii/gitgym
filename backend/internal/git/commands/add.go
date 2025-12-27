@@ -81,7 +81,7 @@ func (c *AddCommand) parseArgs(args []string) (*AddOptions, error) {
 
 func (c *AddCommand) executeAdd(w *gogit.Worktree, opts *AddOptions) (string, error) {
 	if len(opts.Pathspecs) == 0 && !opts.All {
-		return "", fmt.Errorf("Nothing specified, nothing added.\nMaybe you wanted to say 'git add .'?")
+		return "", fmt.Errorf("nothing specified, nothing added.\nMaybe you wanted to say 'git add .'?")
 	}
 
 	var err error

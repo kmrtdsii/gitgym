@@ -43,7 +43,7 @@ func (c *TouchCommand) Execute(ctx context.Context, s *git.Session, args []strin
 func (c *TouchCommand) parseArgs(args []string) (*TouchOptions, error) {
 	cmdArgs := args[1:]
 	if len(cmdArgs) == 0 {
-		return nil, fmt.Errorf("usage: touch <file>...")
+		return nil, fmt.Errorf("usage: touch <file>")
 	}
 	return &TouchOptions{Files: cmdArgs}, nil
 }
@@ -71,7 +71,7 @@ func (c *TouchCommand) executeTouch(s *git.Session, opts *TouchOptions) (string,
 			if createErr != nil {
 				return "", createErr
 			}
-			f.Close()
+			_ = f.Close()
 			created = append(created, filename)
 		} else {
 			// File exists, try to update modification time

@@ -210,11 +210,11 @@ func (c *BranchCommand) createBranch(repo *gogit.Repository, opts *BranchOptions
 		// Existing logic
 		head, headErr := repo.Head()
 		if headErr == nil && head.Name() == refName {
-			return "", fmt.Errorf("fatal: Cannot force update the current branch.")
+			return "", fmt.Errorf("fatal: cannot force update the current branch")
 		}
 
 		if !opts.Force {
-			return "", fmt.Errorf("fatal: A branch named '%s' already exists.", name)
+			return "", fmt.Errorf("fatal: a branch named '%s' already exists", name)
 		}
 		// If force is true, we proceed to overwrite
 	}

@@ -35,7 +35,7 @@ func (s *Server) handleExecCommand(w http.ResponseWriter, r *http.Request) {
 
 	// DEBUG: Log to file upstream
 	logFile := "/tmp/gitgym_clone_debug.log"
-	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(logFile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 	if err == nil {
 		defer f.Close()
 		log.SetOutput(f)

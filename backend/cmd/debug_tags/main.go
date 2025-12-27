@@ -11,7 +11,7 @@ import (
 func main() {
 	// Clone to temp dir
 	tempDir := "/tmp/fastapi_debug"
-	os.RemoveAll(tempDir)
+	_ = os.RemoveAll(tempDir)
 
 	fmt.Println("Cloning fastapi to", tempDir)
 	_, err := git.PlainClone(tempDir, false, &git.CloneOptions{

@@ -83,7 +83,7 @@ const DeveloperTabs: React.FC<DeveloperTabsProps> = ({
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        onRemoveDeveloper && onRemoveDeveloper(dev);
+                                        if (onRemoveDeveloper) onRemoveDeveloper(dev);
                                     }}
                                     className="tab-close-btn"
                                     aria-label={`Remove ${dev}`}

@@ -251,10 +251,10 @@ func (c *RestoreCommand) restoreWorktree(repo *gogit.Repository, files []string,
 		}
 
 		if _, err := io.Copy(f, reader); err != nil {
-			f.Close()
+			_ = f.Close()
 			return "", err
 		}
-		f.Close()
+		_ = f.Close()
 		restoredCount++
 	}
 

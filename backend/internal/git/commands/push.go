@@ -61,10 +61,10 @@ func (c *PushCommand) Execute(ctx context.Context, s *git.Session, args []string
 		return "", err
 	}
 
-	if opts.DryRun {
-		// Quick check before resolution? Or resolved dry run?
-		// Logic below does full resolution then prints matches.
-	}
+	// if opts.DryRun {
+	// 	// Quick check before resolution? Or resolved dry run?
+	// 	// Logic below does full resolution then prints matches.
+	// }
 
 	// 2. Resolve Context (Remote, TargetRepo, RefToPush)
 	pCtx, err := c.resolveContext(s, repo, opts)

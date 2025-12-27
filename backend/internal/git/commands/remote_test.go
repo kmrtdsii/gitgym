@@ -99,7 +99,7 @@ func TestFetchCommand(t *testing.T) {
 			t.Fatalf("Fetch failed: %v", err)
 		}
 		if !strings.Contains(res, "new branch") && !strings.Contains(res, "test-shared") {
-			// output depends on implementation details
+			t.Logf("Note: Fetch output '%s' did not contain expected keywords (implementation detail)", res)
 		}
 
 		// Check if remote ref exists

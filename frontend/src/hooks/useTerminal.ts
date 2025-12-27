@@ -142,7 +142,7 @@ export const useTerminal = (
         prevDeveloperRef.current = activeDeveloper;
         setTimeout(() => fitAddonRef.current?.fit(), 50);
 
-    }, [activeDeveloper, sessionId, clearTranscript, terminalTranscripts, writeAndRecord, fitAddonRef, xtermRef, isReady]);
+    }, [activeDeveloper, sessionId, clearTranscript, terminalTranscripts, writeAndRecord, fitAddonRef, xtermRef, isReady, t]);
 
     const [promptTrigger, setPromptTrigger] = useState(0);
 

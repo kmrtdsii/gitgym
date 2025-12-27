@@ -44,6 +44,7 @@ func TestShowCommand(t *testing.T) {
 			// default show prints commit object string?
 			// current implementation prints formatting?
 			// actually commit.String() prints full details.
+			t.Log("Note: show output format might differ from commit.String()")
 		}
 	})
 

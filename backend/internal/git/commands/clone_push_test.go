@@ -21,7 +21,7 @@ func TestPersistentRemoteCycle(t *testing.T) {
 
 	// 2. Create a "Real" Source Repo (simulating GitHub)
 	// We init it and add a commit so it's cloneable
-	err := os.MkdirAll(sourceRepoPath, 0755)
+	err := os.MkdirAll(sourceRepoPath, 0750)
 	if err != nil {
 		t.Fatal(err)
 	}

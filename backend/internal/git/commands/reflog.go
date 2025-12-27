@@ -14,6 +14,9 @@ func init() {
 
 type ReflogCommand struct{}
 
+// Ensure ReflogCommand implements git.Command
+var _ git.Command = (*ReflogCommand)(nil)
+
 func (c *ReflogCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
 	s.Lock()
 	defer s.Unlock()
@@ -25,8 +28,7 @@ func (c *ReflogCommand) Execute(ctx context.Context, s *git.Session, args []stri
 
 	// Parse flags
 	cmdArgs := args[1:]
-	for i := 0; i < len(cmdArgs); i++ {
-		arg := cmdArgs[i]
+	for _, arg := range cmdArgs {
 		switch arg {
 		case "-h", "--help":
 			return c.Help(), nil

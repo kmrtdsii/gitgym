@@ -84,6 +84,7 @@ func TestCleanCommand(t *testing.T) {
 
 		// 1. clean -f (should NOT remove dir, but remove file inside)
 		res, err := cmd.Execute(context.Background(), s, []string{"clean", "-f"})
+		_ = res // use result or ignore explicitly
 		if err != nil {
 			t.Fatal(err)
 		}

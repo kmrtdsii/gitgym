@@ -125,14 +125,6 @@ func (c *CheckoutCommand) parseArgs(args []string) (*CheckoutOptions, error) {
 		default:
 			if opts.Target == "" {
 				opts.Target = arg
-			} else {
-				// Treat extra arg as file path if target is already set?
-				// git checkout <branch> <path>? No usually git checkout <path>
-				// But we support parsing first non-flag as Target.
-				// If Target is set, assume remainder are files?
-				// Simplified: Just error or ignore.
-				// Existing logic ignored subsequent args unless '--' was used or it was implicitly files check.
-				// Let's assume strict parsing for now or keep existing behavior (ignore).
 			}
 		}
 	}
@@ -149,7 +141,7 @@ func (c *CheckoutCommand) checkoutOrphan(repo *gogit.Repository, s *git.Session,
 	// Verify it doesn't exist
 	_, err := repo.Reference(refName, true)
 	if err == nil {
-		return "", fmt.Errorf("fatal: A branch named '%s' already exists.", branchName)
+		return "", fmt.Errorf("fatal: a branch named '%s' already exists", branchName)
 	}
 
 	// Set HEAD to symbolic ref (unborn)
@@ -186,7 +178,7 @@ func (c *CheckoutCommand) checkoutFiles(repo *gogit.Repository, w *gogit.Worktre
 
 		f, _ := w.Filesystem.OpenFile(filename, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
 		_, _ = f.Write([]byte(content))
-		f.Close()
+		_ = f.Close()
 	}
 
 	if len(files) == 1 {
@@ -208,7 +200,7 @@ func (c *CheckoutCommand) createAndCheckout(repo *gogit.Repository, w *gogit.Wor
 	// Check existence
 	_, err = repo.Reference(refName, true)
 	if err == nil && !forceCreate {
-		return "", fmt.Errorf("fatal: A branch named '%s' already exists.", branchName)
+		return "", fmt.Errorf("fatal: a branch named '%s' already exists", branchName)
 	}
 
 	newRef := plumbing.NewHashReference(refName, *hash)

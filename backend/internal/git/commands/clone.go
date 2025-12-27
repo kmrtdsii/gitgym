@@ -143,7 +143,7 @@ func (c *CloneCommand) resolveContext(s *git.Session, opts *CloneOptions) (*clon
 	}
 
 	if remoteRepo == nil {
-		return nil, fmt.Errorf("repository '%s' not found in shared remotes. Network cloning is disabled to prevent timeout issues. Please use a valid shared remote URL.", opts.URL)
+		return nil, fmt.Errorf("repository '%s' not found in shared remotes. Network cloning is disabled to prevent timeout issues. Please use a valid shared remote URL", opts.URL)
 	}
 
 	return &cloneContext{

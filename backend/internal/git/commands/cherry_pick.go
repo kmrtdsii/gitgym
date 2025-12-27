@@ -50,7 +50,7 @@ func (c *CherryPickCommand) Execute(ctx context.Context, s *git.Session, args []
 func (c *CherryPickCommand) parseArgs(args []string) (*CherryPickOptions, error) {
 	cmdArgs := args[1:]
 	if len(cmdArgs) == 0 {
-		return nil, fmt.Errorf("usage: git cherry-pick <commit>...")
+		return nil, fmt.Errorf("usage: git cherry-pick <commit>")
 	}
 	// For now, no flags supported, just assume all are commit args
 	return &CherryPickOptions{Args: cmdArgs}, nil
@@ -149,9 +149,9 @@ func (c *CherryPickCommand) executeCherryPick(_ *git.Session, repo *gogit.Reposi
 		// Ours: Current HEAD
 		// Theirs: The commit we are picking
 
-		if commitToPick.NumParents() == 0 {
-			// Picking a root commit - not handled in basic flow yet
-		}
+		// if commitToPick.NumParents() == 0 {
+		// 	// Picking a root commit - not handled in basic flow yet
+		// }
 
 		// Get current HEAD (Ours)
 		headRef, err = repo.Head() // Update HEAD ref in each iteration as it moves

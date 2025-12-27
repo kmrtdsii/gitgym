@@ -64,7 +64,7 @@ func (c *RmCommand) parseArgs(args []string) (*RmOptions, error) {
 	}
 
 	if len(opts.Paths) == 0 {
-		return nil, fmt.Errorf("usage: rm [-rf] <path>...")
+		return nil, fmt.Errorf("usage: rm [-rf] <path>")
 	}
 	return opts, nil
 }

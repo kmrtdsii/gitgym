@@ -212,9 +212,9 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 	if prune {
 		count, res, err := c.pruneRemoteBranches(repo, remoteName, remoteBranches, isDryRun)
 		if err != nil {
-			// Don't fail the whole fetch for prune errors, but maybe log?
-			// For now, we return error as per original logic if critical, but original logic appended error strings.
-			// Let's modify helper to return strings.
+			// Don't fail the whole fetch for prune errors
+			// for now we ignore it
+			_ = err
 		}
 		if len(res) > 0 {
 			results = append(results, res...)

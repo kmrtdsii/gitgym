@@ -50,7 +50,7 @@ func TestCommitCommand(t *testing.T) {
 
 	t.Run("Commit --amend", func(t *testing.T) {
 		createAndAdd("test2.txt", "world")
-		cmd.Execute(context.Background(), s, []string{"commit", "-m", "second commit"})
+		_, _ = cmd.Execute(context.Background(), s, []string{"commit", "-m", "second commit"})
 
 		// Amend
 		createAndAdd("test3.txt", "amended")

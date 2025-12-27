@@ -39,7 +39,7 @@ func (sm *SessionManager) IngestRemote(ctx context.Context, name, url string, de
 
 	// 1. Enforce Single Residency: Delete everything in baseDir that isn't our target
 	// Create baseDir if not exists
-	if err := os.MkdirAll(baseDir, 0755); err != nil {
+	if err := os.MkdirAll(baseDir, 0750); err != nil {
 		return fmt.Errorf("failed to create base dir: %w", err)
 	}
 
@@ -48,7 +48,7 @@ func (sm *SessionManager) IngestRemote(ctx context.Context, name, url string, de
 		for _, entry := range entries {
 			if entry.IsDir() && entry.Name() != dirName {
 				// Remove old remote
-				os.RemoveAll(filepath.Join(baseDir, entry.Name()))
+				_ = os.RemoveAll(filepath.Join(baseDir, entry.Name()))
 			}
 		}
 	}
@@ -123,8 +123,8 @@ func (sm *SessionManager) IngestRemote(ctx context.Context, name, url string, de
 	// 3. Clone if not opened successfully
 	if repo == nil {
 		// Clear directory to be safe
-		os.RemoveAll(repoPath)
-		if errMkdir := os.MkdirAll(repoPath, 0755); errMkdir != nil {
+		_ = os.RemoveAll(repoPath)
+		if errMkdir := os.MkdirAll(repoPath, 0750); errMkdir != nil {
 			return fmt.Errorf("failed to create remote dir: %w", errMkdir)
 		}
 

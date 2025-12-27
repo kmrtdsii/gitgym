@@ -45,6 +45,7 @@ const PullRequestSection: React.FC<PullRequestSectionProps> = ({
                 if (branchNames.includes('main')) newBase = 'main';
                 else if (branchNames.includes('master')) newBase = 'master';
                 else newBase = branchNames[0];
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setCompareBase(newBase);
             }
 
@@ -290,6 +291,7 @@ const CompareView: React.FC<CompareViewProps> = ({
 
     // Update default title when branches change
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setTitle(t('remote.compare.defaultTitle', { source: compareCompare, target: compareBase }));
     }, [compareBase, compareCompare, t]);
 

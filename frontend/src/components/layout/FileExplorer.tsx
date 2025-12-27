@@ -109,7 +109,7 @@ const TreeItem: React.FC<{ node: TreeNode, depth: number }> = ({ node, depth }) 
     // We only care about Worktree status (char 1) or Untracked ('??').
 
     let textColor = 'var(--text-secondary)';
-    let badges: { label: string, color: string }[] = [];
+    const badges: { label: string, color: string }[] = [];
 
     const status = node.status || '';
     // const indexStatus = status.length > 0 ? status[0] : ' '; // Ignored

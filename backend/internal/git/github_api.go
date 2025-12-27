@@ -20,10 +20,10 @@ type RepoInfo struct {
 
 // CloneEstimate contains estimated clone time information
 type CloneEstimate struct {
-	RepoInfo         *RepoInfo     `json:"repoInfo"`
-	EstimatedSeconds int           `json:"estimatedSeconds"`
-	SizeDisplay      string        `json:"sizeDisplay"`
-	Message          string        `json:"message"`
+	RepoInfo         *RepoInfo `json:"repoInfo"`
+	EstimatedSeconds int       `json:"estimatedSeconds"`
+	SizeDisplay      string    `json:"sizeDisplay"`
+	Message          string    `json:"message"`
 }
 
 // FetchRepoInfo retrieves repository information from GitHub API
@@ -62,7 +62,7 @@ func FetchRepoInfo(url string) (*RepoInfo, error) {
 	}
 
 	if resp.StatusCode == 403 {
-		return nil, fmt.Errorf("GitHub API rate limit exceeded. Please wait and try again.")
+		return nil, fmt.Errorf("GitHub API rate limit exceeded. Please wait and try again")
 	}
 
 	if resp.StatusCode != 200 {

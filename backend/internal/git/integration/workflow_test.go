@@ -136,6 +136,7 @@ func TestGitPhase2Features(t *testing.T) {
 		if !strings.Contains(status, "M README.md") && !strings.Contains(status, "README.md") {
 			// Check later; status format is custom in this engine?
 			// No, it calls w.Status().String().
+			t.Log("Note: status output format check skipped")
 		}
 
 		// Checkout file (restore)
@@ -148,14 +149,14 @@ func TestGitPhase2Features(t *testing.T) {
 	// 5. Test Diff (Commits)
 	t.Run("Diff", func(t *testing.T) {
 		// Need 2 commits
-		exec("commit", "--amend", "-m", "Base") // reset state
+		_, _ = exec("commit", "--amend", "-m", "Base") // reset state
 		// Create new file
 		session, _ := GetSession(sessionID)
 		f_create, _ := session.Filesystem.Create("new.txt")
-		f_create.Write([]byte("hello"))
-		f_create.Close()
-		exec("add", "new.txt")
-		exec("commit", "-m", "Second")
+		_, _ = f_create.Write([]byte("hello"))
+		_ = f_create.Close()
+		_, _ = exec("add", "new.txt")
+		_, _ = exec("commit", "-m", "Second")
 
 		out, err := exec("diff", "HEAD^", "HEAD")
 		if err != nil {
@@ -163,6 +164,7 @@ func TestGitPhase2Features(t *testing.T) {
 		}
 		if !strings.Contains(out, "new.txt") {
 			// Expected diff to show new file
+			t.Log("Warn: diff output missing new.txt")
 		}
 	})
 
@@ -224,25 +226,25 @@ func TestGitPhase2Features(t *testing.T) {
 
 		// Current state: main has commits.
 		// Let's create new branch 'feature-rebase' from HEAD^ (Base)
-		exec("checkout", "main")
-		exec("branch", "feature-rebase")
-		exec("reset", "--hard", "HEAD^")                       // move main back 1
-		exec("commit", "--allow-empty", "-m", "Main Diverged") // main has Base -> Diverged
+		_, _ = exec("checkout", "main")
+		_, _ = exec("branch", "feature-rebase")
+		_, _ = exec("reset", "--hard", "HEAD^")                       // move main back 1
+		_, _ = exec("commit", "--allow-empty", "-m", "Main Diverged") // main has Base -> Diverged
 
-		exec("checkout", "feature-rebase")
+		_, _ = exec("checkout", "feature-rebase")
 
 		// Let's build explicitly for clarity
-		exec("checkout", "-b", "base-branch")
-		exec("commit", "--allow-empty", "-m", "Base Commit")
+		_, _ = exec("checkout", "-b", "base-branch")
+		_, _ = exec("commit", "--allow-empty", "-m", "Base Commit")
 
-		exec("checkout", "-b", "feat-branch")
-		exec("commit", "--allow-empty", "-m", "Feat Commit")
+		_, _ = exec("checkout", "-b", "feat-branch")
+		_, _ = exec("commit", "--allow-empty", "-m", "Feat Commit")
 
-		exec("checkout", "base-branch")
-		exec("commit", "--allow-empty", "-m", "Upstream Commit")
+		_, _ = exec("checkout", "base-branch")
+		_, _ = exec("commit", "--allow-empty", "-m", "Upstream Commit")
 
 		// Rebase feat-branch on base-branch
-		exec("checkout", "feat-branch")
+		_, _ = exec("checkout", "feat-branch")
 		_, err := exec("rebase", "base-branch")
 		if err != nil {
 			t.Fatalf("rebase failed: %v", err)
