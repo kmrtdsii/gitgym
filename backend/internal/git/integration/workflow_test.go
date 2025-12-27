@@ -17,8 +17,14 @@ func TestGitPhase2Features(t *testing.T) {
 	}
 
 	// Init
-	if _, err := exec("init"); err != nil {
-		t.Fatalf("init failed: %v", err)
+	// Init
+	// "git init" is disabled, so we initialize via internal session method
+	session, err := GetSession(sessionID)
+	if err != nil {
+		t.Fatalf("Failed to get session: %v", err)
+	}
+	if _, err := session.InitRepo(""); err != nil {
+		t.Fatalf("Failed to init repo: %v", err)
 	}
 	if err := TouchFile(sessionID, "README.md"); err != nil {
 		t.Fatalf("touch failed: %v", err)
@@ -181,9 +187,10 @@ func TestGitPhase2Features(t *testing.T) {
 		if err != nil {
 			t.Fatalf("help failed: %v", err)
 		}
-		if !strings.Contains(out, "Supported commands:") {
-			t.Errorf("help output missing header: %s", out)
+		if !strings.Contains(out, "usage: git") {
+			t.Errorf("help output missing usage format: %s", out)
 		}
+
 		if !strings.Contains(out, "init") || !strings.Contains(out, "commit") {
 			t.Errorf("help output missing commands: %s", out)
 		}

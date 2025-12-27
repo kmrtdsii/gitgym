@@ -174,93 +174,29 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 	err = refs.ForEach(func(r *plumbing.Reference) error {
 		// 1. Handle Branches
 		if r.Name().IsBranch() {
-			branchName := r.Name().Short()
-			remoteBranches[branchName] = true
-
-			localRefName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/%s/%s", remoteName, branchName))
-
-			// Check if update needed
-			currentLocal, errRef := repo.Reference(localRefName, true)
-			if errRef == nil && currentLocal.Hash() == r.Hash() {
-				return nil // up to date
-			}
-
-			if isDryRun {
-				results = append(results, fmt.Sprintf(" * [dry-run] %s -> %s/%s", branchName, remoteName, branchName))
-				return nil
-			}
-
-			// Copy Objects
-			err = git.CopyCommitRecursive(srcRepo, repo, r.Hash())
+			res, count, err := c.handleFetchBranch(s, repo, srcRepo, r, remoteName, isDryRun)
 			if err != nil {
 				return err
 			}
-
-			// Update Local Reference
-			newRef := plumbing.NewHashReference(localRefName, r.Hash())
-			err = repo.Storer.SetReference(newRef)
-			if err != nil {
-				return err
+			if res != "" {
+				results = append(results, res)
 			}
-
-			status := "updated"
-			if errRef != nil {
-				status = "new branch"
-			}
-
-			results = append(results, fmt.Sprintf(" * [%s] %s -> %s/%s",
-				status,
-				branchName, remoteName, branchName))
-			updated++
+			updated += count
 		}
 
-		// 2. Handle Tags (Only if --tags is specified)
-		// Note: Real git fetch auto-follows tags; here we simplify to strict flag or maybe auto-follow if easy?
-		// User specifically asked for --tags. Let's make it conditional on flag for now to avoid noise.
+		// 2. Handle Tags
 		if fetchTags && r.Name().IsTag() {
-			tagName := r.Name().Short()
-			localTagRef := r.Name() // refs/tags/TAG
-
-			// Check if update needed
-			currentLocal, errRef := repo.Reference(localTagRef, true)
-			if errRef == nil && currentLocal.Hash() == r.Hash() {
-				return nil
-			}
-
-			if isDryRun {
-				results = append(results, fmt.Sprintf(" * [dry-run] %s -> %s", tagName, tagName))
-				return nil
-			}
-
-			// Copy Objects (Tag object or Commit object)
-			// Ensure we copy the object the tag points to, and the tag object itself if annotated.
-			// CopyCommitRecursive might not handle Tag Objects if it expects Commit.
-			// Ideally we use a generic CopyObject if available, but CopyCommitRecursive works for Commits.
-			// If it's an annotated tag, we need to copy that object too.
-			// Creating a proper copy implementation is complex.
-			// For simulation, let's assume lightweight tags (pointing to commits) for now or try CopyCommitRecursive.
-
-			err = git.CopyCommitRecursive(srcRepo, repo, r.Hash())
+			res, count, err := c.handleFetchTag(s, repo, srcRepo, r, isDryRun)
 			if err != nil {
 				// Warn but don't fail entire fetch?
-				results = append(results, fmt.Sprintf(" ! [error] %s (copy failed)", tagName))
+				results = append(results, fmt.Sprintf(" ! [error] %s (copy failed)", r.Name().Short()))
 				return nil
 			}
-
-			newRef := plumbing.NewHashReference(localTagRef, r.Hash())
-			err = repo.Storer.SetReference(newRef)
-			if err != nil {
-				return err
+			if res != "" {
+				results = append(results, res)
 			}
-
-			status := "updated"
-			if errRef != nil {
-				status = "new tag"
-			}
-			results = append(results, fmt.Sprintf(" * [%s] %s -> %s", status, tagName, tagName))
-			updated++
+			updated += count
 		}
-
 		return nil
 	})
 
@@ -304,6 +240,74 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 	}
 
 	return strings.Join(results, "\n"), nil
+}
+
+func (c *FetchCommand) handleFetchBranch(s *git.Session, repo, srcRepo *gogit.Repository, r *plumbing.Reference, remoteName string, isDryRun bool) (string, int, error) {
+	branchName := r.Name().Short()
+	localRefName := plumbing.ReferenceName(fmt.Sprintf("refs/remotes/%s/%s", remoteName, branchName))
+
+	// Check if update needed
+	currentLocal, errRef := repo.Reference(localRefName, true)
+	if errRef == nil && currentLocal.Hash() == r.Hash() {
+		return "", 0, nil // up to date
+	}
+
+	if isDryRun {
+		return fmt.Sprintf(" * [dry-run] %s -> %s/%s", branchName, remoteName, branchName), 0, nil
+	}
+
+	// Copy Objects
+	err := git.CopyCommitRecursive(srcRepo, repo, r.Hash())
+	if err != nil {
+		return "", 0, err
+	}
+
+	// Update Local Reference
+	newRef := plumbing.NewHashReference(localRefName, r.Hash())
+	err = repo.Storer.SetReference(newRef)
+	if err != nil {
+		return "", 0, err
+	}
+
+	status := "updated"
+	if errRef != nil {
+		status = "new branch"
+	}
+
+	return fmt.Sprintf(" * [%s] %s -> %s/%s", status, branchName, remoteName, branchName), 1, nil
+}
+
+func (c *FetchCommand) handleFetchTag(s *git.Session, repo, srcRepo *gogit.Repository, r *plumbing.Reference, isDryRun bool) (string, int, error) {
+	tagName := r.Name().Short()
+	localTagRef := r.Name()
+
+	// Check if update needed
+	currentLocal, errRef := repo.Reference(localTagRef, true)
+	if errRef == nil && currentLocal.Hash() == r.Hash() {
+		return "", 0, nil
+	}
+
+	if isDryRun {
+		return fmt.Sprintf(" * [dry-run] %s -> %s", tagName, tagName), 0, nil
+	}
+
+	// Copy Objects
+	err := git.CopyCommitRecursive(srcRepo, repo, r.Hash())
+	if err != nil {
+		return "", 0, err
+	}
+
+	newRef := plumbing.NewHashReference(localTagRef, r.Hash())
+	err = repo.Storer.SetReference(newRef)
+	if err != nil {
+		return "", 0, err
+	}
+
+	status := "updated"
+	if errRef != nil {
+		status = "new tag"
+	}
+	return fmt.Sprintf(" * [%s] %s -> %s", status, tagName, tagName), 1, nil
 }
 
 func (c *FetchCommand) Help() string {
