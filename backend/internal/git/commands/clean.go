@@ -40,11 +40,8 @@ func (c *CleanCommand) executeClean(s *git.Session, repo *gogit.Repository, opts
 	for _, path := range candidates {
 		info, err := fs.Lstat(path)
 		if err != nil {
-			fmt.Printf("DEBUG: Lstat failed for %s: %v\n", path, err)
 			continue
 		}
-
-		fmt.Printf("DEBUG: processing %s IsDir=%v Dir=%v\n", path, info.IsDir(), opts.Dir)
 
 		if info.IsDir() {
 			if opts.Dir {
@@ -94,8 +91,6 @@ func (c *CleanCommand) executeClean(s *git.Session, repo *gogit.Repository, opts
 			return len(toRemoveDirs[i]) > len(toRemoveDirs[j])
 		})
 
-		fmt.Printf("DEBUG: uniqueDirs=%v toRemoveDirs=%v\n", uniqueDirs, toRemoveDirs)
-
 		for _, dir := range toRemoveDirs {
 			// We only remove if empty (implied by fs.Remove on dir)
 			// But we shouldn't fail if not empty (it means it had tracked files or we couldn't remove all children)
@@ -112,15 +107,12 @@ func (c *CleanCommand) executeClean(s *git.Session, repo *gogit.Repository, opts
 			} else {
 				err := fs.Remove(dir)
 				if err != nil {
-					// Report error for debugging
-					sb.WriteString(fmt.Sprintf("DEBUG: failed to remove dir %s: %v\n", dir, err))
+					// Ignore error for directory removal (might be non-empty)
 					continue
 				}
 			}
 			sb.WriteString(fmt.Sprintf("%s %s\n", prefix, dir))
 		}
-	} else {
-		fmt.Println("DEBUG: opts.Dir is false")
 	}
 
 	return sb.String(), nil
