@@ -7,6 +7,7 @@ import (
 
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 // GetGraphState returns the current state of the repository for frontend visualization
@@ -166,26 +167,53 @@ func populateBranchesAndTags(repo *gogit.Repository, state *GraphState) error {
 }
 
 func populateFiles(session *Session, state *GraphState) {
-	walkPath := session.CurrentDir
-	if len(walkPath) > 0 && walkPath[0] == '/' {
-		walkPath = walkPath[1:]
-	}
-	if walkPath == "" {
-		walkPath = "."
+	// REQUIREMENT: Show files from HEAD commit (Recursive Tree)
+	// We ignore session.CurrentDir for the file list to provide a stable tree view of the branch.
+
+	repo := session.GetRepo()
+	if repo == nil {
+		return
 	}
 
-	infos, err := session.Filesystem.ReadDir(walkPath)
-	if err == nil {
-		for _, info := range infos {
-			name := info.Name()
-			if info.IsDir() {
-				if name == ".git" {
-					continue
-				}
-				name = name + "/"
-			}
-			state.Files = append(state.Files, name)
+	headRef, err := repo.Head()
+	if err != nil {
+		// No HEAD (empty repo), fallback to nothing or maybe ReadDir(".") ??
+		// Let's stick to empty for now if no HEAD.
+		return
+	}
+
+	commit, err := repo.CommitObject(headRef.Hash())
+	if err != nil {
+		return
+	}
+
+	tree, err := commit.Tree()
+	if err != nil {
+		return
+	}
+
+	// Walk the tree recursively
+	// limit to avoid huge repos freezing? For typical usage it's fine.
+	// We can use Files() which returns an iterator of all files.
+	// Note: This returns full paths "src/foo.go"
+
+	// Create a limiter to avoid sending 100k files
+	limit := 5000
+	count := 0
+
+	err = tree.Files().ForEach(func(f *object.File) error {
+		if count >= limit {
+			return nil // distinct validation error or just stop? ForEach stops on error.
+			// actually ForEach generic error stops it.
 		}
+
+		state.Files = append(state.Files, f.Name)
+		count++
+		return nil
+	})
+
+	if err != nil {
+		log.Printf("populateFiles iteration warning: %v", err)
 	}
 }
 

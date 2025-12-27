@@ -6,9 +6,116 @@ import type { SelectedObject } from '../../types/layoutTypes';
 import Modal from '../common/Modal';
 import { Button } from '../common/Button';
 
+import { ChevronRight, ChevronDown } from 'lucide-react';
 interface FileExplorerProps {
     onSelect: (obj: SelectedObject) => void;
 }
+
+// Tree Node Structure
+interface TreeNode {
+    name: string;
+    path: string;
+    isDir: boolean;
+    children: Record<string, TreeNode>;
+}
+
+const buildTree = (files: string[]): TreeNode => {
+    const root: TreeNode = { name: 'root', path: '', isDir: true, children: {} };
+
+    files.forEach(filePath => {
+        const parts = filePath.split('/');
+        let current = root;
+
+        parts.forEach((part, index) => {
+            if (!part) return;
+            const currentPath = parts.slice(0, index + 1).join('/');
+
+            if (!current.children[part]) {
+                // isDir implied? No, wait. 
+                // index < parts.length - 1 means it's a folder in the path.
+
+                // However, backend might send "src/" separately? No, iter.Files() sends blobs.
+
+                // Correction: tree.Files() sends files.
+                // Logic: if index == parts.length - 1, it's the file itself.
+
+                current.children[part] = {
+                    name: part,
+                    path: currentPath,
+                    isDir: false, // Default to false, set to true if we go deeper
+                    children: {}
+                };
+            }
+
+            // If we are not at the leaf, this node MUST be a dir
+            if (index < parts.length - 1) {
+                current.children[part].isDir = true;
+                current = current.children[part];
+            }
+        });
+    });
+    return root;
+};
+
+const TreeItem: React.FC<{ node: TreeNode, depth: number }> = ({ node, depth }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    const hasChildren = Object.keys(node.children).length > 0;
+    // Force isDir if it has children, even if created as leaf initially?
+    const isDir = node.isDir || hasChildren;
+
+    // Use sorted children: Dirs first, then Files
+    const sortedChildren = useMemo(() => {
+        return Object.values(node.children).sort((a, b) => {
+            if (a.isDir === b.isDir) return a.name.localeCompare(b.name);
+            return a.isDir ? -1 : 1;
+        });
+    }, [node.children]);
+
+    const handleToggle = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsOpen(!isOpen);
+    };
+
+    return (
+        <div>
+            <div
+                className="explorer-row"
+                onClick={isDir ? handleToggle : undefined}
+                style={{
+                    padding: `4px 12px 4px ${12 + depth * 12}px`, // Indentation
+                    cursor: isDir ? 'pointer' : 'default',
+                    display: 'flex',
+                    alignItems: 'center',
+                    color: 'var(--text-secondary)'
+                }}
+            >
+                {/* Indent Icon */}
+                <span style={{ width: '16px', display: 'flex', justifyContent: 'center', marginRight: '4px' }}>
+                    {isDir && (
+                        isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />
+                    )}
+                </span>
+
+                <span className="icon" style={{ display: 'flex', alignItems: 'center', marginRight: '6px' }}>
+                    {isDir ?
+                        <Folder size={14} style={{ color: '#60a5fa' }} /> :
+                        <FileCode size={14} style={{ color: '#fbbf24' }} />
+                    }
+                </span>
+                <span className="name" style={{ fontSize: '12px' }}>{node.name}</span>
+            </div>
+
+            {isOpen && hasChildren && (
+                <div>
+                    {sortedChildren.map(child => (
+                        <TreeItem key={child.path} node={child} depth={depth + 1} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 
 const FileExplorer: React.FC<FileExplorerProps> = () => {
@@ -64,6 +171,10 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
 
         setIsDeleteModalOpen(false);
         setProjectToDelete(null);
+    };
+
+    const handleUpDir = () => {
+        runCommand('cd ..');
     };
 
     const projects = state.projects || [];
@@ -219,39 +330,42 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                     letterSpacing: '0.05em',
                     flexShrink: 0
                 }}>
-                    FILES
+                    {t('workspace.files')}
                 </div>
 
                 <div className="tree-content" style={{ flex: 1, overflowY: 'auto' }}>
+
+                    {/* UP DIR ENTRY */}
+                    {!isRoot && (
+                        <div
+                            className="explorer-row"
+                            onClick={handleUpDir}
+                            style={{ padding: '4px 24px' }}
+                        >
+                            <span className="icon" style={{ display: 'flex', alignItems: 'center' }}>
+                                <Folder size={14} style={{ color: 'var(--text-secondary)' }} />
+                            </span>
+                            <span className="name" style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>..</span>
+                        </div>
+                    )}
+
                     {files.length === 0 ? (
                         <div style={{ padding: '12px', color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
                             {t('workspace.noFiles')}
                         </div>
                     ) : (
-                        <div>
-                            {files.map(file => {
-                                const isDir = file.endsWith('/');
-                                // Clean name for display (remove trailing slash for dirs)
-                                const displayName = isDir ? file.slice(0, -1) : file;
+                        <div style={{ paddingBottom: '20px' }}>
+                            {(() => {
+                                const root = buildTree(files);
+                                const children = Object.values(root.children).sort((a, b) => {
+                                    if (a.isDir === b.isDir) return a.name.localeCompare(b.name);
+                                    return a.isDir ? -1 : 1;
+                                });
 
-                                return (
-                                    <div
-                                        key={file}
-                                        className="explorer-row"
-                                        style={{
-                                            padding: '4px 24px', // Matches indented branch padding roughly
-                                        }}
-                                    >
-                                        <span className="icon" style={{ display: 'flex', alignItems: 'center' }}>
-                                            {isDir ?
-                                                <Folder size={14} style={{ color: '#60a5fa' }} /> : // blue-400
-                                                <FileCode size={14} style={{ color: '#fbbf24' }} /> // amber-400 (using FileCode as generic code icon for visual pop)
-                                            }
-                                        </span>
-                                        <span className="name" style={{ fontSize: '12px' }}>{displayName}</span>
-                                    </div>
-                                );
-                            })}
+                                return children.map(child => (
+                                    <TreeItem key={child.path} node={child} depth={0} />
+                                ));
+                            })()}
                         </div>
                     )}
                 </div>
