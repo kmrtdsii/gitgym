@@ -80,6 +80,7 @@ const PullRequestSection: React.FC<PullRequestSectionProps> = ({
                 <div style={sectionLabelStyle}>{t('remote.pullRequests')}</div>
                 {!isCompareMode && (
                     <button
+                        type="button"
                         onClick={() => setIsCompareMode(true)}
                         style={{ ...actionButtonStyle, background: '#238636' }}
                     >
@@ -441,6 +442,7 @@ const CompareView: React.FC<CompareViewProps> = ({
 
                 <div style={{ display: 'flex', gap: '10px', marginLeft: 'auto' }}> {/* marginLeft auto pushes to right when wrapping */}
                     <button
+                        type="button"
                         onClick={onCancel}
                         style={{
                             padding: '8px 16px',
@@ -456,6 +458,7 @@ const CompareView: React.FC<CompareViewProps> = ({
                         {t('remote.cancel')}
                     </button>
                     <button
+                        type="button"
                         onClick={() => {
                             if (title.trim()) onSubmit(title);
                         }}
@@ -524,7 +527,8 @@ const PullRequestCard: React.FC<PullRequestCardProps> = ({ pr, onMerge, onDelete
             await onMerge();
         } catch (error) {
             console.error('Merge failed:', error);
-            alert(`Merge failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            const msg = error instanceof Error ? error.message : 'Unknown error';
+            alert(`Merge failed: ${msg}`);
         } finally {
             setIsMerging(false);
         }
@@ -624,6 +628,7 @@ const PullRequestCard: React.FC<PullRequestCardProps> = ({ pr, onMerge, onDelete
             {/* Actions */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button
+                    type="button"
                     onClick={() => onDelete()}
                     disabled={isMerging}
                     style={{
@@ -655,6 +660,7 @@ const PullRequestCard: React.FC<PullRequestCardProps> = ({ pr, onMerge, onDelete
 
                 {pr.status === 'OPEN' && (
                     <button
+                        type="button"
                         onClick={handleMergeClick}
                         disabled={isMerging}
                         style={{

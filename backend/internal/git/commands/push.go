@@ -276,7 +276,16 @@ func (c *PushCommand) performPush(repo *gogit.Repository, pCtx *pushContext, opt
 		_ = repo.Storer.SetReference(newLocalRemoteRef)
 	}
 
-	return fmt.Sprintf("To %s\n   %s -> %s", pCtx.RemoteURL, hashToSync.String()[:7], refName.Short()), nil
+	// Get old hash for display (if updating existing ref)
+	oldHashStr := "0000000"
+	if refName.IsBranch() {
+		existingRef, refErr := targetRepo.Reference(refName, true)
+		if refErr == nil {
+			oldHashStr = existingRef.Hash().String()[:7]
+		}
+	}
+
+	return fmt.Sprintf("To %s\n   %s..%s  %s -> %s/%s", pCtx.RemoteURL, oldHashStr, hashToSync.String()[:7], refName.Short(), pCtx.RemoteName, refName.Short()), nil
 }
 
 func (c *PushCommand) Help() string {

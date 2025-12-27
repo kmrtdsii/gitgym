@@ -59,6 +59,13 @@ const AppLayout = () => {
         setSelectedObject(obj);
     };
 
+    // Auto-close details when repo is closed/unloaded
+    React.useEffect(() => {
+        if (state.HEAD && state.HEAD.type === 'none') {
+            setSelectedObject(null);
+        }
+    }, [state.HEAD?.type]);
+
     const startResizeDetails = (e: React.MouseEvent) => {
         e.preventDefault();
         const startX = e.clientX;

@@ -14,8 +14,7 @@ export const useGitCommand = ({ sessionId, gitData }: UseGitCommandProps) => {
         serverState,
         setState,
         updateCommandOutput,
-        incrementCommandCount,
-        state
+        incrementCommandCount
     } = gitData;
 
     const runCommand = useCallback(async (cmd: string, options?: { silent?: boolean; skipRefresh?: boolean }): Promise<string[]> => {
@@ -28,19 +27,18 @@ export const useGitCommand = ({ sessionId, gitData }: UseGitCommandProps) => {
 
         // 1. Echo Command
         const commandEcho = `> ${cmd}`;
-        const currentOutput = state.output;
-        // Note: state.output is from the current session view, which should match sessionId if synced.
-
-        let newOutput = [...currentOutput];
 
         if (!options?.silent) {
-            newOutput.push(commandEcho);
-            // Optimistic update
-            setState(prev => ({
-                ...prev,
-                output: newOutput
-            }));
-            updateCommandOutput(sessionId, newOutput);
+            // Optimistic update using functional update to avoid dependency on state.output
+            setState(prev => {
+                const newOutput = [...prev.output, commandEcho];
+                // Record for session persistence
+                updateCommandOutput(sessionId, newOutput);
+                return {
+                    ...prev,
+                    output: newOutput
+                };
+            });
         }
 
         try {
@@ -57,12 +55,14 @@ export const useGitCommand = ({ sessionId, gitData }: UseGitCommandProps) => {
 
             // 2. Append Output
             if (!options?.silent || isError) {
-                newOutput = [...newOutput, ...responseLines];
-                updateCommandOutput(sessionId, newOutput);
-                setState(prev => ({
-                    ...prev,
-                    output: newOutput
-                }));
+                setState(prev => {
+                    const newOutput = [...prev.output, ...responseLines];
+                    updateCommandOutput(sessionId, newOutput);
+                    return {
+                        ...prev,
+                        output: newOutput
+                    };
+                });
             }
 
             // 3. Refresh State
@@ -92,13 +92,19 @@ export const useGitCommand = ({ sessionId, gitData }: UseGitCommandProps) => {
         } catch (e) {
             console.error(e);
             const errorLine = "Network error";
-            const finalOutput = [...newOutput, errorLine];
-            updateCommandOutput(sessionId, finalOutput);
-            setState(prev => ({ ...prev, output: finalOutput, commandCount: prev.commandCount + 1 }));
+            setState(prev => {
+                const finalOutput = [...prev.output, errorLine];
+                updateCommandOutput(sessionId, finalOutput);
+                return {
+                    ...prev,
+                    output: finalOutput,
+                    commandCount: prev.commandCount + 1
+                };
+            });
             incrementCommandCount(sessionId);
             return [errorLine];
         }
-    }, [sessionId, state.output, fetchState, fetchServerState, serverState, setState, updateCommandOutput, incrementCommandCount]);
+    }, [sessionId, fetchState, fetchServerState, serverState, setState, updateCommandOutput, incrementCommandCount]);
 
     return { runCommand };
 };
