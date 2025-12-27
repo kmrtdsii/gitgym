@@ -133,9 +133,21 @@ func listRemotes(repo *gogit.Repository, verbose bool) (string, error) {
 }
 
 func (c *RemoteCommand) Help() string {
-	return `usage: git remote [-v]
-       git remote add <name> <url>
-       git remote remove <name>
+	return `📘 GIT-REMOTE (1)                                       Git Manual
 
-Manage set of tracked repositories.`
+ 🚀 NAME
+    git-remote - 追跡するリポジトリ（リモート）を管理する
+
+ 📋 SYNOPSIS
+    git remote [-v]
+    git remote add <name> <url>
+    git remote remove <name>
+
+ 💡 DESCRIPTION
+    登録されているリモートリポジトリの一覧表示や、追加、削除を行います。
+
+ ⚙️  COMMON OPTIONS
+    -v, --verbose
+        URLも含めて詳細に表示します。
+`
 }

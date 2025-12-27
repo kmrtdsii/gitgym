@@ -210,13 +210,32 @@ func (c *MergeCommand) Execute(ctx context.Context, s *git.Session, args []strin
 }
 
 func (c *MergeCommand) Help() string {
-	return `usage: git merge [options] <branch>
+	return `📘 GIT-MERGE (1)                                        Git Manual
 
-Options:
-    --squash          squash merge (apply changes but do not commit)
-    -n, --dry-run     dry run
-    --help            display this help message
+ 🚀 NAME
+    git-merge - 2つ以上の開発履歴を結合する
 
-Join two or more development histories together.
+ 📋 SYNOPSIS
+    git merge <branch>...
+    git merge --squash <branch>
+
+ 💡 DESCRIPTION
+    指定したブランチの変更を現在のブランチに取り込み（統合）します。
+    通常は「マージコミット」が自動的に作成されます。
+
+ ⚙️  COMMON OPTIONS
+    --squash
+        マージコミットを作成せず、変更内容のみをワーキングツリーに取り込みます。
+        あとで自分でコミットする場合に使用します。
+
+    --dry-run
+        実際にはマージせず、マージした場合の結果を表示します。
+
+ 🛠  EXAMPLES
+    1. featureブランチを現在のブランチにマージ
+       $ git merge feature/login
+
+    2.変更だけを取り込む（スカッシュ）
+       $ git merge --squash feature/login
 `
 }

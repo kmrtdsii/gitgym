@@ -141,7 +141,32 @@ func (c *ShowCommand) Execute(ctx context.Context, s *git.Session, args []string
 }
 
 func (c *ShowCommand) Help() string {
-	return "usage: git show <commit> [--name-status]"
+	return `📘 GIT-SHOW (1)                                         Git Manual
+
+ 🚀 NAME
+    git-show - さまざまな種類のオブジェクト（主にコミット）を表示する
+
+ 📋 SYNOPSIS
+    git show [<commit>] [--name-status]
+
+ 💡 DESCRIPTION
+    指定したコミットの詳細（ログメッセージと変更内容）を表示します。
+    コミットを指定しない場合は HEAD（最新のコミット）を表示します。
+
+ ⚙️  COMMON OPTIONS
+    --name-status
+        変更内容の差分テキストではなく、変更されたファイル名と状態（A/M/D）のみを表示します。
+
+ 🛠  EXAMPLES
+    1. 最新のコミットを表示
+       $ git show
+
+    2. 特定のコミットの変更ファイル一覧を表示
+       $ git show --name-status e5a3b21
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-show
+`
 }
 
 func listRootChanges(tree *object.Tree) (string, error) {

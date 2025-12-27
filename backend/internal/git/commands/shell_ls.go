@@ -49,5 +49,20 @@ func (c *LsCommand) Execute(ctx context.Context, s *git.Session, args []string) 
 }
 
 func (c *LsCommand) Help() string {
-	return "usage: ls\n\nList directory contents."
+	return `📘 LS (1)                                               Shell Manual
+
+ 🚀 NAME
+    ls - ディレクトリの内容をリスト表示する（シェルコマンド）
+
+ 📋 SYNOPSIS
+    ls [<path>]
+
+ 💡 DESCRIPTION
+    カレントディレクトリまたは指定したパスの内容を表示します。
+    ` + "`" + `-a` + "`" + ` などのオプションは現在サポートされていませんが、隠しファイル (.gitなど) は通常表示されません。
+
+ 🛠  EXAMPLES
+    1. 現在の場所を表示
+       $ ls
+`
 }

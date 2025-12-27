@@ -174,6 +174,31 @@ func (c *CherryPickCommand) resolveRevision(repo *gogit.Repository, rev string) 
 }
 
 func (c *CherryPickCommand) Help() string {
-	return `usage: git cherry-pick <commit>...
-       git cherry-pick <start>..<end>`
+	return `📘 GIT-CHERRY-PICK (1)                                  Git Manual
+
+ 🚀 NAME
+    git-cherry-pick - 既存のコミットによる変更を適用する
+
+ 📋 SYNOPSIS
+    git cherry-pick <commit>...
+    git cherry-pick <start>..<end>
+
+ 💡 DESCRIPTION
+    特定のコミットを選んで、その変更を現在のブランチにコピーして適用します。
+    バグ修正のコミットだけを別のブランチに持っていきたい時などに便利です。
+
+ ⚙️  COMMON OPTIONS
+    <commit>...
+        適用したいコミットのハッシュ。複数指定可能。
+
+    <start>..<end>
+        コミットの範囲を指定します（startを含まず、endまで）。
+
+ 🛠  EXAMPLES
+    1. 特定のコミットを適用
+       $ git cherry-pick e5a3b21
+
+    2. 範囲適用
+       $ git cherry-pick A..B
+`
 }

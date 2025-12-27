@@ -269,16 +269,39 @@ func (c *CheckoutCommand) checkoutRefOrPath(repo *gogit.Repository, w *gogit.Wor
 }
 
 func (c *CheckoutCommand) Help() string {
-	return `usage: git checkout [-b|-B <new_branch>] [<start_point>]
-       git checkout <branch>
-       git checkout <commit>
-       git checkout [--] <file>...
+	return `📘 GIT-CHECKOUT (1)                                     Git Manual
 
-Options:
-    -b <branch>       create and checkout a new branch
-    -B <branch>       create/reset and checkout a branch
-    -f, --force       force checkout (throw away local changes)
-    --detach          detach HEAD at named commit
-    --help            display this help message
+ 🚀 NAME
+    git-checkout - ブランチの切り替えや、ファイルの復元
+
+ 📋 SYNOPSIS
+    git checkout <branch>
+    git checkout -b <new_branch>
+    git checkout <commit>
+
+ 💡 DESCRIPTION
+    ワーキングツリー内のファイルを更新して、指定したバージョンの状態にします。
+    主にブランチの切り替えに使用しますが、` + "`" + `-b` + "`" + ` で作成しながら切り替えたり、
+    コミットハッシュを指定して過去の状態を確認（Detached HEAD）したりできます。
+
+ ⚙️  COMMON OPTIONS
+    -b <new_branch>
+        新しいブランチを作成して、すぐにそのブランチに切り替えます。
+
+    -B <new_branch>
+        ブランチが存在しても強制的に作成（リセット）して切り替えます。
+
+    -f, --force
+        変更中のファイルがあっても強制的に切り替えます（変更は破棄されます）。
+
+ 🛠  EXAMPLES
+    1. 既存のブランチに切り替え
+       $ git checkout main
+
+    2. 新しいブランチを作成して切り替え
+       $ git checkout -b develop
+
+    3. 過去のコミットにチェックアウト（Detached HEAD）
+       $ git checkout e5a3b21
 `
 }

@@ -235,14 +235,21 @@ func (c *PushCommand) Execute(ctx context.Context, s *git.Session, args []string
 }
 
 func (c *PushCommand) Help() string {
-	return `usage: git push [options] [<remote>] [<refspec>]
+	return `📘 GIT-PUSH (1)                                         Git Manual
 
-Options:
-    -f, --force       force updates (overwrites non-fast-forward)
-    -n, --dry-run     dry run (show what would be pushed without doing it)
-    --help            display this help message
+ 🚀 NAME
+    git-push - リモート参照と関連オブジェクトを更新する
 
-Note: This is a simulated push. Objects are copied to in-memory
-virtual remotes only. No actual network operations are performed.
+ 📋 SYNOPSIS
+    git push [<remote>] [<branch>]
+
+ 💡 DESCRIPTION
+    ローカルのコミットをリモートリポジトリに送信（アップロード）します。
+    
+    GitGymではシミュレーションであり、実際のネットワーク送信は行われません。
+
+ ⚙️  COMMON OPTIONS
+    -f, --force
+        強制的にプッシュします（リモートの履歴を上書きする可能性があります）。
 `
 }

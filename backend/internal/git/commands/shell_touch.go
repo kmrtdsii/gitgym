@@ -70,5 +70,20 @@ func (c *TouchCommand) Execute(ctx context.Context, s *git.Session, args []strin
 }
 
 func (c *TouchCommand) Help() string {
-	return "usage: touch <filename>\n\nUpdate modifications timestamp of a file or create it."
+	return `📘 TOUCH (1)                                            Shell Manual
+
+ 🚀 NAME
+    touch - ファイルのタイムスタンプ更新 / 新規作成（シェルコマンド）
+
+ 📋 SYNOPSIS
+    touch <file>...
+
+ 💡 DESCRIPTION
+    ファイルが存在する場合はタイムスタンプを更新し、
+    存在しない場合は空のファイルを作成します。
+
+ 🛠  EXAMPLES
+    1. 新しいファイルを作成
+       $ touch newfile.txt
+`
 }

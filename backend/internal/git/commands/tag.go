@@ -101,5 +101,33 @@ func (c *TagCommand) Execute(ctx context.Context, s *git.Session, args []string)
 }
 
 func (c *TagCommand) Help() string {
-	return "usage: git tag [-d] <tagname> | -a <tagname> -m <msg>"
+	return `📘 GIT-TAG (1)                                          Git Manual
+
+ 🚀 NAME
+    git-tag - タグ（特定のポイントへの参照）を作成・一覧表示・削除する
+
+ 📋 SYNOPSIS
+    git tag [-a] [-m <msg>] <tagname> [<commit>]
+    git tag -d <tagname>
+
+ 💡 DESCRIPTION
+    リリースポイントなど、歴史上の特定の瞬間に名前（タグ）を付けます。
+
+ ⚙️  COMMON OPTIONS
+    -a
+        注釈付き（Annotated）タグを作成します。作成者や日時などの情報を含めます。
+
+    -m <msg>
+        タグのメッセージを指定します。
+
+    -d
+        タグを削除します。
+
+ 🛠  EXAMPLES
+    1. 軽量タグを作成（現在のHEADに）
+       $ git tag v1.0
+
+    2. 注釈付きタグを作成
+       $ git tag -a v1.0 -m "Release version 1.0"
+`
 }

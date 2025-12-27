@@ -45,5 +45,23 @@ func (c *ReflogCommand) Execute(ctx context.Context, s *git.Session, args []stri
 }
 
 func (c *ReflogCommand) Help() string {
-	return "usage: git reflog\n\nShow reflog entries."
+	return `📘 GIT-REFLOG (1)                                       Git Manual
+
+ 🚀 NAME
+    git-reflog - 参照ログ（HEADの動き）を管理・表示する
+
+ 📋 SYNOPSIS
+    git reflog
+
+ 💡 DESCRIPTION
+    ローカルリポジトリでの HEAD の更新履歴を表示します。
+    ` + "`git reset`" + ` や ` + "`git rebase`" + ` などで失われたコミットを探す際に役立ちます。
+
+ 🛠  EXAMPLES
+    1. HEADの履歴を表示
+       $ git reflog
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-reflog
+`
 }

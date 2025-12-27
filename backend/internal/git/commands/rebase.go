@@ -292,8 +292,30 @@ func (c *RebaseCommand) resolveRevision(repo *gogit.Repository, rev string) (*pl
 }
 
 func (c *RebaseCommand) Help() string {
-	return `usage: git rebase [-r] [--onto <newbase>] <upstream> [<branch>]
+	return `📘 GIT-REBASE (1)                                       Git Manual
 
-Reapply commits on top of another base tip.
+ 🚀 NAME
+    git-rebase - コミットを別のベースの上に再適用する
+
+ 📋 SYNOPSIS
+    git rebase [--onto <newbase>] <upstream> [<branch>]
+    git rebase --root
+
+ 💡 DESCRIPTION
+    ブランチの履歴を書き換えて、別の地点から派生したかのように見せかけます。
+    履歴を一直線に綺麗に保つために使われます。
+    
+    ⚠️ 注意: 既に公開（プッシュ）したコミットをリベースすることは推奨されません。
+
+ ⚙️  COMMON OPTIONS
+    --onto <newbase>
+        新しいベース地点を明示的に指定します。
+
+    --root
+        ルートコミット（最初のコミット）まで遡ってリベースします。
+
+ 🛠  EXAMPLES
+    1. 現在のブランチをmainの最新に追従させる
+       $ git rebase main
 `
 }

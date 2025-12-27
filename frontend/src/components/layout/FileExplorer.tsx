@@ -12,15 +12,44 @@ interface FileExplorerProps {
 }
 
 // Tree Node Structure
+// Tree Node Structure
 interface TreeNode {
     name: string;
     path: string;
     isDir: boolean;
     children: Record<string, TreeNode>;
+    status?: string; // 'M', '??', 'A', 'MM', etc.
+    hasChanges?: boolean; // True if self or children have status
 }
 
-const buildTree = (files: string[]): TreeNode => {
+const buildTree = (files: string[], statuses: Record<string, string>): TreeNode => {
     const root: TreeNode = { name: 'root', path: '', isDir: true, children: {} };
+
+    // Helper to calculate hasChanges recursively
+    const computeChanges = (node: TreeNode): boolean => {
+        let changed = false;
+
+        // Check self status (if file)
+        if (!node.isDir && node.status && node.status.trim() !== '') {
+            // Only count changes if they are visual (Untracked or Worktree Modified)
+            const status = node.status;
+            // Untracked
+            if (status === '??') changed = true;
+            // Worktree Modified (2nd char)
+            else if (status.length > 1 && status[1] !== ' ' && status[1] !== '?') changed = true;
+        }
+
+        // Check children
+        Object.values(node.children).forEach(child => {
+            if (computeChanges(child)) {
+                changed = true;
+            }
+        });
+
+        node.hasChanges = changed;
+        return changed;
+    };
+
 
     files.forEach(filePath => {
         const parts = filePath.split('/');
@@ -31,18 +60,10 @@ const buildTree = (files: string[]): TreeNode => {
             const currentPath = parts.slice(0, index + 1).join('/');
 
             if (!current.children[part]) {
-                // isDir implied? No, wait. 
-                // index < parts.length - 1 means it's a folder in the path.
-
-                // However, backend might send "src/" separately? No, iter.Files() sends blobs.
-
-                // Correction: tree.Files() sends files.
-                // Logic: if index == parts.length - 1, it's the file itself.
-
                 current.children[part] = {
                     name: part,
                     path: currentPath,
-                    isDir: false, // Default to false, set to true if we go deeper
+                    isDir: false,
                     children: {}
                 };
             }
@@ -51,17 +72,22 @@ const buildTree = (files: string[]): TreeNode => {
             if (index < parts.length - 1) {
                 current.children[part].isDir = true;
                 current = current.children[part];
+            } else {
+                // Leaf node: Assign status
+                current.children[part].status = statuses[filePath];
             }
         });
     });
+
+    computeChanges(root);
     return root;
 };
 
+// ... (TreeItem)
 const TreeItem: React.FC<{ node: TreeNode, depth: number }> = ({ node, depth }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const hasChildren = Object.keys(node.children).length > 0;
-    // Force isDir if it has children, even if created as leaf initially?
     const isDir = node.isDir || hasChildren;
 
     // Use sorted children: Dirs first, then Files
@@ -77,6 +103,36 @@ const TreeItem: React.FC<{ node: TreeNode, depth: number }> = ({ node, depth }) 
         setIsOpen(!isOpen);
     };
 
+    // --- Status Logic ---
+    // Status is usually 2 chars: [Index, Worktree] e.g "MM", "A ", " M", "??"
+    // We explicitly IGNORE index status (char 0) for the file explorer visualization as per requirements.
+    // We only care about Worktree status (char 1) or Untracked ('??').
+
+    let textColor = 'var(--text-secondary)';
+    let badges: { label: string, color: string }[] = [];
+
+    const status = node.status || '';
+    // const indexStatus = status.length > 0 ? status[0] : ' '; // Ignored
+    const worktreeStatus = status.length > 1 ? status[1] : ' ';
+
+    // 1. Untracked
+    if (status === '??') {
+        textColor = '#73c990'; // Green
+        badges.push({ label: 'U', color: '#73c990' });
+    } else {
+        // 2. Worktree Status (Modified)
+        // Only show if modified in worktree. Staged 'A' or 'M' (indexStatus) are ignored here.
+        if (worktreeStatus !== ' ' && worktreeStatus !== '?') {
+            const color = '#e2c08d'; // Light Orange
+            badges.push({ label: worktreeStatus, color });
+            textColor = color;
+        }
+    }
+
+    // Is Folder modified?
+    // Note: computeChanges (buildTree) has proven to only set hasChanges=true for Untracked/WorktreeModified.
+    const showDot = isDir && node.hasChanges;
+
     return (
         <div>
             <div
@@ -87,7 +143,7 @@ const TreeItem: React.FC<{ node: TreeNode, depth: number }> = ({ node, depth }) 
                     cursor: isDir ? 'pointer' : 'default',
                     display: 'flex',
                     alignItems: 'center',
-                    color: 'var(--text-secondary)'
+                    color: !isDir ? textColor : 'var(--text-secondary)'
                 }}
             >
                 {/* Indent Icon */}
@@ -99,11 +155,44 @@ const TreeItem: React.FC<{ node: TreeNode, depth: number }> = ({ node, depth }) 
 
                 <span className="icon" style={{ display: 'flex', alignItems: 'center', marginRight: '6px' }}>
                     {isDir ?
-                        <Folder size={14} style={{ color: '#60a5fa' }} /> :
-                        <FileCode size={14} style={{ color: '#fbbf24' }} />
+                        <Folder size={14} style={{ color: showDot ? '#e2c08d' : '#60a5fa' }} /> :
+                        <FileCode size={14} style={{ color: !isDir ? textColor : '#fbbf24' }} />
                     }
                 </span>
-                <span className="name" style={{ fontSize: '12px' }}>{node.name}</span>
+
+                <span className="name" style={{ fontSize: '12px', flex: '0 1 auto', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {node.name}
+                </span>
+
+                {/* Right Aligned Area */}
+                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', paddingLeft: '8px' }}>
+
+                    {/* Folder Dot */}
+                    {showDot && (
+                        <span style={{
+                            width: '8px', height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: '#e2c08d', // Dot Color
+                            marginRight: '4px'
+                        }} />
+                    )}
+
+                    {/* File Badges */}
+                    {!isDir && badges.map((b, i) => (
+                        <span
+                            key={i}
+                            className="status-badge"
+                            style={{
+                                color: b.color,
+                                marginLeft: '4px',
+                                minWidth: '14px',
+                                textAlign: 'center'
+                            }}
+                        >
+                            {b.label}
+                        </span>
+                    ))}
+                </div>
             </div>
 
             {isOpen && hasChildren && (
@@ -179,6 +268,7 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
 
     const projects = state.projects || [];
     const files = state.files || [];
+    const fileStatuses = state.fileStatuses || {};
 
     return (
         <div className="file-explorer" data-testid="file-explorer" style={{ color: 'var(--text-primary)', fontSize: '13px', fontFamily: 'system-ui, sans-serif', userSelect: 'none', display: 'flex', width: '100%', height: '100%' }}>
@@ -356,7 +446,7 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                     ) : (
                         <div style={{ paddingBottom: '20px' }}>
                             {(() => {
-                                const root = buildTree(files);
+                                const root = buildTree(files, fileStatuses);
                                 const children = Object.values(root.children).sort((a, b) => {
                                     if (a.isDir === b.isDir) return a.name.localeCompare(b.name);
                                     return a.isDir ? -1 : 1;
@@ -395,7 +485,7 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                 .branch-row:hover { background-color: var(--bg-tertiary); }
                 .icon { margin-right: 6px; opacity: 0.9; }
                 .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-                .status-badge { font-size: 10px; opacity: 0.7; margin-right: 8px; font-family: monospace; }
+                .status-badge { font-size: 10px; font-weight: 700; opacity: 0.9; margin-left: 4px; font-family: monospace; }
                 .delete-btn:hover { opacity: 1 !important; color: var(--text-danger); transform: scale(1.1); transition: all 0.2s; }
             `}</style>
         </div>

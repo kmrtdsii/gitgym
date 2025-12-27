@@ -24,5 +24,19 @@ func (c *PwdCommand) Execute(ctx context.Context, s *git.Session, args []string)
 }
 
 func (c *PwdCommand) Help() string {
-	return "usage: pwd\n\nPrint name of current/working directory."
+	return `📘 PWD (1)                                              Shell Manual
+
+ 🚀 NAME
+    pwd - 現在の作業ディレクトリの場所を表示する（シェルコマンド）
+
+ 📋 SYNOPSIS
+    pwd
+
+ 💡 DESCRIPTION
+    現在のディレクトリのフルパスを表示します。
+
+ 🛠  EXAMPLES
+    $ pwd
+    /gitgym/repo
+`
 }

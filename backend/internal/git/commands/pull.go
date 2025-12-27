@@ -202,14 +202,17 @@ func (c *PullCommand) Execute(ctx context.Context, s *git.Session, args []string
 }
 
 func (c *PullCommand) Help() string {
-	return `usage: git pull [options] [<remote>] [<branch>]
+	return `📘 GIT-PULL (1)                                         Git Manual
 
-Options:
-    -n, --dry-run     dry run
-    --help            display this help message
+ 🚀 NAME
+    git-pull - リモートから取得し、統合する
 
-Fetch from and integrate with another repository or a local branch.
-Note: This is a simulated pull from virtual remotes.
+ 📋 SYNOPSIS
+    git pull [<remote>] [<branch>]
+
+ 💡 DESCRIPTION
+    ` + "`" + `git fetch` + "`" + ` と ` + "`" + `git merge` + "`" + ` を一度に行うコマンドです。
+    リモートの変更を取得し、現在のブランチにマージします。
 `
 }
 

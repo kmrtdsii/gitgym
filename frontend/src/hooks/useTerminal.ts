@@ -13,10 +13,13 @@ import { getPrompt } from '../components/terminal/getPrompt';
  * @param xtermRef - Ref to the xterm.js instance.
  * @param fitAddonRef - Ref to the xterm.js fit addon instance.
  */
+// ... imports
+
 export const useTerminal = (
     terminalRef: RefObject<HTMLDivElement | null>,
     xtermRef: RefObject<Terminal | null>,
-    fitAddonRef: RefObject<FitAddon | null>
+    fitAddonRef: RefObject<FitAddon | null>,
+    allowEmptyCommit: boolean = true
 ) => {
     const { t } = useTranslation('common');
     const {
@@ -28,6 +31,16 @@ export const useTerminal = (
         terminalTranscripts,
         clearTranscript
     } = useGit();
+
+    // ...
+
+    const allowEmptyCommitRef = useRef(allowEmptyCommit);
+    useEffect(() => {
+        allowEmptyCommitRef.current = allowEmptyCommit;
+    }, [allowEmptyCommit]);
+
+    // ... (refs)
+
 
     const { theme } = useTheme();
     const [isReady, setIsReady] = useState(false);
@@ -275,9 +288,20 @@ export const useTerminal = (
                         }
                     }
 
+                    // --- INJECT: Allow Empty Commit ---
+                    if (allowEmptyCommitRef.current) {
+                        // Check if command is a commit command (e.g. "git commit ...")
+                        if (/^git\s+commit(\s|$)/.test(fullCmd)) {
+                            if (!fullCmd.includes('--allow-empty')) {
+                                fullCmd += ' --allow-empty';
+                                showAutoPrefixMsg = true; // Show the user that we modified the command
+                            }
+                        }
+                    }
+
                     // Display auto-prefix message if needed
                     if (showAutoPrefixMsg) {
-                        writeAndRecord(`\x1b[90m(Auto-prefixed: ${fullCmd})\x1b[0m`, true);
+                        writeAndRecord(`\x1b[90m(Modified: ${fullCmd})\x1b[0m`, true);
                     }
 
                     isLocalCommandRef.current = true;

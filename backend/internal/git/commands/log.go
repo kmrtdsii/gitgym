@@ -71,5 +71,30 @@ func (c *LogCommand) Execute(ctx context.Context, s *git.Session, args []string)
 }
 
 func (c *LogCommand) Help() string {
-	return "usage: git log [--oneline]\n\nShow commit logs."
+	return `📘 GIT-LOG (1)                                          Git Manual
+
+ 🚀 NAME
+    git-log - コミットログを表示する
+
+ 📋 SYNOPSIS
+    git log [--oneline]
+
+ 💡 DESCRIPTION
+    コミットの履歴を表示します。各コミットのハッシュ、作者、日付、メッセージが確認できます。
+
+ ⚙️  COMMON OPTIONS
+    --oneline
+        各コミットを1行（ハッシュの一部とメッセージのみ）で表示します。
+        履歴の概観をつかむのに便利です。
+
+ 🛠  EXAMPLES
+    1. 詳細なログを表示
+       $ git log
+
+    2. 簡潔なログを表示
+       $ git log --oneline
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-log
+`
 }

@@ -317,21 +317,48 @@ func (c *BranchCommand) moveBranch(repo *gogit.Repository, oldName, newName stri
 }
 
 func (c *BranchCommand) Help() string {
-	return `usage: git branch [options] [-r | -a] [--merged | --no-merged]
-       git branch [options] [-l] [-f] <branchname> [<start-point>]
-       git branch [options] [-r] (-d | -D) <branchname>...
-       git branch [options] (-m | -M) [<oldbranch>] <newbranch>
+	return `📘 GIT-BRANCH (1)                                       Git Manual
 
-Options:
-    -d, --delete          delete fully merged branch
-    -D                    delete branch (even if not merged)
-    -m, --move            move/rename a branch and its reflog
-    -M                    move/rename a branch, even if target exists
-    -c, --copy            copy a branch and its reflog
-    -C                    copy a branch, even if target exists
-    -l, --list            list branch names
-    -r, --remotes         act on remote-tracking branches
-    -a, --all             list both remote-tracking and local branches
-    --help                display this help message
+ 🚀 NAME
+    git-branch - ブランチのリスト表示、作成、削除
+
+ 📋 SYNOPSIS
+    git branch [--list] [-a] [-r]
+    git branch <branchname>
+    git branch -d|-D <branchname>
+    git branch -m <old> <new>
+
+ 💡 DESCRIPTION
+    ブランチを管理します。
+    引数なしで実行すると、既存のブランチをリスト表示します（現在のブランチには * が付きます）。
+
+ ⚙️  COMMON OPTIONS
+    -a, --all
+        ローカルとリモート（追跡）の両方のブランチを表示します。
+
+    -r, --remotes
+        リモートブランチのみを表示します。
+
+    -d
+        ブランチを削除します（マージ済みの安全な場合のみ）。
+
+    -D
+        ブランチを強制削除します（マージされていなくても削除）。
+
+    -m
+        ブランチ名を変更（移動）します。
+
+ 🛠  EXAMPLES
+    1. ブランチ一覧を表示
+       $ git branch
+
+    2. 新しいブランチを作成
+       $ git branch feature/login
+
+    3. ブランチを強制削除
+       $ git branch -D old-feature
+
+    4. ブランチ名を変更
+       $ git branch -m old-name new-name
 `
 }

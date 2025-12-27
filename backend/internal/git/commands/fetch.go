@@ -190,13 +190,19 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 }
 
 func (c *FetchCommand) Help() string {
-	return `usage: git fetch [options] [<remote>]
+	return `📘 GIT-FETCH (1)                                        Git Manual
 
-Options:
-    -n, --dry-run     dry run (show what would be fetched without doing it)
-    --help            display this help message
+ 🚀 NAME
+    git-fetch - 他のリポジトリからオブジェクトと参照(refs)をダウンロードする
 
-Download objects and refs from another repository.
-Note: This is a simulated fetch from virtual remotes.
+ 📋 SYNOPSIS
+    git fetch [<remote>]
+
+ 💡 DESCRIPTION
+    リモートリポジトリの最新情報をローカルに取り込みますが、
+    ワーキングツリーには反映しません（マージしません）。
+    
+    「何が変わったか」を確認するのに安全な操作です。
+    GitGymでは、事前定義された仮想リモートから取得します。
 `
 }

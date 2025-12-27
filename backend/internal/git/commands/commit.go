@@ -118,14 +118,39 @@ func (c *CommitCommand) Execute(ctx context.Context, s *git.Session, args []stri
 }
 
 func (c *CommitCommand) Help() string {
-	return `usage: git commit [options]
+	return `📘 GIT-COMMIT (1)                                       Git Manual
 
-Options:
-    -m <msg>          use the given <msg> as the commit message
-    --amend           amend the previous commit
-    --allow-empty     allow creating a commit with no changes
-    --help            display this help message
+ 🚀 NAME
+    git-commit - 変更をリポジトリに記録する
 
-Record changes to the repository.
+ 📋 SYNOPSIS
+    git commit -m <msg>
+    git commit --amend
+    git commit --allow-empty
+
+ 💡 DESCRIPTION
+    インデックス（ステージングエリア）に追加された変更を記録し、
+    新しいコミットオブジェクトを作成します。
+
+ ⚙️  COMMON OPTIONS
+    -m <msg>
+        コミットメッセージを指定します。
+
+    --amend
+        直前のコミットを修正します（メッセージの変更や、ファイルの追加忘れ等）。
+        元のコミットは上書きされます。
+
+    --allow-empty
+        変更が含まれていなくてもコミットを作成できるようにします。
+
+ 🛠  EXAMPLES
+    1. メッセージ付きでコミット
+       $ git commit -m "Initial commit"
+
+    2. 直前のコミットメッセージを修正
+       $ git commit --amend -m "Corrected message"
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-commit
 `
 }

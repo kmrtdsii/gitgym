@@ -89,12 +89,33 @@ func (c *AddCommand) Execute(ctx context.Context, s *git.Session, args []string)
 }
 
 func (c *AddCommand) Help() string {
-	return `usage: git add [options] [--] <pathspec>...
+	return `📘 GIT-ADD (1)                                          Git Manual
 
-Options:
-    .                 add all changes in current directory
-    <file>            add specific file
+ 🚀 NAME
+    git-add - ファイルの内容をインデックス（ステージングエリア）に追加する
 
-Add file contents to the index (staging area).
+ 📋 SYNOPSIS
+    git add [<options>] [--] <pathspec>...
+
+ 💡 DESCRIPTION
+    作業ディレクトリ内の現在のコンテンツを使用してインデックスを更新し、
+    次回のコミットに向けて変更を準備（ステージング）します。
+
+ ⚙️  COMMON OPTIONS
+    .
+        カレントディレクトリ配下のすべての変更（新規・変更・削除）を追加します。
+
+    -A, --all
+        ワークツリー全体のすべての変更を追加します。
+
+ 🛠  EXAMPLES
+    1. カレントディレクトリのすべての変更をステージング
+       $ git add .
+
+    2. 特定のファイルのみをステージング
+       $ git add README.md
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-add
 `
 }

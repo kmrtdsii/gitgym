@@ -71,5 +71,36 @@ func (c *ResetCommand) Execute(ctx context.Context, s *git.Session, args []strin
 }
 
 func (c *ResetCommand) Help() string {
-	return "usage: git reset [--soft|mixed|hard] <commit>"
+	return `📘 GIT-RESET (1)                                        Git Manual
+
+ 🚀 NAME
+    git-reset - 現在のHEADを指定した状態にリセットする
+
+ 📋 SYNOPSIS
+    git reset [--soft | --mixed | --hard] <commit>
+
+ 💡 DESCRIPTION
+    現在のブランチのHEADを指定したコミットまで戻します。
+    オプションによって、インデックスやワーキングツリーの状態をどう扱うかが変わります。
+
+ ⚙️  COMMON OPTIONS
+    --soft
+        HEADのみを移動します。インデックスとワーキングツリーは変更しません。
+        （戻った分のコミット内容は「ステージング済み」として残ります）
+
+    --mixed (default)
+        HEADとインデックスを移動します。ワーキングツリーは変更しません。
+        （戻った分のコミット内容は「未ステージ」として残ります）
+
+    --hard
+        HEAD、インデックス、ワーキングツリーすべてを強制的に移動します。
+        未コミットの変更はすべて破棄されます。
+
+ 🛠  EXAMPLES
+    1. 直前のコミットを取り消す（変更はそのまま残す）
+       $ git reset HEAD~1
+
+    2. 全てを強制的に以前の状態に戻す（危険）
+       $ git reset --hard HEAD~1
+`
 }

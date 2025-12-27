@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
@@ -13,8 +13,9 @@ const GitTerminal = () => {
 
     const { t } = useTranslation('common');
     const { activeDeveloper, state } = useGit();
+    const [allowEmpty, setAllowEmpty] = useState(true);
 
-    useTerminal(terminalRef, xtermRef, fitAddonRef);
+    useTerminal(terminalRef, xtermRef, fitAddonRef, allowEmpty);
 
     const currentBranch = state.HEAD?.ref || (state.HEAD?.id ? state.HEAD.id.substring(0, 7) : 'DETACHED');
     const isDetached = !state.HEAD?.ref && !!state.HEAD?.id;
@@ -45,6 +46,19 @@ const GitTerminal = () => {
                     }}>
                         {currentBranch}
                     </span>
+                </div>
+
+                {/* Allow Empty Toggle */}
+                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '6px', userSelect: 'none' }} title="Automatically append --allow-empty to commit commands">
+                        <input
+                            type="checkbox"
+                            checked={allowEmpty}
+                            onChange={(e) => setAllowEmpty(e.target.checked)}
+                            style={{ accentColor: 'var(--accent-primary)', cursor: 'pointer' }}
+                        />
+                        <span style={{ color: 'var(--text-secondary)', fontWeight: '600', fontSize: '11px' }}>Allow Empty</span>
+                    </label>
                 </div>
             </div>
 

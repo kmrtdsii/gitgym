@@ -3,11 +3,13 @@ package state
 import (
 	"fmt"
 	"log"
+	"os"
+	"path/filepath"
 	"sort"
 
+	"github.com/go-git/go-billy/v5/util"
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
 // GetGraphState returns the current state of the repository for frontend visualization
@@ -167,54 +169,39 @@ func populateBranchesAndTags(repo *gogit.Repository, state *GraphState) error {
 }
 
 func populateFiles(session *Session, state *GraphState) {
-	// REQUIREMENT: Show files from HEAD commit (Recursive Tree)
-	// We ignore session.CurrentDir for the file list to provide a stable tree view of the branch.
+	// Show detailed file list based on the WORKTREE (filesystem), including untracked.
 
 	repo := session.GetRepo()
 	if repo == nil {
 		return
 	}
 
-	headRef, err := repo.Head()
+	w, err := repo.Worktree()
 	if err != nil {
-		// No HEAD (empty repo), fallback to nothing or maybe ReadDir(".") ??
-		// Let's stick to empty for now if no HEAD.
+		// Bare repo or other issue
 		return
 	}
 
-	commit, err := repo.CommitObject(headRef.Hash())
-	if err != nil {
-		return
-	}
-
-	tree, err := commit.Tree()
-	if err != nil {
-		return
-	}
-
-	// Walk the tree recursively
-	// limit to avoid huge repos freezing? For typical usage it's fine.
-	// We can use Files() which returns an iterator of all files.
-	// Note: This returns full paths "src/foo.go"
-
-	// Create a limiter to avoid sending 100k files
-	limit := 5000
-	count := 0
-
-	err = tree.Files().ForEach(func(f *object.File) error {
-		if count >= limit {
-			return nil // distinct validation error or just stop? ForEach stops on error.
-			// actually ForEach generic error stops it.
+	// Walk the filesystem to get ALL files including untracked
+	_ = util.Walk(w.Filesystem, "/", func(path string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+		if fi.IsDir() {
+			if path == ".git" {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 
-		state.Files = append(state.Files, f.Name)
-		count++
+		// Clean path if needed (billy usually returns clean paths)
+		if path != "" && path[0] == '/' {
+			path = path[1:]
+		}
+
+		state.Files = append(state.Files, path)
 		return nil
 	})
-
-	if err != nil {
-		log.Printf("populateFiles iteration warning: %v", err)
-	}
 }
 
 func populateGitStatus(repo *gogit.Repository, state *GraphState) error {

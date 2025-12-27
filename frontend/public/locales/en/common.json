@@ -32,6 +32,7 @@
         "deleteTitle": "Delete Project",
         "deleteConfirm": "Are you sure you want to delete project <1>{{name}}</1>? This action cannot be undone.",
         "branches": "BRANCHES",
+        "stagedChanges": "STAGED CHANGES",
         "noProjects": "Projects Not Found. Please clone a repository!",
         "files": "FILES",
         "noFiles": "No files found. The directory is empty.",
