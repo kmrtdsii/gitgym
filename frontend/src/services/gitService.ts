@@ -84,11 +84,11 @@ export const gitService = {
         return res.json();
     },
 
-    async ingestRemote(name: string, url: string): Promise<void> {
+    async ingestRemote(name: string, url: string, depth?: number): Promise<void> {
         const res = await fetch('/api/remote/ingest', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, url })
+            body: JSON.stringify({ name, url, depth: depth || 0 })
         });
         if (!res.ok) throw new Error('Failed to ingest remote');
     },

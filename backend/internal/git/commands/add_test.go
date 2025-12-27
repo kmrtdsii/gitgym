@@ -14,9 +14,9 @@ func TestAddCommand(t *testing.T) {
 	s, _ := sm.CreateSession("test-add")
 	cmd := &AddCommand{}
 
-	// Init
-	initCmd := &InitCommand{}
-	initCmd.Execute(context.Background(), s, []string{"init"})
+	// Init manually since "git init" command is disabled
+	s.InitRepo("repo")
+	s.CurrentDir = "/repo"
 
 	repo := s.GetRepo()
 	w, _ := repo.Worktree()

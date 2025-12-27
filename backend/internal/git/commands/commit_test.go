@@ -13,8 +13,9 @@ func TestCommitCommand(t *testing.T) {
 	s, _ := sm.CreateSession("test-commit")
 
 	// Init
-	initCmd := &InitCommand{}
-	initCmd.Execute(context.Background(), s, []string{"init"})
+	// Init
+	s.InitRepo("testrepo")
+	s.CurrentDir = "/testrepo"
 
 	repo := s.GetRepo()
 	w, _ := repo.Worktree()

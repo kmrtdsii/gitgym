@@ -9,7 +9,7 @@ import { useAutoDiscovery } from '../../hooks/useAutoDiscovery';
 
 // Default remote URL for the GitGym application
 // This repository is automatically available for cloning
-const DEFAULT_REMOTE_URL = 'https://github.com/git-fixtures/basic.git';
+const DEFAULT_REMOTE_URL = 'https://github.com/octocat/Spoon-Knife.git';
 
 interface RemoteRepoViewProps {
     topHeight: number;
@@ -58,7 +58,7 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
         // Only if not already loaded and we have a default URL
         if (!serverState && setupUrl && cloneStatus === 'idle') {
             console.log('Auto-loading default remote:', setupUrl);
-            performClone(setupUrl);
+            performClone(setupUrl, 0);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
@@ -67,7 +67,7 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
     const onCloneSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!setupUrl) return;
-        await performClone(setupUrl);
+        await performClone(setupUrl, 0);
     };
 
     // Close edit mode on success
@@ -78,7 +78,7 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
     }, [cloneStatus]);
 
     const handleRetry = () => {
-        if (setupUrl) performClone(setupUrl);
+        if (setupUrl) performClone(setupUrl, 0);
     };
 
     const handleEditRemote = () => {

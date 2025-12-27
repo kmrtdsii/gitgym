@@ -42,7 +42,7 @@ func TestMerge_RemoteBranch(t *testing.T) {
 	w.Add("remote.txt")
 	w.Commit("Remote Ahead", &gogit.CommitOptions{Author: &object.Signature{Name: "Dev", Email: "d", When: time.Now()}})
 
-	sm.IngestRemote(context.Background(), "origin", originPath)
+	sm.IngestRemote(context.Background(), "origin", originPath, 0)
 	session, _ := sm.CreateSession("test-merge-remote")
 
 	// Clone (Gets everything, origin/main matches remote main)

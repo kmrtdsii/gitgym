@@ -8,42 +8,24 @@ import (
 	"github.com/kurobon/gitgym/backend/internal/git"
 )
 
-func TestInitCommand_Execute(t *testing.T) {
+func TestInitCommand_Execute_Disabled(t *testing.T) {
 	sm := git.NewSessionManager()
-	sessionID := "test-init"
-	s, _ := sm.CreateSession(sessionID)
-
+	s, _ := sm.CreateSession("test-init-disabled")
 	cmd := &InitCommand{}
 
-	// 1. Test init at root (default behavior)
-	s.CurrentDir = "/"
+	// Test init execution
 	res, err := cmd.Execute(context.Background(), s, []string{"init"})
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
-	if res == "" {
-		t.Error("Expected non-empty response")
+
+	expected := "GitGymでは `git init` はサポートされていません"
+	if !strings.Contains(res, expected) {
+		t.Errorf("Expected disabled message '%s', got: %s", expected, res)
 	}
 
-	// 2. Test init with argument
-	s2, _ := sm.CreateSession("test-init-arg")
-	res, err = cmd.Execute(context.Background(), s2, []string{"init", "myrepo"})
-	if err != nil {
-		t.Fatalf("Execute with arg failed: %v", err)
-	}
-	if res == "" {
-		t.Error("Expected non-empty response for init with arg")
-	}
-	if _, ok := s2.Repos["myrepo"]; !ok {
-		t.Error("Repo 'myrepo' not found in session")
-	}
-
-	// 3. Test double init
-	res, err = cmd.Execute(context.Background(), s2, []string{"init", "myrepo"})
-	if err != nil {
-		t.Fatalf("Double init failed: %v", err)
-	}
-	if !strings.Contains(res, "Git repository already initialized") {
-		t.Errorf("Expected already initialized message, got: %s", res)
+	// Verify no repo was created (optional, but good sanity check)
+	if len(s.Repos) > 0 {
+		t.Error("Expected no repos to be created")
 	}
 }

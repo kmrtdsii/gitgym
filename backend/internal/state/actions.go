@@ -14,7 +14,7 @@ import (
 )
 
 // IngestRemote creates a new shared remote repository from a URL (simulated clone)
-func (sm *SessionManager) IngestRemote(ctx context.Context, name, url string) error {
+func (sm *SessionManager) IngestRemote(ctx context.Context, name, url string, depth int) error {
 	// Define local path for persistence
 	// READ LOCK only to get config if needed, but DataDir is static usually or we can just access it if it's not changing.
 	// Safe to read DataDir if it's set on init.
@@ -31,6 +31,10 @@ func (sm *SessionManager) IngestRemote(ctx context.Context, name, url string) er
 	if absPath, err := filepath.Abs(repoPath); err == nil {
 		repoPath = absPath
 	}
+
+	// Serialized Ingestion to prevent race conditions (main vs frontend)
+	sm.ingestMu.Lock()
+	defer sm.ingestMu.Unlock()
 
 	// 1. Enforce Single Residency: Delete everything in baseDir that isn't our target
 	// Create baseDir if not exists
@@ -55,39 +59,60 @@ func (sm *SessionManager) IngestRemote(ctx context.Context, name, url string) er
 		oldPaths[k] = true // Capture URL/Name (Keys)
 		oldPaths[v] = true // Capture Resolved Path (Values) - just in case
 	}
+	// Do NOT clear maps yet. We only update them on success.
 	sm.mu.Unlock()
 
-	// 2. Clear InMemory Maps - Needs LOCK
-	sm.mu.Lock()
-	sm.SharedRemotes = make(map[string]*gogit.Repository)
-	sm.SharedRemotePaths = make(map[string]string)
-	sm.mu.Unlock() // Release lock before cloning
-
-	// ensure target dir exists
-
-	if errMkdir := os.MkdirAll(repoPath, 0755); errMkdir != nil {
-		return fmt.Errorf("failed to create remote dir: %w", errMkdir)
+	// 2. Check if already exists and is valid
+	var repo *gogit.Repository
+	if _, errStat := os.Stat(repoPath); errStat == nil {
+		// Try opening
+		r, errOpen := gogit.PlainOpen(repoPath)
+		if errOpen == nil {
+			log.Printf("IngestRemote: Repository already exists at %s. Fetching updates...", repoPath)
+			// It exists. Fetch to update refs.
+			errFetch := r.Fetch(&gogit.FetchOptions{
+				Progress: os.Stdout,
+				Force:    true, // Force update refs
+			})
+			if errFetch != nil && errFetch != gogit.NoErrAlreadyUpToDate {
+				log.Printf("IngestRemote: Fetch failed (%v), falling back to fresh clone", errFetch)
+				// Fallthrough to clone
+			} else {
+				log.Printf("IngestRemote: Fetch successful or already up to date")
+				repo = r
+			}
+		}
 	}
 
-	// 3. Open or Clone
-	// ALWAYS force a fresh clone for now to ensure we get a Mirror (all refs).
-	// In the future, we could open and Fetch, but for "Ingest/Update" action, full sync is safer.
-	os.RemoveAll(repoPath)
+	// 3. Clone if not opened successfully
+	if repo == nil {
+		// Clear directory to be safe
+		os.RemoveAll(repoPath)
+		if errMkdir := os.MkdirAll(repoPath, 0755); errMkdir != nil {
+			return fmt.Errorf("failed to create remote dir: %w", errMkdir)
+		}
 
-	log.Printf("IngestRemote: Cloning %s into %s", url, repoPath)
-	repo, err := gogit.PlainCloneContext(ctx, repoPath, true, &gogit.CloneOptions{
-		URL:      url,
-		Progress: os.Stdout,
-		Mirror:   true,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to clone remote: %w", err)
+		log.Printf("IngestRemote: Cloning %s into %s (Depth: %d)", url, repoPath, depth)
+		r, errClone := gogit.PlainCloneContext(ctx, repoPath, true, &gogit.CloneOptions{
+			URL:      url,
+			Progress: os.Stdout,
+			Mirror:   true,
+			Depth:    depth,
+		})
+		if errClone != nil {
+			return fmt.Errorf("failed to clone remote: %w", errClone)
+		}
+		repo = r
+		log.Printf("IngestRemote: Clone successful")
 	}
-	log.Printf("IngestRemote: Clone successful")
 
 	// 4. Update State - Needs LOCK
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
+
+	// Reset maps to ensure cleanup of old remotes in memory
+	sm.SharedRemotes = make(map[string]*gogit.Repository)
+	sm.SharedRemotePaths = make(map[string]string)
 
 	// Store under Name
 	sm.SharedRemotes[name] = repo
@@ -102,7 +127,6 @@ func (sm *SessionManager) IngestRemote(ctx context.Context, name, url string) er
 	sm.SharedRemotePaths[repoPath] = repoPath
 
 	// 5. Prune Stale Workspaces
-	// We do this AFTER adding the new one, but logic relies on oldPaths captured BEFORE clear.
 	go sm.pruneStaleWorkspaces(oldPaths)
 
 	return nil

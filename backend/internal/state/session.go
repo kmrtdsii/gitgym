@@ -32,6 +32,7 @@ type SessionManager struct {
 	NextPRID          int
 	DataDir           string
 	mu                sync.RWMutex
+	ingestMu          sync.Mutex // Serializes ingestion operations
 }
 
 // ReflogEntry records a command executed in the session

@@ -24,7 +24,7 @@ interface GitContextType {
     removeDeveloper: (name: string) => Promise<void>;
     pullRequests: PullRequest[];
     refreshPullRequests: () => Promise<void>;
-    ingestRemote: (name: string, url: string) => Promise<void>;
+    ingestRemote: (name: string, url: string, depth?: number) => Promise<void>;
     createPullRequest: (title: string, desc: string, source: string, target: string) => Promise<void>;
     mergePullRequest: (id: number) => Promise<void>;
     deletePullRequest: (id: number) => Promise<void>;
@@ -292,8 +292,8 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
     }, []);
 
-    const ingestRemote = useCallback(async (name: string, url: string) => {
-        await gitService.ingestRemote(name, url);
+    const ingestRemote = useCallback(async (name: string, url: string, depth?: number) => {
+        await gitService.ingestRemote(name, url, depth);
         await fetchState(sessionId);
     }, [sessionId, fetchState]);
 

@@ -17,8 +17,8 @@ func TestCheckoutCommand(t *testing.T) {
 	sm := git.NewSessionManager()
 	s, _ := sm.CreateSession("test-checkout")
 
-	initCmd := &InitCommand{}
-	initCmd.Execute(context.Background(), s, []string{"init"})
+	s.InitRepo("repo")
+	s.CurrentDir = "/repo"
 
 	repo := s.GetRepo()
 	w, _ := repo.Worktree()

@@ -36,7 +36,7 @@ export const useRemoteClone = () => {
         return null;
     };
 
-    const performClone = useCallback(async (url: string) => {
+    const performClone = useCallback(async (url: string, depth?: number) => {
         // Reset
         setErrorMessage(undefined);
         setElapsedSeconds(0);
@@ -68,7 +68,7 @@ export const useRemoteClone = () => {
                 setElapsedSeconds((Date.now() - startTime) / 1000);
             }, 500);
 
-            await ingestRemote('origin', url);
+            await ingestRemote('origin', url, depth);
             await fetchServerState('origin');
 
             if (timerRef.current) {

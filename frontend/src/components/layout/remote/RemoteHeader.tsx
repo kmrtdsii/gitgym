@@ -55,11 +55,12 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                         placeholder="https://github.com/..."
                         value={setupUrl}
                         onChange={(e) => onSetupUrlChange(e.target.value)}
-                        style={inputStyle}
+                        style={{ ...inputStyle, flex: 3 }}
                         autoFocus
                         onFocus={(e) => e.target.select()}
                         data-testid="remote-url-input"
                     />
+
                     <button type="button" onClick={onCancelEdit} style={cancelButtonStyle} data-testid="remote-cancel-btn">
                         {t('remote.cancel')}
                     </button>

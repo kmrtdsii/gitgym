@@ -105,15 +105,16 @@ func (s *Server) handleIngestRemote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req struct {
-		Name string `json:"name"`
-		URL  string `json:"url"`
+		Name  string `json:"name"`
+		URL   string `json:"url"`
+		Depth int    `json:"depth"` // Optional: 0 means full clone
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	// Propagate Context
-	if err := s.SessionManager.IngestRemote(r.Context(), req.Name, req.URL); err != nil {
+	if err := s.SessionManager.IngestRemote(r.Context(), req.Name, req.URL, req.Depth); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

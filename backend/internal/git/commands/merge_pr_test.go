@@ -49,7 +49,7 @@ func TestMergePRCommand(t *testing.T) {
 	w.Checkout(&gogit.CheckoutOptions{Branch: plumbing.NewBranchReferenceName("master")})
 
 	// Ingest
-	sm.IngestRemote(context.Background(), "origin", remotePath)
+	sm.IngestRemote(context.Background(), "origin", remotePath, 0)
 
 	// Create PR in SessionManager
 	pr, _ := sm.CreatePullRequest("Feat", "Desc", "feature", "master", "Dev")

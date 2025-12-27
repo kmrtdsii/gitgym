@@ -14,8 +14,8 @@ func setupBranchTestSession(t *testing.T, sm *git.SessionManager, id string) *gi
 	ctx := context.Background()
 
 	// Init repo
-	initCmd := &InitCommand{}
-	_, err := initCmd.Execute(ctx, s, []string{"init", "testrepo"})
+	// Init repo manually
+	_, err := s.InitRepo("testrepo")
 	if err != nil {
 		t.Fatalf("setup: init failed: %v", err)
 	}
