@@ -45,7 +45,7 @@ export const SKILL_TREE: SkillLevel[] = [
             { id: 'fetch', name: 'git fetch', description: 'Download objects and refs' },
             { id: 'diff', name: 'git diff', description: 'Show changes between commits' },
             { id: 'log', name: 'git log', description: 'Show commit logs' },
-            { id: 'blame', name: 'git blame', description: 'Show what revision and author last modified each line of a file', disabled: true },
+            { id: 'blame', name: 'git blame', description: 'Show what revision and author last modified each line of a file' },
         ]
     },
     {
