@@ -48,6 +48,7 @@ var commandMetadata = map[string]cmdMeta{
 	"rm":      {CatWork, "Remove files from the working tree and from the index"},
 
 	// History
+	"blame":  {CatHistory, "Show what revision and author last modified each line of a file"},
 	"diff":   {CatHistory, "Show changes between commits, commit and working tree, etc"},
 	"log":    {CatHistory, "Show commit logs"},
 	"reflog": {CatHistory, "Manage reflog information"},
@@ -62,6 +63,8 @@ var commandMetadata = map[string]cmdMeta{
 	"merge":       {CatGrow, "Join two or more development histories together"},
 	"rebase":      {CatGrow, "Reapply commits on top of another base tip"},
 	"reset":       {CatGrow, "Reset current HEAD to the specified state"},
+	"revert":      {CatGrow, "Revert some existing commits"},
+	"stash":       {CatGrow, "Stash the changes in a dirty working directory away"},
 	"switch":      {CatGrow, "Switch branches"},
 	"tag":         {CatGrow, "Create, list, delete or verify a tag object"},
 

@@ -24,7 +24,8 @@ export const SKILL_TREE: SkillLevel[] = [
         commands: [
             { id: 'init', name: 'git init', description: 'Initialize a new repository', disabled: true },
             { id: 'clone', name: 'git clone', description: 'Clone a repository into a new directory' },
-            { id: 'status', name: 'git status', description: 'Check state of working tree' },
+            { id: 'status', name: 'git status', description: 'Show the working tree status' },
+            { id: 'help', name: 'git help', description: 'Display help information' },
             { id: 'add', name: 'git add', description: 'Stage changes' },
             { id: 'commit', name: 'git commit', description: 'Save changes to history' },
             { id: 'push', name: 'git push', description: 'Upload changes to remote' },
