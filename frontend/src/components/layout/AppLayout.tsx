@@ -20,6 +20,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import CommitDetails from '../visualization/CommitDetails';
 import SearchBar from '../common/SearchBar';
+import SkillRadar from '../visualization/SkillRadar';
 
 type ViewMode = 'graph' | 'branches' | 'tags';
 
@@ -54,6 +55,7 @@ const AppLayout = () => {
 
     // Modal State
     const [isAddDevModalOpen, setIsAddDevModalOpen] = useState(false);
+    const [isSkillRadarOpen, setIsSkillRadarOpen] = useState(false);
 
     const handleObjectSelect = (obj: SelectedObject) => {
         setSelectedObject(obj);
@@ -133,7 +135,7 @@ const AppLayout = () => {
                     borderBottom: '1px solid var(--border-subtle)'
                 }}>
                     {/* View Modes */}
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         {modes.map(mode => (
                             <button
                                 key={mode}
@@ -154,6 +156,28 @@ const AppLayout = () => {
                                 {t(`viewMode.${mode}`)}
                             </button>
                         ))}
+
+                        {/* Skill Radar Button */}
+                        <button
+                            onClick={() => setIsSkillRadarOpen(true)}
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid var(--accent-primary)',
+                                color: 'var(--accent-primary)',
+                                borderRadius: '4px',
+                                padding: '4px 12px',
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                marginLeft: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                            }}
+                            title="Open Git Skill Tree"
+                        >
+                            <span>🎯 Skills</span>
+                        </button>
                     </div>
 
                     {/* Search Bar */}
@@ -277,6 +301,11 @@ const AppLayout = () => {
                     isOpen={isAddDevModalOpen}
                     onClose={() => setIsAddDevModalOpen(false)}
                     onAddDeveloper={addDeveloper}
+                />
+
+                <SkillRadar
+                    isOpen={isSkillRadarOpen}
+                    onClose={() => setIsSkillRadarOpen(false)}
                 />
             </div>
         </div>

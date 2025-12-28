@@ -43,6 +43,7 @@ type cloneContext struct {
 	RemoteRepo *gogit.Repository
 	RemoteSt   storage.Storer
 	RemotePath string
+	RemoteURL  string // The original requested URL (for display/config)
 }
 
 func (c *CloneCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
@@ -151,6 +152,7 @@ func (c *CloneCommand) resolveContext(s *git.Session, opts *CloneOptions) (*clon
 		RemoteRepo: remoteRepo,
 		RemoteSt:   remoteSt,
 		RemotePath: remotePath,
+		RemoteURL:  opts.URL,
 	}, nil
 }
 
@@ -192,7 +194,7 @@ func (c *CloneCommand) performClone(s *git.Session, clCtx *cloneContext) (string
 
 	_, err = localRepo.CreateRemote(&config.RemoteConfig{
 		Name: "origin",
-		URLs: []string{clCtx.RemotePath}, // Using resolved path
+		URLs: []string{clCtx.RemoteURL}, // Using original URL for display
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to configure origin: %w", err)
