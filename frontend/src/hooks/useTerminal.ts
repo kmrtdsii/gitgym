@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
+import { WebLinksAddon } from '@xterm/addon-web-links';
 import { useGit } from '../context/GitAPIContext';
 import { useTheme } from '../context/ThemeContext';
 import { getPrompt } from '../components/terminal/getPrompt';
@@ -229,6 +230,13 @@ export const useTerminal = (
         const fitAddon = new FitAddon();
         fitAddonRef.current = fitAddon;
         term.loadAddon(fitAddon);
+
+        // Add WebLinksAddon for clickable URLs
+        const webLinksAddon = new WebLinksAddon((_event, uri) => {
+            window.open(uri, '_blank', 'noopener,noreferrer');
+        });
+        term.loadAddon(webLinksAddon);
+
         term.open(terminalRef.current);
         fitAddon.fit();
 
@@ -265,8 +273,11 @@ export const useTerminal = (
                     if (cmd === 'clear') {
                         term.write('\x1bc'); // Full reset
                         if (clearTranscriptRef.current) clearTranscriptRef.current();
-                        const prompt = getPrompt(stateRef.current);
-                        writeAndRecord(prompt, false);
+                        // Add delay after reset to ensure terminal is ready (race condition fix)
+                        setTimeout(() => {
+                            const prompt = getPrompt(stateRef.current);
+                            writeAndRecord(prompt, false);
+                        }, 50);
                         return;
                     }
 

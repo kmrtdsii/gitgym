@@ -62,11 +62,12 @@ const AppLayout = () => {
     };
 
     // Auto-close details when repo is closed/unloaded
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     React.useEffect(() => {
         if (state.HEAD && state.HEAD.type === 'none') {
             setSelectedObject(null);
         }
-    }, [state.HEAD]);
+    }, [state.HEAD?.type]);
 
     const startResizeDetails = (e: React.MouseEvent) => {
         e.preventDefault();

@@ -30,12 +30,16 @@ const CloneProgress: React.FC<CloneProgressProps> = ({
 }) => {
     const { t } = useTranslation('common');
 
-    if (status === 'idle') return null;
+    if (status === 'idle') {
+        return null;
+    }
 
-    // Calculation logic
-    const progress = estimatedSeconds > 0
+    // Calculation logic - simple linear progress
+    const progress = estimatedSeconds > 0 && elapsedSeconds >= 0
         ? Math.min(100, (elapsedSeconds / estimatedSeconds) * 100)
         : 0;
+
+
 
     const remainingSeconds = Math.max(0, estimatedSeconds - elapsedSeconds);
     const formatTime = (seconds: number) => {
@@ -88,7 +92,7 @@ const CloneProgress: React.FC<CloneProgressProps> = ({
                                 background: 'var(--accent-primary)',
                                 borderRadius: '3px',
                                 width: `${progress}%`,
-                                transition: 'width 0.3s ease-out'
+                                transition: 'width 0.5s ease-out'
                             }} />
                         </div>
                         <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '4px' }}>

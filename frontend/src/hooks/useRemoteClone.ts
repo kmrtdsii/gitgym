@@ -37,7 +37,13 @@ export const useRemoteClone = () => {
     };
 
     const performClone = useCallback(async (url: string, depth?: number) => {
-        // Reset
+        // Clear any existing timer first
+        if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+        }
+
+        // Reset state
         setErrorMessage(undefined);
         setElapsedSeconds(0);
         setEstimatedSeconds(0);

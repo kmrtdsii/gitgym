@@ -74,17 +74,7 @@ const SkillRadar: React.FC<SkillRadarProps> = ({ isOpen, onClose }) => {
     // If they share left tangent at START_X: Cx = START_X + R
     const getCx = (levelIndex: number) => START_X + RADII[levelIndex];
 
-    // Helper: Polar to Cartesian from a specific circle's center
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const toCartesian = (levelIndex: number, degrees: number) => {
-        const r = RADII[levelIndex];
-        const cx = getCx(levelIndex);
-        const rad = (degrees * Math.PI) / 180;
-        return {
-            x: cx + r * Math.cos(rad),
-            y: CENTER_Y + r * Math.sin(rad) // SVG Y axis down
-        };
-    };
+
 
     // Title Wedge Angles (Degrees)
     // 0 is East (Right). Wedge is centered there.

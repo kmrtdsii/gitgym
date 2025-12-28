@@ -85,9 +85,33 @@ func (c *TouchCommand) executeTouch(s *git.Session, opts *TouchOptions) (string,
 				}
 				updated = append(updated, filename)
 			} else {
-				// No Chtimes support.
-				// We do NOT modify content (avoid corruption).
-				// We just report updated (simulation bias: success if it exists).
+				// No Chtimes support (e.g., memfs).
+				// To make Git detect this as a modification, we must change the content.
+				// Read existing content, append a timestamp comment, and write back.
+				f, openErr := s.Filesystem.OpenFile(fullPath, 1, 0644) // O_WRONLY = 1
+				if openErr != nil {
+					return "", fmt.Errorf("failed to open file for update: %w", openErr)
+				}
+
+				// Read existing content
+				stat, _ := s.Filesystem.Stat(fullPath)
+				content := make([]byte, stat.Size())
+				readFile, _ := s.Filesystem.Open(fullPath)
+				_, _ = readFile.Read(content)
+				readFile.Close()
+				f.Close()
+
+				// Append modification marker
+				newContent := append(content, []byte(fmt.Sprintf("\n/* touched: %s */", time.Now().Format(time.RFC3339)))...)
+
+				// Write back
+				writeFile, createErr := s.Filesystem.Create(fullPath)
+				if createErr != nil {
+					return "", fmt.Errorf("failed to write updated file: %w", createErr)
+				}
+				_, _ = writeFile.Write(newContent)
+				writeFile.Close()
+
 				updated = append(updated, filename)
 			}
 		}

@@ -77,13 +77,17 @@ export const useGitCommand = ({ sessionId, gitData }: UseGitCommandProps) => {
                 commandCount: prev.commandCount + 1
             }));
 
-            // 5. Auto-refresh Server State
+            // 5. Auto-refresh Server State based on command type
             if (!options?.skipRefresh) {
-                if (serverState && serverState.remotes?.length === 0) {
-                    await fetchServerState('origin');
-                } else if (serverState) {
-                    // Default fallback refresh
-                    await fetchServerState('origin');
+                const isRemoteCommand = ['push', 'pull', 'fetch', 'clone', 'remote'].some(c => cmd.startsWith(`git ${c}`));
+
+                if (isRemoteCommand) {
+                    if (serverState && serverState.remotes?.length === 0) {
+                        await fetchServerState('origin');
+                    } else if (serverState) {
+                        // Default fallback refresh
+                        await fetchServerState('origin');
+                    }
                 }
             }
 

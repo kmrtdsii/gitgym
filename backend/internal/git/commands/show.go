@@ -65,6 +65,40 @@ func (c *ShowCommand) parseArgs(args []string) (*ShowOptions, error) {
 func (c *ShowCommand) executeShow(_ *git.Session, repo *gogit.Repository, opts *ShowOptions) (string, error) {
 	h, err := repo.ResolveRevision(plumbing.Revision(opts.CommitID))
 	if err != nil {
+		// If revision lookup fails, try to treat it as a file path at HEAD
+		// This supports 'git show README.md' -> 'git show HEAD:README.md'
+		if err.Error() == "reference not found" {
+			headRef, headErr := repo.Head()
+			if headErr != nil {
+				return "", fmt.Errorf("reference not found: %s", opts.CommitID)
+			}
+
+			headCommit, commitErr := repo.CommitObject(headRef.Hash())
+			if commitErr != nil {
+				return "", fmt.Errorf("reference not found: %s", opts.CommitID)
+			}
+
+			tree, treeErr := headCommit.Tree()
+			if treeErr != nil {
+				return "", fmt.Errorf("reference not found: %s", opts.CommitID)
+			}
+
+			// Try to find the file in the HEAD tree
+			file, fileErr := tree.File(opts.CommitID)
+			if fileErr == nil {
+				// Found as file! Return content.
+				content, err := file.Contents()
+				if err != nil {
+					return "", err
+				}
+				return content, nil
+			}
+		}
+
+		// Map generic error to user friendly message
+		if err.Error() == "reference not found" {
+			return "", fmt.Errorf("fatal: ambiguous argument '%s': unknown revision or path not in the working tree.", opts.CommitID)
+		}
 		return "", err
 	}
 
@@ -74,8 +108,53 @@ func (c *ShowCommand) executeShow(_ *git.Session, repo *gogit.Repository, opts *
 	}
 
 	if !opts.NameStatus {
-		// Fallback to basic commit info
-		return commit.String(), nil
+		// Basic commit info + Patch
+		var sb strings.Builder
+		sb.WriteString(commit.String())
+		sb.WriteString("\n")
+
+		// Calculate Diff with Parent for Patch
+		var parentTree *object.Tree
+		if commit.NumParents() > 0 {
+			parent, err := commit.Parent(0)
+			if err != nil {
+				return "", err
+			}
+			parentTree, err = parent.Tree()
+			if err != nil {
+				return "", err
+			}
+		}
+
+		currentTree, err := commit.Tree()
+		if err != nil {
+			return "", err
+		}
+
+		if parentTree != nil {
+			patch, err := parentTree.Patch(currentTree)
+			if err != nil {
+				return "", err
+			}
+			sb.WriteString(patch.String())
+		} else {
+			// Root diff - everything is added
+			// For root commit, Patch(nil) might not work as expected or verify behavior
+			// go-git's Patch method expects two trees.
+			// Emulate patch for root? Or just list files.
+			// Standard git show shows diff /dev/null
+			// Let's rely on name-status logic or just skip patch for root for now to be safe,
+			// or better: iterate files and print content as + lines.
+			// For simplicity and standard go-git limitations, we might just show header for root.
+			// But let's try Patch with empty tree if possible.
+			// emptyTree := &object.Tree{}
+			// patch, _ := emptyTree.Patch(currentTree)
+			// sb.WriteString(patch.String())
+			// NOTE: Creating empty tree object cleanly is tricky without hashing.
+			// Just skipping Patch for root to prevent crash, simple show is better than error.
+		}
+
+		return sb.String(), nil
 	}
 
 	// Calculate Diff with Parent
