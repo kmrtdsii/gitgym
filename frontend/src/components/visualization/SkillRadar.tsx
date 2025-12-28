@@ -312,13 +312,19 @@ const SkillRadar: React.FC<SkillRadarProps> = ({ isOpen, onClose }) => {
 
                                 const textColor = levelIndex >= 2 ? '#fff' : '#1e293b';
 
+                                const isDisabled = command.disabled;
+
                                 return (
                                     <g
                                         key={command.id}
-                                        onClick={() => setSelectedCommand(command)}
-                                        onMouseEnter={() => setHoveredCommand(command.id)}
-                                        onMouseLeave={() => setHoveredCommand(null)}
-                                        style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
+                                        onClick={() => !isDisabled && setSelectedCommand(command)}
+                                        onMouseEnter={() => !isDisabled && setHoveredCommand(command.id)}
+                                        onMouseLeave={() => !isDisabled && setHoveredCommand(null)}
+                                        style={{
+                                            cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                            transition: 'all 0.3s ease',
+                                            opacity: isDisabled ? 0.5 : 1
+                                        }}
                                     >
                                         <path
                                             d={describeEccentricSector(levelIndex, startAngle, endAngle)}
@@ -346,7 +352,7 @@ const SkillRadar: React.FC<SkillRadarProps> = ({ isOpen, onClose }) => {
                                             fontWeight={isHovered ? 700 : 500}
                                             style={{ pointerEvents: 'none', userSelect: 'none', textShadow: levelIndex >= 2 ? '0 1px 2px rgba(0,0,0,0.3)' : 'none' }}
                                         >
-                                            {command.name.replace('git ', '')}
+                                            {isDisabled ? '🔒 ' : ''}{command.name.replace('git ', '')}
                                         </text>
                                     </g>
                                 );
