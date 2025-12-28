@@ -303,5 +303,8 @@ func (c *RebaseCommand) Help() string {
  🛠  EXAMPLES
     1. 現在のブランチをmainの最新に追従させる
        $ git rebase main
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-rebase
 `
 }

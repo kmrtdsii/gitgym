@@ -295,5 +295,8 @@ func (c *CloneCommand) Help() string {
     2. 実践: ディレクトリ名を指定してクローン (Recommended)
        「リポジトリ名とは別のフォルダ名で作業したい」場合に使います。
        $ git clone git@github.com:org/repo.git my-project
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-clone
 `
 }

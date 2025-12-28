@@ -252,5 +252,8 @@ func (c *StashCommand) Help() string {
        
     3. 最新の退避を復元して消す
        $ git stash pop
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-stash
 `
 }

@@ -126,6 +126,9 @@ func (c *BlameCommand) Help() string {
  🛠  EXAMPLES
     1. README.md の履歴を見る
        $ git blame README.md
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-blame
 `
 }
 

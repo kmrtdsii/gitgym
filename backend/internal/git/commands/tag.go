@@ -189,5 +189,8 @@ func (c *TagCommand) Help() string {
 
     2. 注釈付きタグを作成
        $ git tag -a v1.0 -m "Release version 1.0"
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-tag
 `
 }

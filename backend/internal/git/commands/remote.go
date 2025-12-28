@@ -160,5 +160,8 @@ func (c *RemoteCommand) Help() string {
  ⚙️  COMMON OPTIONS
     -v, --verbose
         URLも含めて詳細に表示します。
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-remote
 `
 }

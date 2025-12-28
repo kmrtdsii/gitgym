@@ -153,5 +153,8 @@ func (c *RevertCommand) Help() string {
        
     2. 特定の過去のコミットを取り消す
        $ git revert a1b2c3d
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-revert
 `
 }

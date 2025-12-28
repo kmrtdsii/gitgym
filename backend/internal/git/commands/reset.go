@@ -124,5 +124,8 @@ func (c *ResetCommand) Help() string {
 
     2. 全てを強制的に以前の状態に戻す（危険）
        $ git reset --hard HEAD~1
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-reset
 `
 }

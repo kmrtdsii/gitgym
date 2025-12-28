@@ -337,6 +337,9 @@ func (c *FetchCommand) Help() string {
     3. 実践: 特定のブランチだけ取得
        「mainの更新だけ欲しい」という時に。
        $ git fetch origin main
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-fetch
 `
 }
 func (c *FetchCommand) pruneRemoteBranches(repo *gogit.Repository, remoteName string, remoteBranches map[string]bool, isDryRun bool) (int, []string, error) {

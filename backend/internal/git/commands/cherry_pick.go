@@ -226,5 +226,8 @@ func (c *CherryPickCommand) Help() string {
 
     2. 範囲適用
        $ git cherry-pick A..B
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-cherry-pick
 `
 }

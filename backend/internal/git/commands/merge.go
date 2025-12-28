@@ -277,5 +277,8 @@ func (c *MergeCommand) Help() string {
     2. 実践: マージコミットを必ず作る (Recommended)
        単なるポインタ移動(Fast-forward)ではなく、コミットを残します。
        $ git merge --no-ff feature/login
+
+ 🔗 REFERENCE
+    Full documentation: https://git-scm.com/docs/git-merge
 `
 }
