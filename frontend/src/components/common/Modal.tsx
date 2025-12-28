@@ -9,18 +9,24 @@ interface ModalProps {
 
 
 
-const modalContentStyle: React.CSSProperties = {
+// Visual styles for the dialog box itself
+const dialogStyle: React.CSSProperties = {
     backgroundColor: 'var(--bg-secondary)',
     border: '1px solid var(--border-subtle)',
     borderRadius: '8px',
-    padding: '24px',
+    padding: '0', // Padding handled by inner container
     minWidth: '320px',
     maxWidth: '500px',
     boxShadow: '0 4px 24px rgba(0, 0, 0, 0.2)',
+    color: 'var(--text-primary)',
+};
+
+// Internal layout (Flex)
+const dialogInnerStyle: React.CSSProperties = {
+    padding: '24px',
     display: 'flex',
     flexDirection: 'column',
     gap: '16px',
-    color: 'var(--text-primary)',
 };
 
 const modalHeaderStyle: React.CSSProperties = {
@@ -77,19 +83,18 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }) => {
             onCancel={handleCancel}
             onClick={handleClick}
             style={{
-                ...modalContentStyle,
+                ...dialogStyle,
                 margin: 'auto', // Center natively
                 position: 'fixed', // Ensure fixed positioning even for dialog
                 zIndex: 1000
-                // Backdrop is handled by ::backdrop pseudo-element usually, but we keep content style
+                // NOTE: We do NOT set display: flex here to avoid overriding 'display: none' when closed.
             }}
             aria-labelledby="modal-title"
         >
-            <div id="modal-title" style={modalHeaderStyle}>{title}</div>
-            {children}
-            {/* Native backdrop styling injected via style tag or global css if needed, 
-                but browser default is usually passable (dimmed). 
-                Ideally we add ::backdrop to global CSS. */}
+            <div style={dialogInnerStyle}>
+                <div id="modal-title" style={modalHeaderStyle}>{title}</div>
+                {children}
+            </div>
         </dialog>
     );
 };

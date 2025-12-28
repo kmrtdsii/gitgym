@@ -49,7 +49,7 @@ const GitTerminal = () => {
                 </div>
 
                 {/* Allow Empty Toggle */}
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginLeft: 'var(--space-4)' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '6px', userSelect: 'none' }} title={t('terminal.allowEmptyTooltip')}>
                         <input
                             type="checkbox"
