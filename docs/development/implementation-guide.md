@@ -26,7 +26,20 @@ To implement a new Git feature (e.g., `git merge` support):
 -   **Terminal**: Respect the "Recorder Pattern" in `GitTerminal`. Do not bypass the transcript history mechanism.
 -   **State**: Always rely on backend-provided state. Do not perform optimistic updates that might diverge from `go-git`'s reality.
 
-## 2.1 Backend Command Pattern (Standardization)
+## 2.1 Recommended Workflow for AI Agents
+Agents are encouraged to use **Flash Mode** (see `.ai/patterns/flash_mode.md`) to accelerate development, provided the final output strictly adheres to the Command Phasing pattern.
+
+### The "Draft & Seal" Protocol
+1.  **Draft phase (Flash Mode)**:
+    -   Write the specific command logic rapidly in a single pass.
+    -   Ignore strict linting or splitting into sub-functions temporarily.
+    -   *Goal*: Get `go build` passing and the feature working.
+2.  **Seal phase (Refinement)**:
+    -   Refactor the working draft into `parseArgs`, `resolveContext`, `performAction`.
+    -   Apply project lints and style guides.
+    -   *Goal*: Compliance with Section 2.1 Command Pattern standards.
+
+## 2.2 Backend Command Pattern (Standardization)
 All commands in `internal/git/commands/` must follow the **Command Phasing** pattern to ensure consistency and testability.
 
 ### Phase 1: Parse Arguments (`parseArgs`)
