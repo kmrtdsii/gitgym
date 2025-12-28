@@ -114,13 +114,27 @@ func listRemotes(repo *gogit.Repository, verbose bool) (string, error) {
 		return "", err
 	}
 
+	// Prepare config lookup for displayurl overrides
+	repoCfg, _ := repo.Config()
+
 	var sb strings.Builder
 	for _, r := range remotes {
 		cfg := r.Config()
+
+		// Check override
+		displayURL := ""
+		if repoCfg != nil {
+			displayURL = repoCfg.Raw.Section("remote").Subsection(cfg.Name).Option("displayurl")
+		}
+
 		if verbose {
 			for _, url := range cfg.URLs {
-				sb.WriteString(fmt.Sprintf("%s\t%s (fetch)\n", cfg.Name, url))
-				sb.WriteString(fmt.Sprintf("%s\t%s (push)\n", cfg.Name, url))
+				showURL := url
+				if displayURL != "" {
+					showURL = displayURL
+				}
+				sb.WriteString(fmt.Sprintf("%s\t%s (fetch)\n", cfg.Name, showURL))
+				sb.WriteString(fmt.Sprintf("%s\t%s (push)\n", cfg.Name, showURL))
 			}
 		} else {
 			sb.WriteString(fmt.Sprintf("%s\n", cfg.Name))

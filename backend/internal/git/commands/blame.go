@@ -102,9 +102,9 @@ func (c *BlameCommand) Execute(ctx context.Context, s *git.Session, args []strin
 		// Use actual file content for the text
 		lineText := fileLines[i]
 
-		sb.WriteString(fmt.Sprintf("%s (%-10s %s %4d) %s\n",
+		sb.WriteString(fmt.Sprintf("%s (%-20s %s %4d) %s\n",
 			hashStr,
-			truncateString(author, 10),
+			truncateString(author, 20),
 			dateStr,
 			i+1,
 			lineText))

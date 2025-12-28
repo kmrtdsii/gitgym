@@ -194,10 +194,17 @@ func (c *CloneCommand) performClone(s *git.Session, clCtx *cloneContext) (string
 
 	_, err = localRepo.CreateRemote(&config.RemoteConfig{
 		Name: "origin",
-		URLs: []string{clCtx.RemoteURL}, // Using original URL for display
+		URLs: []string{clCtx.RemotePath}, // Use internal path for functionality
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to configure origin: %w", err)
+	}
+
+	// Store the friendly URL for display purposes (git remote -v)
+	cfg, err := localRepo.Config()
+	if err == nil {
+		cfg.Raw.Section("remote").Subsection("origin").AddOption("displayurl", clCtx.RemoteURL)
+		localRepo.Storer.SetConfig(cfg)
 	}
 
 	s.Repos[clCtx.RepoName] = localRepo

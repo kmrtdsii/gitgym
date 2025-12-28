@@ -62,7 +62,8 @@ export const SKILL_TREE: SkillLevel[] = [
             { id: 'tag', name: 'git tag', description: 'Create, list, delete or verify tag object' },
             { id: 'remote', name: 'git remote', description: 'Manage tracked repositories' },
             { id: 'show', name: 'git show', description: 'Show various types of objects' },
-            { id: 'stash', name: 'git stash', description: 'Stash the changes in a dirty working directory away', disabled: true },
+            { id: 'stash', name: 'git stash', description: 'Stash the changes in a dirty working directory away' },
+            { id: 'revert', name: 'git revert', description: 'Revert some existing commits' },
         ]
     },
     {
