@@ -163,5 +163,21 @@ export const gitService = {
             body: JSON.stringify({ name })
         });
         if (!res.ok) throw new Error('Failed to reset remote');
+    },
+
+    async createRemote(name: string, sessionId: string): Promise<{ name: string; remoteUrl: string }> {
+        const res = await fetch('/api/remote/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Session-ID': sessionId
+            },
+            body: JSON.stringify({ name })
+        });
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error(errText || 'Failed to create repository');
+        }
+        return res.json();
     }
 };

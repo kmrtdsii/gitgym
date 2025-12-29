@@ -10,7 +10,7 @@ export interface RepoInfo {
 }
 
 export const useRemoteClone = () => {
-    const { ingestRemote, fetchServerState } = useGit();
+    const { ingestRemote, fetchServerState, sessionId } = useGit();
 
     const [cloneStatus, setCloneStatus] = useState<CloneStatus>('idle');
     const [estimatedSeconds, setEstimatedSeconds] = useState<number>(0);
@@ -103,6 +103,54 @@ export const useRemoteClone = () => {
         }
     }, [ingestRemote, fetchServerState]);
 
+    const performCreate = useCallback(async (name: string) => {
+        // Reset state
+        setErrorMessage(undefined);
+        setElapsedSeconds(0);
+        setEstimatedSeconds(0);
+        setRepoInfo(undefined);
+
+        if (!name.trim()) {
+            setCloneStatus('error');
+            setErrorMessage('Repository name is required');
+            return;
+        }
+
+        try {
+            setCloneStatus('creating');
+            // Mock timer for UX
+            const startTime = Date.now();
+            timerRef.current = window.setInterval(() => {
+                setElapsedSeconds((Date.now() - startTime) / 1000);
+            }, 100);
+
+            await gitService.createRemote(name, sessionId);
+
+            // Fetch state to reflect the directory switch on backend
+            // We use 'origin' remote name just to refresh common things, 
+            // but fetching general state is key here.
+            await fetchServerState('origin');
+
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+            setCloneStatus('complete');
+
+            // Auto reset
+            setTimeout(() => setCloneStatus('idle'), 2000);
+
+        } catch (err) {
+            if (timerRef.current) {
+                clearInterval(timerRef.current);
+                timerRef.current = null;
+            }
+            setCloneStatus('error');
+            setErrorMessage(err instanceof Error ? err.message : 'Failed to create repository');
+        }
+    }, [fetchServerState, sessionId]);
+
+
     const cancelClone = useCallback(() => {
         if (timerRef.current) {
             clearInterval(timerRef.current);
@@ -120,6 +168,7 @@ export const useRemoteClone = () => {
         repoInfo,
         errorMessage,
         performClone,
+        performCreate,
         cancelClone
     };
 };

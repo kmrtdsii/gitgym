@@ -23,7 +23,8 @@
         "name": "名前",
         "hash": "ハッシュ",
         "message": "メッセージ",
-        "date": "日付"
+        "date": "日付",
+        "or": "または"
     },
     "commitDetails": {
         "title": "コミット詳細",
@@ -80,7 +81,22 @@
             "synced": "同期完了！",
             "failed": "同期に失敗しました",
             "remaining": "残り",
-            "almostDone": "まもなく完了します..."
+            "almostDone": "まもなく完了します...",
+            "creating": "リポジトリを作成中..."
+        },
+        "header": {
+            "description": "GitHubリポジトリに接続してリモート履歴を可視化しましょう。"
+        },
+        "empty": {
+            "title": "リモート未設定",
+            "connect": "リポジトリに接続",
+            "create": "リポジトリを作成",
+            "createPlaceholder": "リポジトリ名...",
+            "validation": "英数字、ハイフン、アンダースコアのみ使用できます。",
+            "createButton": "作成",
+            "creating": "リポジトリを作成中...",
+            "created": "リポジトリを作成しました！",
+            "connecting": "リポジトリに接続中..."
         }
     },
     "developer": {
@@ -97,5 +113,14 @@
         "help": "'git help' と入力すると利用可能なコマンドが表示されます。",
         "allowEmpty": "空コミットを許可",
         "allowEmptyTooltip": "コミットコマンドに自動的に --allow-empty を追加します"
+    },
+    "mission": {
+        "active": "現在のミッション",
+        "objective": "目的",
+        "verify": "確認",
+        "abort": "中止",
+        "success": "ミッション達成！",
+        "failed": "確認失敗",
+        "loading": "ミッション詳細を読み込み中..."
     }
 }

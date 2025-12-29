@@ -9,7 +9,8 @@ import { useAutoDiscovery } from '../../hooks/useAutoDiscovery';
 
 // Default remote URL for the GitGym application
 // This repository is automatically available for cloning
-const DEFAULT_REMOTE_URL = 'https://github.com/octocat/Spoon-Knife.git';
+// Default remote URL removed
+const DEFAULT_REMOTE_URL = '';
 
 interface RemoteRepoViewProps {
     topHeight: number;
@@ -54,12 +55,11 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
     useEffect(() => {
         refreshPullRequests();
 
-        // Auto-load the default remote repository graph on startup
-        // Only if not already loaded and we have a default URL
-        if (!serverState && setupUrl && cloneStatus === 'idle') {
+        // Auto-load default remote removed
+        /* if (!serverState && setupUrl && cloneStatus === 'idle') {
             console.log('Auto-loading default remote:', setupUrl);
             performClone(setupUrl, 0);
-        }
+        } */
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

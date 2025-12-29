@@ -7,10 +7,17 @@ type Mission struct {
 	Description string     `yaml:"description" json:"description"`
 	Difficulty  Difficulty `yaml:"difficulty" json:"difficulty"`
 	Skill       string     `yaml:"skill" json:"skill"`
-	Setup       []string   `yaml:"setup" json:"-"`         // Commands to run for setup
-	Validation  Validation `yaml:"validation" json:"-"`    // Validation rules
-	Hints       []string   `yaml:"hints" json:"hints"`     // Hints for the user
-	Scoring     Scoring    `yaml:"scoring" json:"scoring"` // Scoring rules
+	Setup       []string                      `yaml:"setup" json:"-"`         // Commands to run for setup
+	Validation  Validation                    `yaml:"validation" json:"-"`    // Validation rules
+	Hints       []string                      `yaml:"hints" json:"hints"`     // Hints for the user
+	Scoring     Scoring                       `yaml:"scoring" json:"scoring"` // Scoring rules
+	Translations map[string]MissionTranslation `yaml:"translations" json:"-"` // Localized content
+}
+
+type MissionTranslation struct {
+	Title       string   `yaml:"title" json:"title"`
+	Description string   `yaml:"description" json:"description"`
+	Hints       []string `yaml:"hints" json:"hints"`
 }
 
 type Difficulty struct {

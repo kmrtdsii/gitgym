@@ -40,6 +40,7 @@ func (s *Server) routes() {
 	s.Mux.HandleFunc("/api/remote/pull-requests/delete", s.handleDeletePullRequest)
 	s.Mux.HandleFunc("/api/remote/reset", s.handleResetRemote)
 	s.Mux.HandleFunc("/api/remote/info", s.handleGetRemoteInfo)
+	s.Mux.HandleFunc("/api/remote/create", s.handleCreateRemote)
 
 	// Mission
 	s.Mux.HandleFunc("/api/mission/list", s.handleListMissions)

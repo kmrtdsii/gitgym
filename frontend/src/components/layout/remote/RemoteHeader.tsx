@@ -189,7 +189,7 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                     color: 'var(--text-tertiary)',
                     marginTop: 'var(--space-1)'
                 }}>
-                    Connect a GitHub repository to visualize remote history.
+                    {t('remote.header.description')}
                 </div>
             )}
         </div>

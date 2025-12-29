@@ -3,6 +3,9 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
+
+	"github.com/kurobon/gitgym/backend/internal/mission"
 )
 
 type StartMissionRequest struct {
@@ -24,6 +27,37 @@ func (s *Server) handleListMissions(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// Localization Logic
+	lang := "en" // default
+	acceptLang := r.Header.Get("Accept-Language")
+	// Simple detection for Japanese. For production, consider using x/text/language.
+	if strings.Contains(strings.ToLower(acceptLang), "ja") {
+		lang = "ja"
+	}
+
+	if lang != "en" {
+		localizedMissions := make([]*mission.Mission, len(missions))
+		for i, m := range missions {
+			// Copy the mission struct by dereferencing
+			val := *m
+			localized := &val
+
+			if trans, ok := m.Translations[lang]; ok {
+				if trans.Title != "" {
+					localized.Title = trans.Title
+				}
+				if trans.Description != "" {
+					localized.Description = trans.Description
+				}
+				if len(trans.Hints) > 0 {
+					localized.Hints = trans.Hints
+				}
+			}
+			localizedMissions[i] = localized
+		}
+		missions = localizedMissions
 	}
 
 	w.Header().Set("Content-Type", "application/json")

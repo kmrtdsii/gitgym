@@ -3,7 +3,7 @@ import { Loader2, AlertCircle, CheckCircle, RefreshCw, XCircle } from 'lucide-re
 import { useTranslation } from 'react-i18next';
 import { Button } from '../../common/Button';
 
-export type CloneStatus = 'idle' | 'fetching_info' | 'cloning' | 'complete' | 'error';
+export type CloneStatus = 'idle' | 'fetching_info' | 'cloning' | 'creating' | 'complete' | 'error';
 
 interface CloneProgressProps {
     status: CloneStatus;
@@ -62,7 +62,7 @@ const CloneProgress: React.FC<CloneProgressProps> = ({
         }}>
             {/* Icon State */}
             <div style={{ color: 'var(--accent-primary)', flexShrink: 0, marginTop: '2px' }}>
-                {(status === 'fetching_info' || status === 'cloning') && (
+                {(status === 'fetching_info' || status === 'cloning' || status === 'creating') && (
                     <Loader2 size={20} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
                 )}
                 {status === 'complete' && <CheckCircle size={20} color="var(--color-success)" />}
@@ -80,6 +80,7 @@ const CloneProgress: React.FC<CloneProgressProps> = ({
                         </span>
                     )}
                     {status === 'complete' && t('remote.status.synced')}
+                    {status === 'creating' && t('remote.status.creating')}
                     {status === 'error' && t('remote.status.failed')}
                 </div>
 

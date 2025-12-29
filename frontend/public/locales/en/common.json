@@ -23,7 +23,8 @@
         "name": "Name",
         "hash": "Hash",
         "message": "Message",
-        "date": "Date"
+        "date": "Date",
+        "or": "OR"
     },
     "commitDetails": {
         "title": "Commit Details",
@@ -80,7 +81,22 @@
             "synced": "Remote synced!",
             "failed": "Sync failed",
             "remaining": "remaining",
-            "almostDone": "Almost done..."
+            "almostDone": "Almost done...",
+            "creating": "Creating repository..."
+        },
+        "header": {
+            "description": "Connect a GitHub repository to visualize remote history."
+        },
+        "empty": {
+            "title": "No Remote Configured",
+            "connect": "Connect Repository",
+            "create": "Create Repository",
+            "createPlaceholder": "Repository name...",
+            "validation": "Only alphanumeric characters, hyphens, and underscores allowed.",
+            "createButton": "Create",
+            "creating": "Creating repository...",
+            "created": "Repository Created!",
+            "connecting": "Connecting to repository..."
         }
     },
     "developer": {
@@ -97,5 +113,14 @@
         "help": "Type 'git help' to see available commands.",
         "allowEmpty": "Allow Empty",
         "allowEmptyTooltip": "Automatically append --allow-empty to commit commands"
+    },
+    "mission": {
+        "active": "Active Mission",
+        "objective": "Objective",
+        "verify": "Verify Mission",
+        "abort": "Abort",
+        "success": "Mission Accomplished!",
+        "failed": "Verification Failed",
+        "loading": "Loading mission details..."
     }
 }

@@ -40,6 +40,17 @@ Initiates a specific remote clone (simulated).
 - **Body**: `{ "url": "https://github.com/..." }`
 - **Response**: `{ "status": "queued" }` (Actual clone happens async or sync depending on implementation).
 
+### 4. `POST /api/remote/create`
+Creates a new bare remote repository.
+- **Body**: `{ "name": "my-new-repo" }`
+- **Response**:
+    ```json
+    {
+        "name": "my-new-repo",
+        "remoteUrl": "remote://gitgym/my-new-repo.git"
+    }
+    ```
+
 ## Error Handling
 - **400 Bad Request**: Invalid command or arguments.
 - **500 Internal Server Error**: Go panic or unhandled filesystem error.

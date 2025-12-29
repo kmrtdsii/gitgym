@@ -195,3 +195,57 @@ func (s *Server) handleGetStrategies(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(strategies)
 }
+
+// CreateRemoteRequest structure
+type CreateRemoteRequest struct {
+	Name string `json:"name"`
+}
+
+// handleCreateRemote creates a new bare repository
+func (s *Server) handleCreateRemote(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 1. Get Session ID
+	// Priority: Header > Cookie
+	sessionID := r.Header.Get("X-Session-ID")
+	if sessionID == "" {
+		cookie, err := r.Cookie("session_id")
+		if err == nil {
+			sessionID = cookie.Value
+		}
+	}
+
+	if sessionID == "" {
+		http.Error(w, "Session ID required (X-Session-ID header or session_id cookie)", http.StatusBadRequest)
+		return
+	}
+
+	var req CreateRemoteRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" {
+		http.Error(w, "Repository name is required", http.StatusBadRequest)
+		return
+	}
+
+	// 2. Create Repository
+	if err := s.SessionManager.CreateBareRepository(r.Context(), sessionID, req.Name); err != nil {
+		// Differentiate error types if possible, but 500 is safe for now
+		http.Error(w, fmt.Sprintf("Failed to create repository: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// 3. Return Success
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"message":   "Repository created successfully",
+		"name":      req.Name,
+		"remoteUrl": fmt.Sprintf("remote://gitgym/%s.git", req.Name),
+	})
+}

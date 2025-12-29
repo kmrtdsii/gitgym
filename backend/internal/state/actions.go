@@ -331,3 +331,94 @@ func (sm *SessionManager) pruneStaleWorkspaces(stalePaths map[string]bool) {
 		s.Unlock()
 	}
 }
+
+// CreateBareRepository creates a new bare repository locally and switches the session context
+func (sm *SessionManager) CreateBareRepository(ctx context.Context, sessionID, name string) error {
+	// 1. Validate Name (Simple alphanumeric check)
+	for _, r := range name {
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_') {
+			return fmt.Errorf("invalid repository name: only alphanumeric, hyphen and underscore allowed")
+		}
+	}
+
+	// Define local path for persistence
+	baseDir := os.Getenv("GITGYM_DATA_ROOT")
+	if baseDir == "" {
+		baseDir = ".gitgym-data"
+	}
+	baseDir = filepath.Join(baseDir, "remotes")
+
+	// Use name or hash for directory? "remote://gitgym/{name}" -> hash
+	// To be consistent with IngestRemote which hashes the URL.
+	// Let's construct a pseudo-URL for consistency.
+	pseudoURL := fmt.Sprintf("remote://gitgym/%s.git", name)
+	hash := sha256.Sum256([]byte(pseudoURL))
+	dirName := hex.EncodeToString(hash[:])
+	repoPath := filepath.Join(baseDir, dirName)
+	if absPath, err := filepath.Abs(repoPath); err == nil {
+		repoPath = absPath
+	}
+
+	sm.ingestMu.Lock()
+	defer sm.ingestMu.Unlock()
+
+	// 2. Cleanup existing (Single Residency)
+	if err := os.MkdirAll(baseDir, 0750); err != nil {
+		return fmt.Errorf("failed to create base dir: %w", err)
+	}
+	entries, err := os.ReadDir(baseDir)
+	if err == nil {
+		for _, entry := range entries {
+			if entry.IsDir() && entry.Name() != dirName {
+				_ = os.RemoveAll(filepath.Join(baseDir, entry.Name()))
+			}
+		}
+	}
+
+	// 3. Init Bare Repository
+	// Always recreate to ensure empty state for "Create" action
+	_ = os.RemoveAll(repoPath)
+	if err := os.MkdirAll(repoPath, 0750); err != nil {
+		return fmt.Errorf("failed to create repo dir: %w", err)
+	}
+
+	repo, err := gogit.PlainInit(repoPath, true) // isBare = true
+	if err != nil {
+		return fmt.Errorf("failed to init bare repo: %w", err)
+	}
+
+	// 4. Update Session Manager State
+	sm.mu.Lock()
+	// Reset maps
+	sm.SharedRemotes = make(map[string]*gogit.Repository)
+	sm.SharedRemotePaths = make(map[string]string)
+
+	// Register under Name, PseudoURL, and Path
+	sm.SharedRemotes[name] = repo
+	sm.SharedRemotePaths[name] = repoPath
+
+	sm.SharedRemotes[pseudoURL] = repo
+	sm.SharedRemotePaths[pseudoURL] = repoPath
+
+	sm.SharedRemotes[repoPath] = repo
+	sm.SharedRemotePaths[repoPath] = repoPath
+	sm.mu.Unlock()
+
+	// 5. Switch Session Directory (Side Effect)
+	if sessionID != "" {
+		if session, ok := sm.GetSession(sessionID); ok {
+			session.Lock()
+			// Create directory in session fs
+			dirName := name
+			if err := session.Filesystem.MkdirAll(dirName, 0755); err != nil {
+				log.Printf("Warning: failed to mkdir in session: %v", err)
+			}
+			// Switch current dir
+			session.CurrentDir = "/" + dirName
+			session.Unlock()
+			log.Printf("Switched session %s to directory /%s", sessionID, dirName)
+		}
+	}
+
+	return nil
+}
