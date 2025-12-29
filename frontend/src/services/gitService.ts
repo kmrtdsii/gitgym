@@ -126,6 +126,20 @@ export const gitService = {
         return data.remotes || [];
     },
 
+    /**
+     * Helper to get the current active remote name (since we only support single residency).
+     * Returns the first remote found, or 'origin' as fallback.
+     */
+    async getActiveRemoteName(): Promise<string> {
+        try {
+            const remotes = await this.listRemotes();
+            return remotes[0] || 'origin';
+        } catch (e) {
+            console.warn('Failed to list remotes, falling back to origin', e);
+            return 'origin';
+        }
+    },
+
     async fetchPullRequests(): Promise<PullRequest[]> {
         const res = await fetch('/api/remote/pull-requests');
         if (!res.ok) throw new Error('Failed to fetch pull requests');

@@ -82,11 +82,8 @@ export const useGitCommand = ({ sessionId, gitData }: UseGitCommandProps) => {
 
                 if (isRemoteCommand) {
                     // Fetch current remote list from backend (avoids stale serverState issues)
-                    const remotes = await gitService.listRemotes();
-                    const remoteName = remotes[0];
-                    if (remoteName) {
-                        await fetchServerState(remoteName);
-                    }
+                    const remoteName = await gitService.getActiveRemoteName();
+                    await fetchServerState(remoteName);
                 }
             }
 
