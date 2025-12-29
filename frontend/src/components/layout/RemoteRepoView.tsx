@@ -209,14 +209,16 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
 
             {/* BOTTOM SPLIT: Remote Operations */}
             <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', background: 'var(--bg-primary)' }}>
-                {/* Pull Requests */}
-                <PullRequestSection
-                    pullRequests={pullRequests}
-                    branches={remoteGraphState.branches}
-                    onCreatePR={createPullRequest}
-                    onMergePR={mergePullRequest}
-                    onDeletePR={deletePullRequest}
-                />
+                {/* Pull Requests - only show when remote exists AND has branches */}
+                {hasSharedRemotes && Object.keys(remoteGraphState.branches).length > 0 && (
+                    <PullRequestSection
+                        pullRequests={pullRequests}
+                        branches={remoteGraphState.branches}
+                        onCreatePR={createPullRequest}
+                        onMergePR={mergePullRequest}
+                        onDeletePR={deletePullRequest}
+                    />
+                )}
 
             </div>
         </div>

@@ -116,6 +116,16 @@ export const gitService = {
         return data;
     },
 
+    /**
+     * Get list of currently registered shared remotes
+     */
+    async listRemotes(): Promise<string[]> {
+        const res = await fetch('/api/remote/list');
+        if (!res.ok) return [];
+        const data = await res.json();
+        return data.remotes || [];
+    },
+
     async fetchPullRequests(): Promise<PullRequest[]> {
         const res = await fetch('/api/remote/pull-requests');
         if (!res.ok) throw new Error('Failed to fetch pull requests');

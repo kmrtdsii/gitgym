@@ -112,8 +112,9 @@ export const useGitData = (sessionId: string): GitDataHook => {
             const sState = await gitService.getRemoteState(name);
             setServerState(sState);
         } catch (e) {
-            console.error("Failed to fetch server state", e);
-            setServerState(null);
+            // Don't set serverState to null on failure - preserve the previous state
+            // This prevents losing remote display when the requested remote doesn't exist
+            console.error("Failed to fetch server state for:", name, e);
         }
     }, []);
 

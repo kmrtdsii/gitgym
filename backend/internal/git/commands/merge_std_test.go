@@ -139,3 +139,60 @@ func TestMergeFastForward(t *testing.T) {
 	head, _ := r.Head()
 	assert.Equal(t, featureHash, head.Hash())
 }
+
+// TestMergeEmptyTreeCommits tests merging branches where both have empty commits
+// (no actual file changes). This was a bug where the merge failed with
+// "cannot create empty commit: clean working tree".
+func TestMergeEmptyTreeCommits(t *testing.T) {
+	// Setup repo
+	fs := memfs.New()
+	storer := memory.NewStorage()
+	r, _ := gogit.Init(storer, fs)
+	w, _ := r.Worktree()
+
+	// 1. Initial empty commit (base)
+	baseHash, _ := w.Commit("Base (empty)", &gogit.CommitOptions{
+		Author:            &object.Signature{Name: "Test", Email: "test@example.com", When: time.Now()},
+		AllowEmptyCommits: true,
+	})
+
+	// 2. Create feature branch with empty commit
+	w.Checkout(&gogit.CheckoutOptions{Branch: plumbing.ReferenceName("refs/heads/feature"), Create: true})
+	featureHash, _ := w.Commit("Feature (empty)", &gogit.CommitOptions{
+		Author:            &object.Signature{Name: "Test", Email: "test@example.com", When: time.Now()},
+		AllowEmptyCommits: true,
+	})
+
+	// 3. Switch back to master and make empty commit (diverge)
+	w.Checkout(&gogit.CheckoutOptions{Branch: plumbing.Master, Force: true})
+	masterHash, _ := w.Commit("Master (empty)", &gogit.CommitOptions{
+		Author:            &object.Signature{Name: "Test", Email: "test@example.com", When: time.Now()},
+		AllowEmptyCommits: true,
+	})
+
+	// Verify we have diverged
+	require.NotEqual(t, baseHash, masterHash)
+	require.NotEqual(t, baseHash, featureHash)
+	require.NotEqual(t, masterHash, featureHash)
+
+	session := &git.Session{
+		ID:         "test-session",
+		Filesystem: fs,
+		Repos:      map[string]*gogit.Repository{"repo": r},
+		CurrentDir: "/repo",
+	}
+	cmd := &MergeCommand{}
+
+	// Test: Merge should succeed even with empty trees
+	output, err := cmd.Execute(context.Background(), session, []string{"merge", "feature"})
+	require.NoError(t, err, "Merge of empty tree branches should not fail")
+	assert.Contains(t, output, "Merge made by the 'ort' strategy")
+
+	// Verify merge commit was created
+	head, _ := r.Head()
+	require.NotEqual(t, masterHash, head.Hash(), "HEAD should have moved to merge commit")
+
+	mergeCommit, _ := r.CommitObject(head.Hash())
+	require.NotNil(t, mergeCommit)
+	assert.Equal(t, 2, mergeCommit.NumParents(), "Merge commit should have 2 parents")
+}

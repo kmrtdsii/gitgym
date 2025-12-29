@@ -214,9 +214,10 @@ func (c *MergeCommand) performMerge(s *git.Session, repo *gogit.Repository, mCtx
 	s.UpdateOrigHead()
 
 	newCommitHash, err := w.Commit(msg, &gogit.CommitOptions{
-		Parents:   parents,
-		Author:    git.GetDefaultSignature(),
-		Committer: git.GetDefaultSignature(),
+		Parents:           parents,
+		Author:            git.GetDefaultSignature(),
+		Committer:         git.GetDefaultSignature(),
+		AllowEmptyCommits: true, // Merge commits should always be created even without tree changes
 	})
 	if err != nil {
 		return "", err

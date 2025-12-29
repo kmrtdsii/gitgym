@@ -128,9 +128,14 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const mergePullRequest = useCallback(async (id: number) => {
         const { gitService } = await import('../services/gitService');
-        await gitService.mergePullRequest(id);
+        // Get current remote name from backend
+        const remotes = await gitService.listRemotes();
+        const remoteName = remotes[0] || 'origin';
+        await gitService.mergePullRequest(id, remoteName);
         await refreshPullRequests();
-        await fetchServerState('origin');
+        if (remoteName) {
+            await fetchServerState(remoteName);
+        }
         if (sessionId) await fetchState(sessionId);
     }, [sessionId, refreshPullRequests, fetchServerState, fetchState]);
 
@@ -138,7 +143,12 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const { gitService } = await import('../services/gitService');
         await gitService.deletePullRequest(id);
         await refreshPullRequests();
-        await fetchServerState('origin');
+        // Get current remote name from backend
+        const remotes = await gitService.listRemotes();
+        const remoteName = remotes[0];
+        if (remoteName) {
+            await fetchServerState(remoteName);
+        }
     }, [refreshPullRequests, fetchServerState]);
 
     const resetRemote = useCallback(async (name: string = 'origin') => {

@@ -228,6 +228,14 @@ func (sm *SessionManager) RemoveRemote(name string) error {
 	}
 	delete(sm.SharedRemotes, name)
 	delete(sm.SharedRemotePaths, name)
+
+	// Clear all entries in SharedRemotes (Single Residency cleanup)
+	sm.SharedRemotes = make(map[string]*gogit.Repository)
+	sm.SharedRemotePaths = make(map[string]string)
+
+	// Clear associated pull requests
+	sm.PullRequests = []*PullRequest{}
+
 	return nil
 }
 

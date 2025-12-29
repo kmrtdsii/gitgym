@@ -11,7 +11,6 @@ export const useGitCommand = ({ sessionId, gitData }: UseGitCommandProps) => {
     const {
         fetchState,
         fetchServerState,
-        serverState,
         setState,
         updateCommandOutput,
         incrementCommandCount
@@ -82,11 +81,11 @@ export const useGitCommand = ({ sessionId, gitData }: UseGitCommandProps) => {
                 const isRemoteCommand = ['push', 'pull', 'fetch', 'clone', 'remote'].some(c => cmd.startsWith(`git ${c}`));
 
                 if (isRemoteCommand) {
-                    if (serverState && serverState.remotes?.length === 0) {
-                        await fetchServerState('origin');
-                    } else if (serverState) {
-                        // Default fallback refresh
-                        await fetchServerState('origin');
+                    // Fetch current remote list from backend (avoids stale serverState issues)
+                    const remotes = await gitService.listRemotes();
+                    const remoteName = remotes[0];
+                    if (remoteName) {
+                        await fetchServerState(remoteName);
                     }
                 }
             }
@@ -108,7 +107,7 @@ export const useGitCommand = ({ sessionId, gitData }: UseGitCommandProps) => {
             incrementCommandCount(sessionId);
             return [errorLine];
         }
-    }, [sessionId, fetchState, fetchServerState, serverState, setState, updateCommandOutput, incrementCommandCount]);
+    }, [sessionId, fetchState, fetchServerState, setState, updateCommandOutput, incrementCommandCount]);
 
     return { runCommand };
 };

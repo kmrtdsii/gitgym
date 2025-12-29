@@ -263,3 +263,32 @@ func (s *Server) handleCreateRemote(w http.ResponseWriter, r *http.Request) {
 		"remoteUrl": fmt.Sprintf("remote://gitgym/%s.git", req.Name),
 	})
 }
+
+// handleListRemotes returns the list of currently registered shared remotes
+func (s *Server) handleListRemotes(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get unique keys (filter out duplicates like path aliases)
+	s.SessionManager.RLock()
+	seen := make(map[string]bool)
+	var names []string
+	for key := range s.SessionManager.SharedRemotes {
+		// Only include simple names (no paths, no URLs)
+		if key != "" && key[0] != '/' && len(key) < 50 && key != "origin" {
+			// Assume repo names are short, paths are long
+			if _, dup := seen[key]; !dup {
+				seen[key] = true
+				names = append(names, key)
+			}
+		}
+	}
+	s.SessionManager.RUnlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"remotes": names,
+	})
+}
