@@ -4,7 +4,7 @@ import { useTerminalTranscript, type TranscriptLine } from '../hooks/useTerminal
 import { useGitSession } from '../hooks/useGitSession';
 import { useGitData } from '../hooks/useGitData';
 import { useGitCommand } from '../hooks/useGitCommand';
-import type { DirectoryNode } from '../services/gitService';
+import { gitService, type DirectoryNode } from '../services/gitService';
 
 interface GitContextType {
     state: GitState;
@@ -109,13 +109,11 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         // But ingestRemote is distinct service call.
         // We can just import service here or put in useGitCommand?
         // Let's keep it clean and use service + fetchState.
-        const { gitService } = await import('../services/gitService');
         await gitService.ingestRemote(name, url, depth);
         await fetchState(sessionId);
     }, [sessionId, fetchState]);
 
     const createPullRequest = useCallback(async (title: string, desc: string, source: string, target: string) => {
-        const { gitService } = await import('../services/gitService');
         await gitService.createPullRequest({
             title,
             description: desc,
@@ -127,7 +125,6 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, [activeDeveloper, refreshPullRequests]);
 
     const mergePullRequest = useCallback(async (id: number) => {
-        const { gitService } = await import('../services/gitService');
         // Get current remote name from backend
         const remoteName = await gitService.getActiveRemoteName();
         await gitService.mergePullRequest(id, remoteName);
@@ -137,7 +134,6 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, [sessionId, refreshPullRequests, fetchServerState, fetchState]);
 
     const deletePullRequest = useCallback(async (id: number) => {
-        const { gitService } = await import('../services/gitService');
         await gitService.deletePullRequest(id);
         await refreshPullRequests();
         // Get current remote name from backend
@@ -146,7 +142,6 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, [refreshPullRequests, fetchServerState]);
 
     const resetRemote = useCallback(async (name: string = 'origin') => {
-        const { gitService } = await import('../services/gitService');
         await gitService.resetRemote(name);
         await fetchState(sessionId);
         setServerState(null);
