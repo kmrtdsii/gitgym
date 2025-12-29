@@ -53,15 +53,15 @@ func (sm *SessionManager) IngestRemote(ctx context.Context, name, url string, de
 		}
 	}
 
-	// 1.5. Capture Old Paths for Pruning Stale Workspaces
-	sm.mu.Lock()
-	oldPaths := make(map[string]bool)
-	for k, v := range sm.SharedRemotePaths {
-		oldPaths[k] = true // Capture URL/Name (Keys)
-		oldPaths[v] = true // Capture Resolved Path (Values) - just in case
-	}
-	// Do NOT clear maps yet. We only update them on success.
-	sm.mu.Unlock()
+	// 1.5. Capture Old Paths for Pruning Stale Workspaces - DISABLED
+	// sm.mu.Lock()
+	// oldPaths := make(map[string]bool)
+	// for k, v := range sm.SharedRemotePaths {
+	// 	oldPaths[k] = true // Capture URL/Name (Keys)
+	// 	oldPaths[v] = true // Capture Resolved Path (Values) - just in case
+	// }
+	// // Do NOT clear maps yet. We only update them on success.
+	// sm.mu.Unlock()
 
 	// 2. Check if already exists and is valid
 	var repo *gogit.Repository
@@ -208,8 +208,8 @@ func (sm *SessionManager) IngestRemote(ctx context.Context, name, url string, de
 	sm.SharedRemotes[repoPath] = repo
 	sm.SharedRemotePaths[repoPath] = repoPath
 
-	// 5. Prune Stale Workspaces
-	go sm.pruneStaleWorkspaces(oldPaths)
+	// 5. Prune Stale Workspaces - DISABLED
+	// go sm.pruneStaleWorkspaces(oldPaths)
 
 	return nil
 }

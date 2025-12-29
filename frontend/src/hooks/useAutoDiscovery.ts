@@ -27,6 +27,11 @@ export const useAutoDiscovery = ({
                 return;
             }
 
+            // Skip local file paths (often used for internal bare repos)
+            if (detectedUrl.startsWith('/') || detectedUrl.startsWith('file://')) {
+                return;
+            }
+
             // Only auto-configure if disconnected, no setup url manually typed, and not currently cloning
             if (!serverState && !setupUrl && cloneStatus === 'idle') {
                 console.log('Auto-detected remote origin:', detectedUrl);

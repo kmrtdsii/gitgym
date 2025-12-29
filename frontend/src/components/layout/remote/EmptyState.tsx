@@ -9,11 +9,17 @@ interface EmptyStateProps {
     isEditMode?: boolean;
     cloneStatus?: CloneStatus;
     onConnect?: () => void;
+    recentRemotes?: string[];
+    onSelectRemote?: (name: string) => void;
 }
 
 import { useTranslation } from 'react-i18next';
 
-const EmptyState: React.FC<EmptyStateProps> = ({ cloneStatus }) => {
+const EmptyState: React.FC<EmptyStateProps> = ({
+    cloneStatus,
+    recentRemotes = [],
+    onSelectRemote
+}) => {
     const { t } = useTranslation('common');
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
     const [isConnectDialogOpen, setIsConnectDialogOpen] = useState(false);
@@ -80,6 +86,53 @@ const EmptyState: React.FC<EmptyStateProps> = ({ cloneStatus }) => {
                             {t('remote.empty.create')}
                         </button>
                     </div>
+
+                    {/* Recent Repositories List */}
+                    {recentRemotes.length > 0 && (
+                        <div style={{ marginTop: '24px', width: '100%', maxWidth: '240px' }}>
+                            <div style={{
+                                fontSize: '11px',
+                                color: 'var(--text-tertiary)',
+                                marginBottom: '8px',
+                                textAlign: 'left',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                <span>{t('remote.recent', { defaultValue: '履歴' })}</span>
+                                <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                {recentRemotes.map(remote => (
+                                    <button
+                                        key={remote}
+                                        onClick={() => onSelectRemote?.(remote)}
+                                        style={{
+                                            ...actionButtonStyle,
+                                            background: 'transparent',
+                                            color: 'var(--text-secondary)',
+                                            border: '1px solid transparent',
+                                            fontSize: '12px',
+                                            padding: '6px 12px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            justifyContent: 'flex-start'
+                                        }}
+                                        className="hover:bg-[var(--bg-tertiary)] hover:border-[var(--border-subtle)]"
+                                    >
+                                        <div style={{
+                                            width: '6px',
+                                            height: '6px',
+                                            borderRadius: '50%',
+                                            background: remote === 'origin' ? 'var(--accent-primary)' : 'var(--text-tertiary)'
+                                        }} />
+                                        {remote}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
 

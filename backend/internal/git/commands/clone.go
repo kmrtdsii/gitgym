@@ -187,9 +187,13 @@ func (c *CloneCommand) performClone(s *git.Session, clCtx *cloneContext) (string
 	}
 
 	localSt := filesystem.NewStorage(dotGitFS, cache.NewObjectLRUDefault())
-	hybridSt := git.NewHybridStorer(localSt, clCtx.RemoteSt)
 
-	localRepo, err := gogit.Init(hybridSt, repoFS)
+	// Perform Full Object Copy (No HybridStorer)
+	if err := c.copyObjects(clCtx.RemoteSt, localSt); err != nil {
+		return "", fmt.Errorf("failed to copy objects: %w", err)
+	}
+
+	localRepo, err := gogit.Init(localSt, repoFS)
 	if err != nil {
 		return "", fmt.Errorf("failed to init local repo: %w", err)
 	}
@@ -276,6 +280,19 @@ func (c *CloneCommand) checkoutDefaultBranch(local *gogit.Repository, remote *go
 		})
 	}
 	return fmt.Errorf("could not resolve default branch '%s'", shortName)
+}
+
+func (c *CloneCommand) copyObjects(src storage.Storer, dst storage.Storer) error {
+	// iterate all objects
+	iter, err := src.IterEncodedObjects(plumbing.AnyObject)
+	if err != nil {
+		return err
+	}
+
+	return iter.ForEach(func(obj plumbing.EncodedObject) error {
+		_, err := dst.SetEncodedObject(obj)
+		return err
+	})
 }
 
 func (c *CloneCommand) Help() string {

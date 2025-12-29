@@ -230,6 +230,12 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
                             isEditMode={isEditMode}
                             cloneStatus={cloneStatus}
                             onConnect={handleEditRemote}
+                            recentRemotes={remoteList}
+                            onSelectRemote={(name) => {
+                                setActiveRemoteView(name);
+                                // If selecting from list, we might want to ensure we're not in edit mode
+                                setIsEditMode(false);
+                            }}
                         />
                     )}
                 </div>

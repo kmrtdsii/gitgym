@@ -3,7 +3,9 @@ package git
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
+	"time"
 	"unicode"
 )
 
@@ -25,6 +27,7 @@ func RegisterCommand(name string, factory CommandFactory) {
 
 // Global dispatcher
 func Dispatch(ctx context.Context, session *Session, cmdName string, args []string) (string, error) {
+	log.Printf("Dispatch: %s %v", cmdName, args)
 	// All commands (git and shell) are registered in the same registry
 	factory, ok := registry[cmdName]
 	if !ok {
@@ -37,7 +40,11 @@ func Dispatch(ctx context.Context, session *Session, cmdName string, args []stri
 	session.Unlock()
 
 	cmd := factory()
-	return cmd.Execute(ctx, session, args)
+	start := time.Now()
+	out, err := cmd.Execute(ctx, session, args)
+	duration := time.Since(start)
+	log.Printf("Dispatch: %s completed in %v. Error: %v", cmdName, duration, err)
+	return out, err
 }
 
 // GetSupportedCommands returns all registered commands
