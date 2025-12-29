@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Cloud, Database, Copy, Check, LogOut, Plus } from 'lucide-react';
+import { Cloud, Database, Copy, Check, LogOut } from 'lucide-react';
 import { headerStyle, inputStyle, cancelButtonStyle, submitButtonStyle } from './remoteStyles';
 
 interface RemoteHeaderProps {
@@ -31,13 +31,9 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
     isSettingUp,
     setupUrl,
     onSetupUrlChange,
-    onEditRemote,
     onDisconnect,
     onCancelEdit,
     onSubmit,
-    remotes = [],
-    activeRemote,
-    onSelectRemote,
 }) => {
     const { t } = useTranslation('common');
     const [isCopied, setIsCopied] = useState(false);
@@ -88,48 +84,7 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
 
     return (
         <div style={headerStyle}>
-            {/* Multi-Remote Tabs */}
-            {remotes.length > 0 && (
-                <div style={{ display: 'flex', gap: '4px', marginBottom: '12px', borderBottom: '1px solid var(--border-subtle)', overflowX: 'auto' }}>
-                    {remotes.map(r => (
-                        <button
-                            key={r}
-                            onClick={() => onSelectRemote?.(r)}
-                            style={{
-                                padding: '6px 12px',
-                                borderBottom: activeRemote === r ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                                fontWeight: activeRemote === r ? 600 : 400,
-                                fontSize: 'var(--text-sm)',
-                                cursor: 'pointer',
-                                background: 'transparent',
-                                borderTop: 'none',
-                                borderLeft: 'none',
-                                borderRight: 'none',
-                                color: activeRemote === r ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            {r}
-                        </button>
-                    ))}
-                    {/* New Remote Button (Triggers Edit/Add) */}
-                    <button
-                        onClick={onEditRemote}
-                        title="Add Remote (Enter new URL)"
-                        style={{
-                            padding: '6px 12px',
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            color: 'var(--text-tertiary)',
-                            display: 'flex',
-                            alignItems: 'center'
-                        }}
-                    >
-                        <Plus size={14} />
-                    </button>
-                </div>
-            )}
+
 
             {/* Title row with Configure button */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -144,10 +99,10 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
 
                 </div>
 
-                {/* Configure button */}
-                {remoteUrl && (
+                {/* Disconnect button - Replaces Configure/Settings */}
+                {remoteUrl && onDisconnect && (
                     <button
-                        onClick={remoteUrl.startsWith('remote://') ? onDisconnect : onEditRemote}
+                        onClick={onDisconnect}
                         style={{
                             padding: '3px 10px',
                             fontSize: 'var(--text-sm)',
@@ -162,16 +117,10 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                             alignItems: 'center',
                             gap: '4px'
                         }}
-                        data-testid="remote-configure-btn"
+                        data-testid="remote-disconnect-btn"
                     >
-                        {remoteUrl.startsWith('remote://') ? (
-                            <>
-                                <LogOut size={12} />
-                                {t('remote.disconnect')}
-                            </>
-                        ) : (
-                            t('remote.configure')
-                        )}
+                        <LogOut size={12} />
+                        {t('remote.disconnect')}
                     </button>
                 )}
             </div>

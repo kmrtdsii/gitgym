@@ -97,7 +97,8 @@ export const submitButtonStyle: React.CSSProperties = {
 };
 
 export const headerStyle: React.CSSProperties = {
-    height: '72px',
+    minHeight: '76px',
+    height: 'auto',
     boxSizing: 'border-box',
     padding: '0 12px',
     background: 'var(--bg-secondary)',
