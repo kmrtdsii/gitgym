@@ -23,8 +23,7 @@
         "name": "名前",
         "hash": "ハッシュ",
         "message": "メッセージ",
-        "date": "日付",
-        "or": "または"
+        "date": "日付"
     },
     "commitDetails": {
         "title": "コミット詳細",
@@ -96,7 +95,8 @@
             "createButton": "作成",
             "creating": "リポジトリを作成中...",
             "created": "リポジトリを作成しました！",
-            "connecting": "リポジトリに接続中..."
+            "connecting": "リポジトリに接続中...",
+            "or": "または"
         }
     },
     "developer": {

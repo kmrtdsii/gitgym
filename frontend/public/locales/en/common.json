@@ -23,8 +23,7 @@
         "name": "Name",
         "hash": "Hash",
         "message": "Message",
-        "date": "Date",
-        "or": "OR"
+        "date": "Date"
     },
     "commitDetails": {
         "title": "Commit Details",
@@ -96,7 +95,8 @@
             "createButton": "Create",
             "creating": "Creating repository...",
             "created": "Repository Created!",
-            "connecting": "Connecting to repository..."
+            "connecting": "Connecting to repository...",
+            "or": "OR"
         }
     },
     "developer": {

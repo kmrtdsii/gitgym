@@ -61,7 +61,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ isEditMode, cloneStatus, onConn
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px' }}>
                             <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
-                            <span>{t('common.or')}</span>
+                            <span>{t('remote.empty.or')}</span>
                             <div style={{ flex: 1, height: '1px', background: 'var(--border-subtle)' }} />
                         </div>
 
