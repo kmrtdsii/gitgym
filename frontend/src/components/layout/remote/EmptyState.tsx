@@ -264,7 +264,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                                     リモート <strong>{deleteTarget}</strong> をリストから削除しますか？
                                 </div>
                                 <div style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-tertiary)' }}>
-                                    Gitの設定からリモート設定のみが削除されます。実際のリポジトリやローカルファイルは保持されます。
+                                    実際のリポジトリやローカルファイルは保持されます。
                                 </div>
                             </div>
                         </div>

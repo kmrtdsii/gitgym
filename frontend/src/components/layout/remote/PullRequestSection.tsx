@@ -520,16 +520,18 @@ interface PullRequestCardProps {
 const PullRequestCard: React.FC<PullRequestCardProps> = ({ pr, onMerge, onDelete }) => {
     const { t } = useTranslation('common');
     const [isMerging, setIsMerging] = useState(false);
+    const [mergeError, setMergeError] = useState<string | null>(null);
     const [isHovered, setIsHovered] = useState(false);
 
     const handleMergeClick = async () => {
         setIsMerging(true);
+        setMergeError(null);
         try {
             await onMerge();
         } catch (error) {
             console.error('Merge failed:', error);
             const msg = error instanceof Error ? error.message : 'Unknown error';
-            alert(`Merge failed: ${msg}`);
+            setMergeError(msg);
         } finally {
             setIsMerging(false);
         }
@@ -625,6 +627,31 @@ const PullRequestCard: React.FC<PullRequestCardProps> = ({ pr, onMerge, onDelete
                     <span>{t('remote.list.openedBy', { name: pr.creator })}</span>
                 </div>
             </div>
+
+            {/* Error Message */}
+            {mergeError && (
+                <div style={{
+                    marginBottom: '16px',
+                    padding: '10px 12px',
+                    background: 'rgba(207, 34, 46, 0.1)',
+                    border: '1px solid rgba(207, 34, 46, 0.2)',
+                    borderRadius: '6px',
+                    color: '#cf222e',
+                    fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                }}>
+                    <div style={{ flexShrink: 0 }}>⚠️</div>
+                    <div>{mergeError}</div>
+                    <button
+                        onClick={() => setMergeError(null)}
+                        style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#cf222e', cursor: 'pointer', fontSize: '14px' }}
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>

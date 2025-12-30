@@ -158,13 +158,16 @@ export const GitProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }, [activeDeveloper, refreshPullRequests, activeRemoteView]);
 
     const mergePullRequest = useCallback(async (id: number) => {
-        // Use activeRemoteView for the target remote
-        const remoteName = activeRemoteView || 'origin';
+        // Find the PR to get its specific remoteName
+        const pr = pullRequests.find(p => p.id === id);
+        // Use the remote name from the PR itself, or fallback to active view
+        const remoteName = pr?.remoteName || activeRemoteView || 'origin';
+
         await gitService.mergePullRequest(id, remoteName);
         await refreshPullRequests();
         await fetchServerState(remoteName);
         if (sessionId) await fetchState(sessionId);
-    }, [sessionId, refreshPullRequests, fetchServerState, fetchState, activeRemoteView]);
+    }, [sessionId, refreshPullRequests, fetchServerState, fetchState, activeRemoteView, pullRequests]);
 
     const deletePullRequest = useCallback(async (id: number) => {
         await gitService.deletePullRequest(id);

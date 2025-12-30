@@ -78,11 +78,22 @@ func (c *MergePRCommand) resolveContext(_ context.Context) error {
 	c.pr = foundPR
 
 	// 2. Resolve Remote Repository
-	repo, ok := sm.SharedRemotes[c.remoteName]
+	// Use the remote name from the PR itself as the source of truth if available and not "origin"
+	targetRemote := c.remoteName
+	if c.pr.RemoteName != "" && c.pr.RemoteName != "origin" {
+		targetRemote = c.pr.RemoteName
+	}
+
+	repo, ok := sm.SharedRemotes[targetRemote]
 	if !ok {
-		return fmt.Errorf("remote repository %q not found", c.remoteName)
+		// Fallback to the requested one if PR remote not found? No, let's be strict if we have a mismatch.
+		repo, ok = sm.SharedRemotes[c.remoteName]
+		if !ok {
+			return fmt.Errorf("remote repository %q not found (PR expected %q)", c.remoteName, c.pr.RemoteName)
+		}
 	}
 	c.repo = repo
+	c.remoteName = targetRemote // Sync back for logging
 
 	return nil
 }

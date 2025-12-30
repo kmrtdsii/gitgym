@@ -29,6 +29,11 @@ const CreateRepoDialog: React.FC<CreateRepoDialogProps> = ({ isOpen, onClose, on
 
     // Check availability
     useEffect(() => {
+        // Skip validation if we are currently creating or have completed creation
+        if (cloneStatus === 'creating' || cloneStatus === 'complete') {
+            return;
+        }
+
         if (!repoName.trim()) {
             setError(null);
             return;
@@ -44,7 +49,7 @@ const CreateRepoDialog: React.FC<CreateRepoDialogProps> = ({ isOpen, onClose, on
         }
 
         setError(null);
-    }, [repoName, existingRemotes]);
+    }, [repoName, existingRemotes, cloneStatus]);
 
     // Dialog Control
     useEffect(() => {
