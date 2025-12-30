@@ -67,6 +67,11 @@ export const useGitData = (sessionId: string): GitDataHook => {
     }, [sessionCmdCounts]);
 
     const updateCommandOutput = useCallback((sid: string, output: string[]) => {
+        // Update ref synchronously to prevent race condition with fetchState
+        sessionOutputsRef.current = {
+            ...sessionOutputsRef.current,
+            [sid]: output
+        };
         setSessionOutputs(prev => ({
             ...prev,
             [sid]: output

@@ -132,10 +132,16 @@ export const useTerminal = (
             ];
             welcomeLines.forEach(line => {
                 xtermRef.current?.writeln(line);
+                if (appendToTranscriptRef.current) {
+                    appendToTranscriptRef.current(line, true);
+                }
             });
             // Write initial prompt
             const prompt = getPrompt(stateRef.current);
             xtermRef.current.write(`\x1b[2K\r${prompt}`);
+            if (appendToTranscriptRef.current) {
+                appendToTranscriptRef.current(`\x1b[2K\r${prompt}`, false);
+            }
         }
 
         // Save previous developer's input before switching
@@ -161,7 +167,9 @@ export const useTerminal = (
         prevDeveloperRef.current = activeDeveloper;
         setTimeout(() => fitAddonRef.current?.fit(), 50);
 
-    }, [activeDeveloper, sessionId, clearTranscript, terminalTranscripts, fitAddonRef, xtermRef, isReady, t, getOutput]);
+        // Note: terminalTranscripts intentionally excluded to prevent re-running on each transcript append
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeDeveloper, sessionId, fitAddonRef, xtermRef, isReady, t, getOutput]);
 
     // --- SYNC EXTERNAL & LOCAL COMMANDS ---
     useEffect(() => {
