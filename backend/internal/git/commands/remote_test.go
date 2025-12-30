@@ -39,6 +39,18 @@ func TestRemoteCommand(t *testing.T) {
 		}
 	})
 
+	t.Run("Reproduction: Add without URL", func(t *testing.T) {
+		// Cleanup first
+		_, _ = cmd.Execute(context.Background(), s, []string{"remote", "remove", "origin"})
+
+		_, err := cmd.Execute(context.Background(), s, []string{"remote", "add", "origin"})
+		if err == nil {
+			t.Error("remote add origin (no URL) should have failed")
+		} else {
+			t.Logf("Caught expected error: %v", err)
+		}
+	})
+
 	t.Run("Remove", func(t *testing.T) {
 		_, err := cmd.Execute(context.Background(), s, []string{"remote", "remove", "origin"})
 		if err != nil {

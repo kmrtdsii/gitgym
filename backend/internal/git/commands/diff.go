@@ -7,6 +7,7 @@ import (
 
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/kurobon/gitgym/backend/internal/git"
 )
 
@@ -68,56 +69,101 @@ func (c *DiffCommand) parseArgs(args []string) (*DiffOptions, error) {
 	}
 
 	// Validation
-	if opts.Ref1 == "" {
-		// git diff (no args) -> worktree vs index (not supported fully in simulation yet?)
-		// The original code returned usage message.
-		// Standard git diff (no args) is Worktree vs Index.
-		// git diff --cached is Index vs HEAD.
-		// git diff A B is A vs B.
-		if opts.Cached {
-			// diff --cached (Index vs HEAD)
-			// support later?
-			return nil, fmt.Errorf("diff --cached not yet supported in simulation (requires Index inspection)")
-		}
-		return nil, fmt.Errorf("usage: git diff <ref1> <ref2>\n(Worktree diff not yet supported)")
-	}
-
-	if opts.Ref2 == "" {
-		// diff A -> A vs Worktree? Or A vs HEAD?
-		// git diff <commit> -> <commit> vs Worktree
-		return nil, fmt.Errorf("usage: git diff <ref1> <ref2>\n(Single ref diff not yet supported)")
-	}
+	// git diff -> Ref1="", Ref2="", Cached=false
+	// git diff --cached -> Ref1="", Ref2="", Cached=true
+	// git diff commit -> Ref1="commit", Ref2="", Cached=false
 
 	return opts, nil
 }
 
-func (c *DiffCommand) executeDiff(_ *git.Session, repo *gogit.Repository, opts *DiffOptions) (string, error) {
-	// Resolve refs
-	h1, err := repo.ResolveRevision(plumbing.Revision(opts.Ref1))
-	if err != nil {
-		return "", err
-	}
-	h2, err := repo.ResolveRevision(plumbing.Revision(opts.Ref2))
-	if err != nil {
-		return "", err
+func (c *DiffCommand) executeDiff(s *git.Session, repo *gogit.Repository, opts *DiffOptions) (string, error) {
+	var tree1, tree2 *object.Tree
+	var err error
+
+	// 1. Resolve Tree 2 (Target)
+	if opts.Ref2 != "" {
+		// git diff ref1 ref2
+		h2, err := repo.ResolveRevision(plumbing.Revision(opts.Ref2))
+		if err != nil {
+			return "", fmt.Errorf("could not resolve %s: %w", opts.Ref2, err)
+		}
+		commit2, err := repo.CommitObject(*h2)
+		if err != nil {
+			return "", err
+		}
+		tree2, err = commit2.Tree()
+		if err != nil {
+			return "", err
+		}
+	} else if opts.Ref1 != "" && !opts.Cached {
+		// git diff ref1 -> ref1 vs Worktree
+		// Standard Git: git diff <commit> compares <commit> with working tree
+		tree2, err = s.GetWorktreeTree(repo)
+		if err != nil {
+			return "", fmt.Errorf("failed to build worktree tree: %w", err)
+		}
+	} else if opts.Cached {
+		// git diff --cached -> Index vs HEAD
+		tree2, err = s.GetIndexTree(repo)
+		if err != nil {
+			return "", fmt.Errorf("failed to build index tree: %w", err)
+		}
+	} else {
+		// git diff -> Worktree vs Index (or HEAD if no index?)
+		// Standard Git: compares working directory with index
+		tree2, err = s.GetWorktreeTree(repo)
+		if err != nil {
+			return "", fmt.Errorf("failed to build worktree tree: %w", err)
+		}
 	}
 
-	c1, err := repo.CommitObject(*h1)
-	if err != nil {
-		return "", err
-	}
-	c2, err := repo.CommitObject(*h2)
-	if err != nil {
-		return "", err
+	// 2. Resolve Tree 1 (Base)
+	if opts.Ref1 != "" {
+		h1, err := repo.ResolveRevision(plumbing.Revision(opts.Ref1))
+		if err != nil {
+			return "", fmt.Errorf("could not resolve %s: %w", opts.Ref1, err)
+		}
+		commit1, err := repo.CommitObject(*h1)
+		if err != nil {
+			return "", err
+		}
+		tree1, err = commit1.Tree()
+		if err != nil {
+			return "", err
+		}
+	} else if opts.Cached {
+		// git diff --cached -> Index vs HEAD. Base is HEAD.
+		head, err := repo.Head()
+		if err != nil {
+			// No commits yet, compare with empty tree
+			tree1 = &object.Tree{}
+		} else {
+			commit1, err := repo.CommitObject(head.Hash())
+			if err != nil {
+				return "", err
+			}
+			tree1, err = commit1.Tree()
+			if err != nil {
+				return "", err
+			}
+		}
+	} else {
+		// git diff -> Worktree vs Index. Base is Index.
+		tree1, err = s.GetIndexTree(repo)
+		if err != nil {
+			// If index tree fails (e.g. empty repo), fallback to HEAD or empty
+			head, err := repo.Head()
+			if err != nil {
+				tree1 = &object.Tree{}
+			} else {
+				commit1, _ := repo.CommitObject(head.Hash())
+				tree1, _ = commit1.Tree()
+			}
+		}
 	}
 
-	tree1, err := c1.Tree()
-	if err != nil {
-		return "", err
-	}
-	tree2, err := c2.Tree()
-	if err != nil {
-		return "", err
+	if tree1 == nil || tree2 == nil {
+		return "", fmt.Errorf("internal error: could not resolve trees for diff")
 	}
 
 	patch, err := tree1.Patch(tree2)

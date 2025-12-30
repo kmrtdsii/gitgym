@@ -52,13 +52,14 @@ func TestDiffStandardized(t *testing.T) {
 		}
 	})
 
-	t.Run("Diff Missing Args", func(t *testing.T) {
+	t.Run("Diff No Args", func(t *testing.T) {
 		res, err := cmd.Execute(context.Background(), s, []string{"diff"})
-		if err == nil {
-			t.Errorf("Expected error for missing args, got nil. Output: %s", res)
+		if err != nil {
+			t.Errorf("Expected success for no args, got err: %v", err)
 		}
-		if !strings.Contains(err.Error(), "usage:") {
-			t.Errorf("Expected usage message in error, got: %v", err)
+		// No changes at this point as the last commit matches worktree
+		if res != "" {
+			t.Errorf("Expected empty diff for clean worktree, got: %s", res)
 		}
 	})
 }

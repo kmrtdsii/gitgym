@@ -65,7 +65,7 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                         <Cloud
-                            size={16}
+                            size={18}
                             className={remoteUrl ? "text-accent-primary" : "text-tertiary"}
                             style={{ opacity: remoteUrl ? 1 : 0.5 }}
                         />
@@ -75,7 +75,7 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                                 position: 'absolute',
                                 right: -4,
                                 bottom: -2,
-                                color: remoteUrl ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+                                color: remoteUrl ? 'var(--text-accent)' : 'var(--text-tertiary)',
                                 background: 'var(--bg-secondary)',
                                 borderRadius: '50%'
                             }}
