@@ -9,7 +9,7 @@
     *   **Transitions**: content shouldn't just "snap" into place. Use smooth fades and slides.
     *   **Glassmorphism/Modern UI**: Use subtle shadows, blurs, and consistent spacing variables.
 *   **Colors**:
-    *   Avoid "Default Blue/Red". Use semantic color palettes defined in `index.css` / CSS Variables.
+    *   Avoid generic default palettes (plain red/blue). Use semantic color palettes defined in the project's global stylesheet or design tokens.
     *   Support **Dark Mode** first-class.
 
 ## 2. Usability & Accessibility (a11y)
