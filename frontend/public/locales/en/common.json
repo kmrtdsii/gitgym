@@ -96,12 +96,14 @@
             "createFailed": "Failed to create repository"
         },
         "header": {
-            "description": "Connect a Git repository to visualize remote history."
+            "description": "Connect a Git repository to visualize remote history.",
+            "settings": "Repo Settings",
+            "setup": "Configure Remote"
         },
         "empty": {
             "title": "No Remote Configured",
             "description": "A remote repository is required to experience push / pull / clone.",
-            "connect": "Connect Repository",
+            "connect": "Connect External Repository",
             "create": "Create Repository",
             "createTitle": "Create New Repository",
             "duplicateName": "A remote repository with the same name already exists.",

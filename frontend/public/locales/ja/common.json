@@ -97,12 +97,14 @@
             "createFailed": "リポジトリの作成に失敗しました"
         },
         "header": {
-            "description": "Gitリポジトリに接続してリモート履歴を可視化しましょう。"
+            "description": "Gitリポジトリに接続してリモート履歴を可視化しましょう。",
+            "settings": "リモート再設定",
+            "setup": "リモートを設定"
         },
         "empty": {
             "title": "リモートリポジトリ",
             "description": "push / pull / clone を体験するにはリモートリポジトリが必要です",
-            "connect": "リポジトリに接続",
+            "connect": "外部リポジトリに接続",
             "create": "リポジトリを作成",
             "createTitle": "新規にリポジトリを作成",
             "duplicateName": "既に同じ名前のリモートリポジトリが存在します。",

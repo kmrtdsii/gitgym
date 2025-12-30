@@ -60,7 +60,13 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
             background: 'var(--bg-secondary)', // Same as developer tabs
         }}>
             {/* ROW 1: Title & Main Actions (36px) - Matches DeveloperTabs */}
-            <div style={{ ...toolbarRowStyle, padding: '0 12px', justifyContent: 'space-between', height: remoteUrl ? '36px' : '40px', borderBottom: 'none' }}>
+            <div style={{
+                ...toolbarRowStyle,
+                padding: '0 12px',
+                justifyContent: 'space-between',
+                height: '36px',
+                borderBottom: '1px solid var(--border-subtle)'
+            }}>
                 {/* Left: Project Name */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
                     <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -94,7 +100,7 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                 </div>
 
                 {/* Settings button - Right aligned */}
-                {remoteUrl && !isSettingsOpen && (
+                {!isSettingsOpen && (
                     <button
                         onClick={onEditRemote}
                         title="リポジトリ設定"
@@ -109,74 +115,92 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                             cursor: 'pointer',
                             padding: '4px 8px',
                             borderRadius: '4px',
-                            flexShrink: 0 // Prevent shrinking
+                            flexShrink: 0
                         }}
                         className="hover:bg-bg-tertiary transition-colors"
                     >
                         <Settings size={14} />
-                        <span>リモートを設定</span>
+                        <span>{remoteUrl ? t('remote.header.settings') || 'リポジトリ設定' : t('remote.header.setup') || 'リモートを設定'}</span>
                     </button>
                 )}
             </div>
 
             {/* ROW 2: URL & Info (40px) - Matches Local View Toggles */}
-            {remoteUrl && (
-                <div style={{
-                    height: '40px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '0 12px',
-                    background: 'var(--bg-toolbar)', // Distinct background for submenu-like feel
-                    // borderTop: '1px solid var(--border-subtle)', // Removed divider as requested
-                    gap: '12px'
-                }}>
-                    <span style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: 'var(--text-secondary)',
-                        whiteSpace: 'nowrap'
-                    }}>
-                        リモートURL
-                    </span>
-                    <div style={{
-                        flex: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        minWidth: 0
-                    }}>
-                        <input
-                            type="text"
-                            readOnly
-                            value={remoteUrl}
-                            style={{
-                                flex: 1,
-                                background: 'var(--bg-tertiary)',
-                                border: '1px solid var(--border-subtle)',
-                                borderRadius: '4px',
-                                padding: '4px 8px',
-                                fontSize: '11px',
-                                fontFamily: 'monospace',
-                                color: 'var(--text-secondary)',
-                                outline: 'none',
-                                width: '100%'
-                            }}
-                        />
-                        <button
-                            onClick={handleCopyUrl}
-                            title="Copy URL"
-                            style={{
-                                display: 'flex', alignItems: 'center',
-                                background: 'transparent', border: 'none',
-                                padding: '4px', cursor: 'pointer',
-                                color: isCopied ? 'var(--accent-primary)' : 'var(--text-tertiary)'
-                            }}
-                        >
-                            {isCopied ? <Check size={14} /> : <Copy size={14} />}
-                        </button>
+            <div style={{
+                height: '40px',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 12px',
+                background: 'var(--bg-toolbar)',
+                gap: '12px'
+            }}>
+                {remoteUrl ? (
+                    <>
+                        <span style={{
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: 'var(--text-secondary)',
+                            whiteSpace: 'nowrap'
+                        }}>
+                            リモートURL
+                        </span>
+                        <div style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            minWidth: 0
+                        }}>
+                            <input
+                                type="text"
+                                readOnly
+                                value={remoteUrl}
+                                style={{
+                                    flex: 1,
+                                    background: 'var(--bg-tertiary)',
+                                    border: '1px solid var(--border-subtle)',
+                                    borderRadius: '4px',
+                                    padding: '4px 8px',
+                                    fontSize: '11px',
+                                    fontFamily: 'monospace',
+                                    color: 'var(--text-secondary)',
+                                    outline: 'none',
+                                    width: '100%'
+                                }}
+                            />
+                            <button
+                                onClick={handleCopyUrl}
+                                title="Copy URL"
+                                style={{
+                                    display: 'flex', alignItems: 'center',
+                                    background: 'transparent', border: 'none',
+                                    padding: '4px', cursor: 'pointer',
+                                    color: isCopied ? 'var(--accent-primary)' : 'var(--text-tertiary)'
+                                }}
+                            >
+                                {isCopied ? <Check size={14} /> : <Copy size={14} />}
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+                        {/* Automatically generated build information */}
+                        <div style={{
+                            fontSize: '9px',
+                            color: 'var(--text-tertiary)',
+                            opacity: 0.5,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-end',
+                            lineHeight: 1.1,
+                            fontFamily: 'monospace'
+                        }}>
+                            <span>v{__APP_VERSION__}</span>
+                            <span>Built: {__BUILD_TIME__}</span>
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };

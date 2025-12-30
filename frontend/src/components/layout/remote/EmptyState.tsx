@@ -108,13 +108,13 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                                 }}
                             >
                                 <Link2 size={16} />
-                                新規にリポジトリに接続
+                                {t('remote.empty.connect')}
                             </button>
 
                             {/* Separator */}
                             <div style={separatorStyle}>
                                 <div style={lineStyle} />
-                                <span>または</span>
+                                <span>{t('remote.empty.or')}</span>
                                 <div style={lineStyle} />
                             </div>
 
