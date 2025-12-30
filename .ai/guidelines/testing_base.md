@@ -27,9 +27,8 @@ The test file itself is a "specification" for the AI.
 -   Use `await expect(...)` for all assertions.
 -   Keep tests independent (no shared mutable variables outside `test.describe`).
 
-## 5. Environment & Troubleshooting
-### MacOS / Nix / Direnv Issues
-If you encounter `go: creating work dir: ... no such file or directory` errors during testing, it is likely a stale `TMPDIR` environment variable from a closed Nix shell.
--   **Diagnosis**: Run `echo $TMPDIR`. If it points to a non-existent `/var/folders/.../nix-shell...` path, this is the cause.
--   **Fix**: Run `unset TMPDIR` before executing tests.
--   **Agent Note**: If `go test` fails with filesystem errors immediately, try checking environment variables first.
+## 5. Agent-Driven Verification (Browser Subagents)
+When using AI agents to verify features via browser automation:
+-   **Environment Check**: ALWAYS verify the target (e.g., `curl -I http://localhost:80`) is up before launching the browser.
+-   **Docker**: Ensure services are running (`docker compose up -d`). Do not assume they are maintained between sessions.
+-   **Visual Feedback**: Use screenshots to verify state. For "Search" or "Filter" features, verify "Dimming" effects by checking `opacity` styles, as elements often remain in the DOM but change visual state.

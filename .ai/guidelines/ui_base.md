@@ -9,7 +9,7 @@
     *   **Transitions**: content shouldn't just "snap" into place. Use smooth fades and slides.
     *   **Glassmorphism/Modern UI**: Use subtle shadows, blurs, and consistent spacing variables.
 *   **Colors**:
-    *   Avoid "Default Blue/Red". Use semantic color palettes defined in `index.css` / CSS Variables.
+    *   Avoid generic default palettes (plain red/blue). Use semantic color palettes defined in the project's global stylesheet or design tokens.
     *   Support **Dark Mode** first-class.
 
 ## 2. Usability & Accessibility (a11y)
@@ -30,3 +30,15 @@
 
 ## 5. Agent-Friendly UI
 *   **Test IDs**: Add `data-testid` to critical interaction elements. This allows Agents (and E2E tests) to reliably locate elements even if the visual design changes completely.
+
+## 6. Premium Component Patterns (2025 Standards)
+*   **Avoid Defaults**: Native `<select>` and `<input>` often look outdated. Wrap them or replace them with custom implementations (e.g., `CustomSelect`) that support:
+    *   Custom styling (borders, backgrounds).
+    *   Icon integration (`ChevronDown`, `CheckCircle`).
+    *   Hover/Active states.
+*   **Icons**: standard library is `lucide-react`. Use specific icons to convey action (e.g., `GitMerge` for merging, `Trash2` for deleting) rather than text-only buttons.
+*   **Card-Based Layouts**:
+    *   Use borders (`border-subtle`) + light backgrounds (`bg-secondary`) for list items.
+    *   Add `flex-wrap: wrap` to toolbars to ensure layouts don't break on resize.
+    *   **Typography Hierarchy**: Bold titles, monospace IDs, colored badges for status.
+
