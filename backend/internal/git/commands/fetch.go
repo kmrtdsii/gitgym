@@ -114,11 +114,13 @@ func (c *FetchCommand) resolveFetchTargets(repo *gogit.Repository, opts *FetchOp
 
 func (c *FetchCommand) executeFetch(s *git.Session, repo *gogit.Repository, remotes []*gogit.Remote, opts *FetchOptions) (string, error) {
 	var allResults []string
+	failed := false
 
 	for _, rem := range remotes {
 		res, err := c.fetchRemote(s, repo, rem, opts.DryRun, opts.Tags, opts.Prune)
 		if err != nil {
 			allResults = append(allResults, fmt.Sprintf("error: fetching %s: %v", rem.Config().Name, err))
+			failed = true
 		} else {
 			if res != "" {
 				allResults = append(allResults, res)
@@ -126,8 +128,12 @@ func (c *FetchCommand) executeFetch(s *git.Session, repo *gogit.Repository, remo
 		}
 	}
 
+	if failed && len(remotes) == 1 {
+		return "", fmt.Errorf("fetch failed") // Return error for single remote failure
+	}
+
 	if len(allResults) == 0 {
-		return "Already up to date.", nil
+		return "", nil // Standard git is silent if nothing happened? Or "Already up to date."? Git is usually silent if nothing printed.
 	}
 
 	return strings.Join(allResults, "\n"), nil
@@ -141,25 +147,10 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 	}
 	url := cfg.URLs[0]
 
-	// Look up simulated remote
-	lookupKey := strings.TrimPrefix(url, "/")
-
-	var srcRepo *gogit.Repository
-	var ok bool
-
-	// Check Session-local
-	srcRepo, ok = s.Repos[lookupKey]
-	if !ok && s.Manager != nil {
-		// Check Shared
-		srcRepo, ok = s.Manager.SharedRemotes[lookupKey]
-		// Fallback: Check using full URL
-		if !ok {
-			srcRepo, ok = s.Manager.SharedRemotes[url]
-		}
-	}
-
-	if !ok {
-		return "", fmt.Errorf("remote repository '%s' not found (simulated path or URL required)", url)
+	// Look up simulated remote source
+	srcRepo, err := c.resolveSimulatedRemote(s, url)
+	if err != nil {
+		return "", err
 	}
 
 	// Scan remote refs (branches and tags)
@@ -168,8 +159,20 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 		return "", err
 	}
 
-	updated := 0
 	results := []string{fmt.Sprintf("From %s", url)}
+	nothingFetched := true
+
+	// Filter targets based on refspecs/tags
+	// Map: RemoteBranchName -> TargetLocalRef
+	fetchTargets := make(map[string]plumbing.ReferenceName)
+
+	// Default fetchspec if no refspecs provided: +refs/heads/*:refs/remotes/origin/*
+	// If refspecs provided (e.g. "main"), it usually means fetch that branch and map to FETCH_HEAD,
+	// BUT for simplicity in this simulated env, we will map "main" -> "refs/remotes/origin/main"
+	// unless a full refspec is given (which we honestly support minimally).
+
+	// Build a list of candidate remote branches we care about
+	candidates := make(map[string]*plumbing.Reference)
 
 	// Track present remote branches for pruning later
 	remoteBranches := make(map[string]bool)
@@ -200,11 +203,7 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 			}
 			updated += count
 		}
-		return nil
-	})
-
-	if err != nil {
-		return "", err
+		// If equal, say nothing
 	}
 
 	// 3. Prune Logic
