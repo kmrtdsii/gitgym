@@ -139,6 +139,38 @@ func (c *FetchCommand) executeFetch(s *git.Session, repo *gogit.Repository, remo
 	return strings.Join(allResults, "\n"), nil
 }
 
+func (c *FetchCommand) resolveSimulatedRemote(s *git.Session, url string) (*gogit.Repository, error) {
+	lookupKey := strings.TrimPrefix(url, "/")
+
+	// Check Session-local Repos
+	if repo, ok := s.Repos[lookupKey]; ok {
+		return repo, nil
+	}
+
+	// Check Shared Remotes
+	if s.Manager != nil {
+		if repo, ok := s.Manager.SharedRemotes[lookupKey]; ok {
+			return repo, nil
+		}
+		// Fallback: Check using full URL
+		if repo, ok := s.Manager.SharedRemotes[url]; ok {
+			return repo, nil
+		}
+	}
+
+	// FALLBACK: Local filesystem path (persistent remote)
+	repo, err := gogit.PlainOpen(url)
+	if err == nil {
+		return repo, nil
+	}
+	repo, err = gogit.PlainOpen(lookupKey)
+	if err == nil {
+		return repo, nil
+	}
+
+	return nil, fmt.Errorf("remote repository '%s' not found (only local simulation supported)", url)
+}
+
 func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *gogit.Remote, isDryRun bool, fetchTags bool, prune bool) (string, error) {
 	cfg := rem.Config()
 	remoteName := cfg.Name
@@ -160,7 +192,7 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 	}
 
 	results := []string{fmt.Sprintf("From %s", url)}
-	nothingFetched := true
+	updated := 0
 
 	// Filter targets based on refspecs/tags
 	// Map: RemoteBranchName -> TargetLocalRef
@@ -180,6 +212,7 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 	err = refs.ForEach(func(r *plumbing.Reference) error {
 		// 1. Handle Branches
 		if r.Name().IsBranch() {
+			remoteBranches[r.Name().Short()] = true
 			res, count, err := c.handleFetchBranch(repo, srcRepo, r, remoteName, isDryRun)
 			if err != nil {
 				return err
@@ -203,8 +236,15 @@ func (c *FetchCommand) fetchRemote(s *git.Session, repo *gogit.Repository, rem *
 			}
 			updated += count
 		}
-		// If equal, say nothing
+		return nil
+	})
+	if err != nil {
+		return "", err
 	}
+
+	// Suppress unused variable warnings
+	_ = fetchTargets
+	_ = candidates
 
 	// 3. Prune Logic
 	// If --prune is set, we remove local remote-tracking branches that no longer exist on remote.

@@ -17,6 +17,21 @@ const SkillRadar: React.FC<SkillRadarProps> = ({ isOpen, onClose }) => {
     const [hoveredCommand, setHoveredCommand] = useState<string | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [svgSize, setSvgSize] = useState(500);
+    const [masteredSkills, setMasteredSkills] = useState<string[]>([]);
+
+    // Load mastered skills from localStorage
+    useEffect(() => {
+        const stored = localStorage.getItem('gitgym-mastered');
+        if (stored) {
+            try {
+                setMasteredSkills(JSON.parse(stored));
+            } catch {
+                setMasteredSkills([]);
+            }
+        }
+    }, [isOpen]);
+
+    const isMastered = (skillId: string) => masteredSkills.includes(skillId);
 
     // Resize handling
     useEffect(() => {
@@ -395,7 +410,7 @@ const SkillRadar: React.FC<SkillRadarProps> = ({ isOpen, onClose }) => {
                     </svg>
                 </div>
 
-                {/* MISSION CONTROL POPUP */}
+                {/* MISSION CONTROL POPUP - Enhanced Mission Brief */}
                 <AnimatePresence>
                     {selectedCommand && (
                         <motion.div
@@ -407,86 +422,155 @@ const SkillRadar: React.FC<SkillRadarProps> = ({ isOpen, onClose }) => {
                                 position: 'fixed',
                                 bottom: '40px',
                                 right: '40px',
-                                width: '380px',
-                                background: 'rgba(255, 255, 255, 0.95)',
-                                backdropFilter: 'blur(12px)',
-                                padding: '24px',
+                                width: '400px',
+                                background: 'rgba(255, 255, 255, 0.98)',
+                                backdropFilter: 'blur(16px)',
+                                padding: '0',
                                 borderRadius: '20px',
-                                boxShadow: '0 20px 50px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.5)',
+                                boxShadow: '0 20px 50px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.5)',
                                 border: '1px solid rgba(0,0,0,0.05)',
-                                zIndex: 1000
+                                zIndex: 1000,
+                                overflow: 'hidden'
                             }}
                         >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
-                                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: '#1e293b' }}>
-                                    {t(selectedCommand.name)}
-                                </h2>
-                                <button
-                                    onClick={() => setSelectedCommand(null)}
-                                    style={{
+                            {/* Header with mastery status */}
+                            <div style={{
+                                padding: '20px 24px',
+                                background: isMastered(selectedCommand.id)
+                                    ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)'
+                                    : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                color: 'white'
+                            }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                                    <div>
+                                        <span style={{
+                                            display: 'inline-block',
+                                            padding: '4px 10px',
+                                            borderRadius: '100px',
+                                            background: 'rgba(255,255,255,0.2)',
+                                            fontSize: '11px',
+                                            fontWeight: 700,
+                                            marginBottom: '8px',
+                                            textTransform: 'uppercase'
+                                        }}>
+                                            {isMastered(selectedCommand.id) ? '✓ ' + t('mission.mastered') : t('mission.brief')}
+                                        </span>
+                                        <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 800 }}>
+                                            {t(selectedCommand.name)}
+                                        </h2>
+                                    </div>
+                                    <button
+                                        onClick={() => setSelectedCommand(null)}
+                                        style={{
+                                            background: 'rgba(255,255,255,0.2)',
+                                            border: 'none',
+                                            borderRadius: '50%',
+                                            width: '32px',
+                                            height: '32px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            color: 'white'
+                                        }}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+
+                                {/* Difficulty indicator */}
+                                {selectedCommand.missionId && (
+                                    <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ fontSize: '12px', opacity: 0.8 }}>⭐⭐☆☆☆</span>
+                                        <span style={{ fontSize: '12px', opacity: 0.8 }}>Basic · ~5 min</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Body */}
+                            <div style={{ padding: '20px 24px' }}>
+                                {/* Scenario */}
+                                <div style={{ marginBottom: '16px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>
+                                        📖 {t('mission.scenario', 'Scenario')}
+                                    </h4>
+                                    <p style={{ margin: 0, color: '#475569', lineHeight: 1.6, fontSize: '14px' }}>
+                                        {t(selectedCommand.description)}
+                                    </p>
+                                </div>
+
+                                {/* What You'll Learn - only for commands with missions */}
+                                {selectedCommand.missionId && (
+                                    <div style={{
+                                        padding: '12px 16px',
                                         background: '#f1f5f9',
+                                        borderRadius: '10px',
+                                        marginBottom: '16px'
+                                    }}>
+                                        <h4 style={{ margin: '0 0 8px 0', fontSize: '12px', fontWeight: 600, color: '#64748b', textTransform: 'uppercase' }}>
+                                            🎓 {t('mission.whatYouLearn', "What You'll Learn")}
+                                        </h4>
+                                        <ul style={{ margin: 0, paddingLeft: '18px', color: '#334155', fontSize: '13px', lineHeight: 1.8 }}>
+                                            <li>{t('mission.learn.identifyConflict', 'Identify conflicting files with git status')}</li>
+                                            <li>{t('mission.learn.readMarkers', 'Read conflict markers')}</li>
+                                            <li>{t('mission.learn.complete', 'Complete a merge manually')}</li>
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Action Button */}
+                            <div style={{ padding: '0 24px 24px' }}>
+                                <button
+                                    style={{
+                                        width: '100%',
+                                        padding: '14px 16px',
+                                        background: isMastered(selectedCommand.id)
+                                            ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                                            : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                                        color: 'white',
                                         border: 'none',
-                                        borderRadius: '50%',
-                                        width: '32px',
-                                        height: '32px',
+                                        borderRadius: '12px',
+                                        fontSize: '15px',
+                                        fontWeight: 700,
+                                        cursor: selectedCommand.missionId ? 'pointer' : 'not-allowed',
+                                        opacity: selectedCommand.missionId ? 1 : 0.6,
+                                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
                                         display: 'flex',
-                                        alignItems: 'center',
                                         justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        color: '#64748b'
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        transition: 'transform 0.2s, box-shadow 0.2s'
                                     }}
+                                    onClick={() => {
+                                        if (selectedCommand && selectedCommand.missionId) {
+                                            startMission(selectedCommand.missionId);
+                                            onClose();
+                                            setSelectedCommand(null);
+                                        }
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (selectedCommand.missionId) {
+                                            e.currentTarget.style.transform = 'translateY(-2px)';
+                                            e.currentTarget.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.4)';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(37, 99, 235, 0.3)';
+                                    }}
+                                    disabled={!selectedCommand.missionId}
                                 >
-                                    ✕
+                                    <span>
+                                        {!selectedCommand.missionId
+                                            ? t('mission.notImplemented')
+                                            : isMastered(selectedCommand.id)
+                                                ? t('mission.retry', 'Practice Again')
+                                                : t('mission.startPractice')}
+                                    </span>
+                                    {selectedCommand.missionId && <span>→</span>}
                                 </button>
                             </div>
-
-                            <div style={{ marginBottom: '24px' }}>
-                                <span style={{
-                                    display: 'inline-block',
-                                    padding: '4px 12px',
-                                    borderRadius: '100px',
-                                    background: '#dbeafe',
-                                    color: '#2563eb',
-                                    fontSize: '12px',
-                                    fontWeight: 700,
-                                    marginBottom: '12px'
-                                }}>
-                                    {t('mission.brief')}
-                                </span>
-                                <p style={{ margin: 0, color: '#475569', lineHeight: 1.6, fontSize: '15px' }}>
-                                    {t(selectedCommand.description)}
-                                </p>
-                            </div>
-
-                            <button
-                                style={{
-                                    width: '100%',
-                                    padding: '16px',
-                                    background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '12px',
-                                    fontSize: '16px',
-                                    fontWeight: 700,
-                                    cursor: 'pointer',
-                                    boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)',
-                                    display: 'flex',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    gap: '8px'
-                                }}
-                                onClick={() => {
-                                    if (selectedCommand && selectedCommand.missionId) {
-                                        startMission(selectedCommand.missionId);
-                                        onClose();
-                                    } else {
-                                        alert(t('mission.notImplemented'));
-                                    }
-                                }}
-                            >
-                                <span>{t('mission.startPractice')}</span>
-                                <span>→</span>
-                            </button>
                         </motion.div>
                     )}
                 </AnimatePresence>

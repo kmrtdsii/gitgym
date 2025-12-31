@@ -153,15 +153,42 @@
     },
     "mission": {
         "active": "現在のミッション",
-        "objective": "目的",
-        "verify": "確認",
+        "objective": "目標",
+        "verify": "検証する",
         "abort": "中止",
         "success": "ミッション達成！",
-        "failed": "確認失敗",
+        "failed": "検証失敗",
         "loading": "ミッション詳細を読み込み中...",
         "brief": "ミッション概要",
         "startPractice": "練習を開始",
-        "notImplemented": "このスキルのミッションはまだ実装されていません。"
+        "notImplemented": "このスキルのミッションはまだ実装されていません。",
+        "accomplished": "ミッション達成！",
+        "mastered": "をマスターしました",
+        "score": "スコア",
+        "points": "点",
+        "clearTime": "クリアタイム",
+        "hintsUsed": "使用ヒント",
+        "times": "回",
+        "returnToRadar": "Skill Radarに戻る",
+        "steps": {
+            "title": "ステップ",
+            "identifyConflict": "競合ファイルを特定する",
+            "resolveConflict": "コンフリクトを解決する",
+            "createMergeCommit": "マージコミットを作成する"
+        },
+        "hints": {
+            "title": "ヒント",
+            "reveal": "ヒントを表示",
+            "remaining": "残り"
+        },
+        "scenario": "シナリオ",
+        "whatYouLearn": "学べること",
+        "retry": "もう一度練習",
+        "learn": {
+            "identifyConflict": "git status で競合ファイルを特定する",
+            "readMarkers": "コンフリクトマーカーの読み方を理解する",
+            "complete": "手動でマージを完了させる"
+        }
     },
     "skills": {
         "basic": {

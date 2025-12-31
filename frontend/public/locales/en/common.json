@@ -154,14 +154,41 @@
     "mission": {
         "active": "Active Mission",
         "objective": "Objective",
-        "verify": "Verify Mission",
+        "verify": "Verify",
         "abort": "Abort",
         "success": "Mission Accomplished!",
         "failed": "Verification Failed",
         "loading": "Loading mission details...",
         "brief": "MISSION BRIEF",
         "startPractice": "Start Practice",
-        "notImplemented": "Mission not yet implemented for this skill."
+        "notImplemented": "Mission not yet implemented for this skill.",
+        "accomplished": "Mission Accomplished!",
+        "mastered": "Mastered",
+        "score": "Score",
+        "points": " pts",
+        "clearTime": "Clear Time",
+        "hintsUsed": "Hints Used",
+        "times": "",
+        "returnToRadar": "Return to Skill Radar",
+        "steps": {
+            "title": "Steps",
+            "identifyConflict": "Identify conflicting files",
+            "resolveConflict": "Resolve the conflict",
+            "createMergeCommit": "Create merge commit"
+        },
+        "hints": {
+            "title": "Hints",
+            "reveal": "Reveal Hint",
+            "remaining": "remaining"
+        },
+        "scenario": "Scenario",
+        "whatYouLearn": "What You'll Learn",
+        "retry": "Practice Again",
+        "learn": {
+            "identifyConflict": "Identify conflicting files with git status",
+            "readMarkers": "Read and understand conflict markers",
+            "complete": "Complete a merge manually"
+        }
     },
     "skills": {
         "basic": {
