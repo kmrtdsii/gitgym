@@ -63,6 +63,13 @@ func populateCommits(repo *gogit.Repository, state *GraphState, showAll bool) {
 		if err == nil {
 			_ = refs.ForEach(func(r *plumbing.Reference) error {
 				// We want remotes and tags specifically if not covered above
+				name := r.Name().String()
+
+				// Limit noise: Exclude ORIG_HEAD, FETCH_HEAD
+				if name == "ORIG_HEAD" || name == "FETCH_HEAD" {
+					return nil
+				}
+
 				if r.Name().IsRemote() {
 					queue = append(queue, r.Hash())
 				} else if r.Name().IsTag() {

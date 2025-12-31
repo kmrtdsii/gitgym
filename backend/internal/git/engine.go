@@ -92,6 +92,9 @@ func ParseCommand(input string) (string, []string) {
 			return "version", []string{"version"}
 		case "-h", "--help":
 			return "help", []string{"help"}
+		case "rm":
+			// Special handling for git rm to separate from shell rm
+			return "git-rm", parts[1:]
 		}
 
 		// Block stupid things like "git ls" if "ls" is a shell command valid on its own but not as git subcommand
