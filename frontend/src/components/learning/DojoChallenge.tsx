@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDojo } from '../../context/DojoContext';
 import './GitDojo.css';
@@ -12,7 +11,6 @@ const DojoChallenge: React.FC<DojoChallengeProps> = ({ onStartAndClose }) => {
     const { t } = useTranslation('common');
     const { state, goToList } = useDojo();
     const { currentProblem } = state;
-    const [showConfirmExit, setShowConfirmExit] = useState(false);
 
     if (!currentProblem) {
         return null;
@@ -24,52 +22,12 @@ const DojoChallenge: React.FC<DojoChallengeProps> = ({ onStartAndClose }) => {
     };
 
     const handleBack = () => {
-        setShowConfirmExit(true);
-    };
-
-    const handleConfirmExit = () => {
-        setShowConfirmExit(false);
+        // Preview screen - go directly to list without confirmation
         goToList();
-    };
-
-    const handleCancelExit = () => {
-        setShowConfirmExit(false);
     };
 
     return (
         <div className="dojo-challenge">
-            {/* Exit Confirmation Modal */}
-            <AnimatePresence>
-                {showConfirmExit && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="confirm-modal-overlay"
-                        onClick={handleCancelExit}
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="confirm-modal"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <h3 className="confirm-modal-title">{t('dojo.confirmExit.title')}</h3>
-                            <p className="confirm-modal-message">{t('dojo.confirmExit.message')}</p>
-                            <div className="confirm-modal-actions">
-                                <button onClick={handleCancelExit} className="action-button secondary">
-                                    {t('dojo.confirmExit.cancel')}
-                                </button>
-                                <button onClick={handleConfirmExit} className="action-button primary">
-                                    {t('dojo.confirmExit.confirm')}
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
             {/* Header - No timer in preview */}
             <div className="challenge-header">
                 <button className="back-button" onClick={handleBack}>

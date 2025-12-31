@@ -83,6 +83,13 @@ const MissionPanel: React.FC = () => {
         }
     }, [activeMissionId, i18n.language, t]);
 
+    const calculateScore = useCallback(() => {
+        const baseScore = 100;
+        const hintPenalty = revealedHints * 10;
+        const timeBonus = Math.max(0, 20 - Math.floor(elapsedTime / 60000) * 5);
+        return Math.max(0, baseScore - hintPenalty + timeBonus);
+    }, [revealedHints, elapsedTime]);
+
     const handleVerify = useCallback(async () => {
         const result = await verifyMission();
         if (result) {
@@ -97,16 +104,32 @@ const MissionPanel: React.FC = () => {
             }
 
             if (result.success) {
-                setShowSuccess(true);
+                // Capture missionId before endMission clears it
+                const missionId = activeMissionId || '';
+
                 // Save to localStorage for Skill Radar
                 const masteredSkills = JSON.parse(localStorage.getItem('gitgym-mastered') || '[]');
                 if (!masteredSkills.includes(missionInfo?.skill)) {
                     masteredSkills.push(missionInfo?.skill);
                     localStorage.setItem('gitgym-mastered', JSON.stringify(masteredSkills));
                 }
+
+                // Go directly to DojoResult screen (skip MissionPanel success overlay)
+                const dojoResult = {
+                    passed: true,
+                    score: calculateScore(),
+                    timeMs: elapsedTime,
+                    hintsUsed: revealedHints,
+                };
+                showResult(dojoResult, missionId);
+                endMission();
+                // Delay modal open to allow state update to complete
+                setTimeout(() => {
+                    openDojoModal();
+                }, 50);
             }
         }
-    }, [verifyMission, missionInfo?.skill]);
+    }, [verifyMission, missionInfo?.skill, activeMissionId, calculateScore, elapsedTime, revealedHints, showResult, endMission, openDojoModal]);
 
     const revealNextHint = () => {
         if (missionInfo && revealedHints < missionInfo.hints.length) {
@@ -119,14 +142,6 @@ const MissionPanel: React.FC = () => {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    };
-
-    const calculateScore = () => {
-        const baseScore = 100;
-        const hintPenalty = revealedHints * 10;
-        const elapsedMs = Date.now() - startTime;
-        const timeBonus = Math.max(0, 20 - Math.floor(elapsedMs / 60000) * 5);
-        return Math.max(0, baseScore - hintPenalty + timeBonus);
     };
 
     if (!activeMissionId) return null;
@@ -173,6 +188,8 @@ const MissionPanel: React.FC = () => {
                             <button
                                 className="mission-button secondary"
                                 onClick={() => {
+                                    // Capture missionId before endMission clears it
+                                    const missionId = activeMissionId || '';
                                     // Create result data and show in Dojo result screen
                                     const result = {
                                         passed: true,
@@ -181,9 +198,12 @@ const MissionPanel: React.FC = () => {
                                         hintsUsed: revealedHints,
                                     };
                                     setShowSuccess(false);
+                                    showResult(result, missionId);
                                     endMission();
-                                    showResult(result, activeMissionId || '');
-                                    openDojoModal();
+                                    // Delay modal open to allow state update to complete
+                                    setTimeout(() => {
+                                        openDojoModal();
+                                    }, 50);
                                 }}
                             >
                                 {t('mission.returnToRadar')}
