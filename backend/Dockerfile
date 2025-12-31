@@ -22,6 +22,7 @@ WORKDIR /app
 RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /app/server .
+COPY --from=builder /app/missions ./missions
 
 EXPOSE 8080
 

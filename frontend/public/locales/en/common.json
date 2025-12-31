@@ -8,7 +8,96 @@
         "loading": "Loading GitGym...",
         "searchPlaceholder": "Search commits...",
         "skills": "🎯 Skills",
-        "skillRadarTitle": "Git Skill Radar"
+        "skillRadarTitle": "Git Skill Radar",
+        "dojo": "Dojo"
+    },
+    "dojo": {
+        "title": "Git Dojo",
+        "subtitle": "Select today's challenge",
+        "category": {
+            "basic": "BASIC",
+            "intermediate": "INTERMEDIATE",
+            "advanced": "ADVANCED"
+        },
+        "minutes": " min",
+        "progress": "Progress",
+        "cleared": "cleared",
+        "problem": "Problem",
+        "goals": "Goals",
+        "terminalInstruction": "Enter commands in the terminal below",
+        "submit": "Submit Answer",
+        "submitting": "Grading...",
+        "giveUp": "Give Up",
+        "giveUpConfirm": "Are you sure you want to give up?",
+        "backToList": "Back to List",
+        "backConfirm": "Are you sure? Your progress won't be saved.",
+        "start": "Start",
+        "confirmExit": {
+            "title": "Exit Challenge?",
+            "message": "Your progress will not be saved. Are you sure you want to exit?",
+            "cancel": "Cancel",
+            "confirm": "Exit"
+        },
+        "hints": {
+            "title": "Hints",
+            "reveal": "Reveal Hint",
+            "generic": {
+                "1": "Use git status to check the current state",
+                "2": "Read the error message carefully",
+                "3": "Use git help <command> to learn about commands"
+            }
+        },
+        "result": {
+            "passed": "PASSED!",
+            "failed": "FAILED...",
+            "score": "Score",
+            "points": " pts",
+            "time": "Time",
+            "hints": "Hints Used",
+            "times": "",
+            "solution": "Model Answer",
+            "trivia": "Did You Know?",
+            "backToList": "Back to List",
+            "next": "Next Challenge"
+        },
+        "problems": {
+            "101": {
+                "title": "Your First Commit",
+                "description": "A README file has been created. Stage and commit this file.",
+                "goals": {
+                    "0": "Stage the file",
+                    "1": "Create a commit"
+                },
+                "trivia": "git add . stages all changes in the current directory. To stage specific files, specify the filename."
+            },
+            "102": {
+                "title": "Create a Branch",
+                "description": "To develop a new feature, create a new branch and switch to it.",
+                "goals": {
+                    "0": "Create a new branch",
+                    "1": "Switch to the new branch"
+                },
+                "trivia": "Use git switch -c <branch-name> to create and switch to a branch in one command."
+            },
+            "103": {
+                "title": "Resolve Merge Conflict",
+                "description": "Alice and Bob edited the same file simultaneously. Resolve the merge conflict and create a commit that includes both changes.",
+                "goals": {
+                    "0": "Resolve the conflict",
+                    "1": "Create the merge commit"
+                },
+                "trivia": "Conflict markers are <<<<<<< HEAD, =======, and >>>>>>>. Above ======= is your current branch, below is the branch being merged."
+            },
+            "201": {
+                "title": "Rebase Basics",
+                "description": "Rebase the feature branch onto the latest commit of the main branch.",
+                "goals": {
+                    "0": "Switch to the feature branch",
+                    "1": "Rebase onto main"
+                },
+                "trivia": "Rebasing keeps commit history linear, but rebasing already-pushed branches can cause issues."
+            }
+        }
     },
     "viewMode": {
         "graph": "Graph",
@@ -112,7 +201,8 @@
             "description": "Connect a Git repository to visualize remote history.",
             "settings": "Repo Settings",
             "setup": "Configure Remote",
-            "label": "Remote URL"
+            "label": "Remote URL",
+            "copyUrl": "Copy URL"
         },
         "empty": {
             "title": "No Remote Configured",
@@ -156,6 +246,7 @@
         "objective": "Objective",
         "verify": "Verify",
         "abort": "Abort",
+        "start": "Start",
         "success": "Mission Accomplished!",
         "failed": "Verification Failed",
         "loading": "Loading mission details...",
@@ -169,7 +260,7 @@
         "clearTime": "Clear Time",
         "hintsUsed": "Hints Used",
         "times": "",
-        "returnToRadar": "Return to Skill Radar",
+        "returnToRadar": "Close",
         "steps": {
             "title": "Steps",
             "identifyConflict": "Identify conflicting files",
@@ -180,6 +271,22 @@
             "title": "Hints",
             "reveal": "Reveal Hint",
             "remaining": "remaining"
+        },
+        "backToList": "Back to List",
+        "problem": "Problem",
+        "goalsTitle": "Goals",
+        "terminalGuidance": "Enter commands in the terminal below",
+        "giveUp": "Give Up",
+        "goals": {
+            "stageFile": "Stage the file",
+            "createCommit": "Create a commit",
+            "createBranch": "Create a new branch"
+        },
+        "confirmExit": {
+            "title": "Exit Mission?",
+            "message": "Your progress will not be saved. Are you sure you want to exit?",
+            "cancel": "Cancel",
+            "confirm": "Exit"
         },
         "scenario": "Scenario",
         "whatYouLearn": "What You'll Learn",

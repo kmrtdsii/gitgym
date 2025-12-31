@@ -2,16 +2,16 @@ package mission
 
 // Mission defines the structure of a practice mission loaded from YAML.
 type Mission struct {
-	ID          string     `yaml:"id" json:"id"`
-	Title       string     `yaml:"title" json:"title"`
-	Description string     `yaml:"description" json:"description"`
-	Difficulty  Difficulty `yaml:"difficulty" json:"difficulty"`
-	Skill       string     `yaml:"skill" json:"skill"`
-	Setup       []string                      `yaml:"setup" json:"-"`         // Commands to run for setup
-	Validation  Validation                    `yaml:"validation" json:"-"`    // Validation rules
-	Hints       []string                      `yaml:"hints" json:"hints"`     // Hints for the user
-	Scoring     Scoring                       `yaml:"scoring" json:"scoring"` // Scoring rules
-	Translations map[string]MissionTranslation `yaml:"translations" json:"-"` // Localized content
+	ID           string                        `yaml:"id" json:"id"`
+	Title        string                        `yaml:"title" json:"title"`
+	Description  string                        `yaml:"description" json:"description"`
+	Difficulty   Difficulty                    `yaml:"difficulty" json:"difficulty"`
+	Skill        string                        `yaml:"skill" json:"skill"`
+	Setup        []string                      `yaml:"setup" json:"-"`         // Commands to run for setup
+	Validation   Validation                    `yaml:"validation" json:"-"`    // Validation rules
+	Hints        []string                      `yaml:"hints" json:"hints"`     // Hints for the user
+	Scoring      Scoring                       `yaml:"scoring" json:"scoring"` // Scoring rules
+	Translations map[string]MissionTranslation `yaml:"translations" json:"-"`  // Localized content
 }
 
 type MissionTranslation struct {
@@ -30,11 +30,12 @@ type Validation struct {
 }
 
 type Check struct {
-	Type           string   `yaml:"type"`            // no_conflict, commit_exists, file_content
+	Type           string   `yaml:"type"`            // no_conflict, commit_exists, file_content, file_tracked, clean_working_tree, branch_exists, current_branch
 	Description    string   `yaml:"description"`     // User facing description
 	MessagePattern string   `yaml:"message_pattern"` // For log checks
 	Path           string   `yaml:"path"`            // For file checks
 	Contains       []string `yaml:"contains"`        // For file content checks
+	Name           string   `yaml:"name"`            // For branch checks (branch_exists, current_branch)
 }
 
 type Scoring struct {

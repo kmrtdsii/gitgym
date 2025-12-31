@@ -50,7 +50,7 @@ func setupTestRepo(t *testing.T) (*git.SessionManager, *git.Session, *gogit.Repo
 	w.Checkout(&gogit.CheckoutOptions{Branch: plumbing.NewBranchReferenceName("master")}) // go-git defaults master
 
 	// Create Session & Ingest
-	sm.IngestRemote(context.Background(), "origin", originPath)
+	sm.IngestRemote(context.Background(), "origin", originPath, 0)
 	session, _ := sm.CreateSession("test-session")
 
 	// Clone
@@ -124,7 +124,7 @@ func TestFetch_Prune(t *testing.T) {
 	})
 
 	// Ingest
-	sm.IngestRemote(context.Background(), "origin", originPath)
+	sm.IngestRemote(context.Background(), "origin", originPath, 0)
 	session, _ := sm.CreateSession("test-session")
 
 	// Clone (Gets everything)
@@ -186,7 +186,7 @@ func TestFetch_DryRun(t *testing.T) {
 	w.Add("main.txt")
 	w.Commit("Init", &gogit.CommitOptions{Author: &object.Signature{Name: "Dev", Email: "d", When: time.Now()}})
 
-	sm.IngestRemote(context.Background(), "origin", originPath)
+	sm.IngestRemote(context.Background(), "origin", originPath, 0)
 	session, _ := sm.CreateSession("test-dryrun")
 
 	// Clone

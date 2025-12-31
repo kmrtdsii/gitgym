@@ -1,0 +1,44 @@
+id: "102-create-branch"
+title: "Create a Branch"
+description: "The main branch has one commit. Create a new branch called 'feature' and switch to it."
+difficulty:
+  level: "basic"
+  stars: 1
+skill: "branch"
+
+setup:
+  - "mkdir project"
+  - "cd project"
+  - "git init"
+  - "git config user.name 'User'"
+  - "git config user.email 'user@example.com'"
+  - "echo '# My Project' > README.md"
+  - "git add README.md"
+  - "git commit -m 'Initial commit'"
+
+validation:
+  checks:
+    - type: "branch_exists"
+      name: "feature"
+      description: "A branch named 'feature' exists"
+    - type: "current_branch"
+      name: "feature"
+      description: "Currently on the 'feature' branch"
+
+hints:
+  - "Use `git branch <name>` to create a new branch."
+  - "Use `git switch <name>` or `git checkout <name>` to switch branches."
+  - "You can also use `git switch -c <name>` to create and switch in one command."
+
+scoring:
+  time_bonus: true
+  hint_penalty: 10
+
+translations:
+  ja:
+    title: "ブランチを作成する"
+    description: "main ブランチにコミットが1つあります。'feature' という名前の新しいブランチを作成して、そこに切り替えてください。"
+    hints:
+      - "`git branch <名前>` で新しいブランチを作成します。"
+      - "`git switch <名前>` または `git checkout <名前>` でブランチを切り替えます。"
+      - "`git switch -c <名前>` で作成と切り替えを同時に行えます。"

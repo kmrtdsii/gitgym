@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useMission, type VerificationResult } from '../../context/MissionContext';
+import { useDojo } from '../../context/DojoContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import './MissionPanel.css';
@@ -24,21 +25,36 @@ interface MissionStep {
 
 const MissionPanel: React.FC = () => {
     const { activeMissionId, endMission, verifyMission } = useMission();
+    const { showResult, openDojoModal } = useDojo();
     const { t, i18n } = useTranslation();
     const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null);
     const [missionInfo, setMissionInfo] = useState<MissionInfo | null>(null);
     const [revealedHints, setRevealedHints] = useState<number>(0);
     const [showSuccess, setShowSuccess] = useState(false);
-    const [startTime] = useState<number>(Date.now());
+    const [startTime, setStartTime] = useState<number>(Date.now());
+    const [elapsedTime, setElapsedTime] = useState<number>(0);
 
     // Mock steps based on mission validation checks
     const [steps, setSteps] = useState<MissionStep[]>([]);
+
+    // Timer effect - update every second
+    useEffect(() => {
+        if (!activeMissionId || showSuccess) return;
+
+        const interval = setInterval(() => {
+            setElapsedTime(Date.now() - startTime);
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [activeMissionId, startTime, showSuccess]);
 
     useEffect(() => {
         if (activeMissionId) {
             setRevealedHints(0);
             setVerificationResult(null);
             setShowSuccess(false);
+            setStartTime(Date.now());
+            setElapsedTime(0);
 
             // Fetch mission details
             fetch('/api/mission/list', {
@@ -157,8 +173,17 @@ const MissionPanel: React.FC = () => {
                             <button
                                 className="mission-button secondary"
                                 onClick={() => {
+                                    // Create result data and show in Dojo result screen
+                                    const result = {
+                                        passed: true,
+                                        score: calculateScore(),
+                                        timeMs: elapsedTime,
+                                        hintsUsed: revealedHints,
+                                    };
                                     setShowSuccess(false);
                                     endMission();
+                                    showResult(result, activeMissionId || '');
+                                    openDojoModal();
                                 }}
                             >
                                 {t('mission.returnToRadar')}
@@ -176,29 +201,24 @@ const MissionPanel: React.FC = () => {
                 initial={{ x: 300, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: 300, opacity: 0 }}
-                className="mission-panel"
+                drag
+                dragConstraints={{ left: -500, right: 0, top: -100, bottom: 300 }}
+                dragElastic={0.1}
+                dragMomentum={false}
+                className="mission-panel redesigned"
             >
-                {/* Header */}
-                <div className="mission-panel-header">
-                    <div className="mission-title-row">
-                        <span className="mission-icon">🎯</span>
-                        <h3 className="mission-title">
-                            {missionInfo ? missionInfo.title : t('mission.active')}
+                {/* Blue Gradient Header */}
+                <div className="mission-header-redesigned" style={{ cursor: 'grab' }}>
+                    <div className="header-center">
+                        <span className="challenge-number">CHALLENGE #{missionInfo?.id?.split('-')[0] || '101'}</span>
+                        <h3 className="mission-title-main">
+                            {missionInfo?.title || t('mission.loading')}
                         </h3>
                     </div>
-                    <button onClick={endMission} className="mission-close-btn">✕</button>
-                </div>
-
-                {/* Difficulty Badge */}
-                {missionInfo?.difficulty && (
-                    <div className="mission-difficulty">
-                        <span className="difficulty-stars">
-                            {'⭐'.repeat(missionInfo.difficulty.stars)}
-                            {'☆'.repeat(5 - missionInfo.difficulty.stars)}
-                        </span>
-                        <span className="difficulty-label">{missionInfo.difficulty.level}</span>
+                    <div className="timer-display">
+                        ⏱ {formatTime(elapsedTime)}
                     </div>
-                )}
+                </div>
 
                 {/* Objective */}
                 <div className="mission-section">

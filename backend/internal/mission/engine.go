@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	gogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/kurobon/gitgym/backend/internal/git"
 	"github.com/kurobon/gitgym/backend/internal/state"
@@ -96,9 +97,40 @@ func (e *Engine) StartMission(ctx context.Context, missionID string) (string, er
 	return sessionID, nil
 }
 
-// runCommand handles git commands and basic shell simulation (echo, redirection)
+// runCommand handles git commands and basic shell simulation (echo, mkdir, cd, redirection)
 func (e *Engine) runCommand(ctx context.Context, session *state.Session, cmdStr string) error {
-	// 1. Handle "echo" with redirection
+	cmdStr = strings.TrimSpace(cmdStr)
+	if cmdStr == "" {
+		return nil
+	}
+
+	// 1. Handle "mkdir"
+	if strings.HasPrefix(cmdStr, "mkdir ") {
+		dirName := strings.TrimSpace(strings.TrimPrefix(cmdStr, "mkdir "))
+		dirName = strings.Trim(dirName, "\"'")
+		return session.Filesystem.MkdirAll(dirName, 0755)
+	}
+
+	// 2. Handle "cd"
+	if strings.HasPrefix(cmdStr, "cd ") {
+		dirName := strings.TrimSpace(strings.TrimPrefix(cmdStr, "cd "))
+		dirName = strings.Trim(dirName, "\"'")
+		// Update session's current directory
+		if dirName == "/" {
+			session.CurrentDir = "/"
+		} else if strings.HasPrefix(dirName, "/") {
+			session.CurrentDir = dirName
+		} else {
+			if session.CurrentDir == "/" {
+				session.CurrentDir = "/" + dirName
+			} else {
+				session.CurrentDir = session.CurrentDir + "/" + dirName
+			}
+		}
+		return nil
+	}
+
+	// 3. Handle "echo" with redirection
 	if strings.HasPrefix(cmdStr, "echo ") {
 		parts := strings.SplitN(cmdStr, ">", 2)
 		if len(parts) == 2 {
@@ -112,6 +144,15 @@ func (e *Engine) runCommand(ctx context.Context, session *state.Session, cmdStr 
 			if strings.HasPrefix(targetFile, ">") {
 				appendMode = true
 				targetFile = strings.TrimSpace(strings.TrimPrefix(targetFile, ">"))
+			}
+
+			// Resolve path relative to CurrentDir
+			if !strings.HasPrefix(targetFile, "/") {
+				if session.CurrentDir == "/" {
+					targetFile = "/" + targetFile
+				} else {
+					targetFile = session.CurrentDir + "/" + targetFile
+				}
 			}
 
 			// Write to file
@@ -226,14 +267,19 @@ func (e *Engine) VerifyMission(sessionID string, missionID string) (*Verificatio
 			}
 
 		case "commit_exists":
-			// Search log for message pattern
-			iter, _ := repo.Log(&gogit.LogOptions{})
-			_ = iter.ForEach(func(c *object.Commit) error {
-				if strings.Contains(c.Message, check.MessagePattern) {
-					passed = true
-				}
-				return nil
-			})
+			// Search log for commits. If MessagePattern is empty, just check if any commit exists.
+			iter, iterErr := repo.Log(&gogit.LogOptions{})
+			if iterErr == nil {
+				_ = iter.ForEach(func(c *object.Commit) error {
+					if check.MessagePattern == "" {
+						// Any commit passes
+						passed = true
+					} else if strings.Contains(c.Message, check.MessagePattern) {
+						passed = true
+					}
+					return nil
+				})
+			}
 
 		case "file_content":
 			// Check file content
@@ -255,6 +301,50 @@ func (e *Engine) VerifyMission(sessionID string, missionID string) (*Verificatio
 					}
 				}
 				passed = matchAll
+			}
+
+		case "file_tracked":
+			// Check if a file is tracked by git (exists in HEAD commit)
+			// A file is "tracked" if it's in the HEAD commit's tree
+			headRef, hErr := repo.Head()
+			if hErr == nil {
+				commit, cErr := repo.CommitObject(headRef.Hash())
+				if cErr == nil {
+					tree, tErr := commit.Tree()
+					if tErr == nil {
+						_, fErr := tree.File(check.Path)
+						passed = (fErr == nil)
+					}
+				}
+			}
+
+		case "clean_working_tree":
+			// Check if working tree is clean (no unstaged or uncommitted changes)
+			w, wErr := repo.Worktree()
+			if wErr == nil {
+				status, sErr := w.Status()
+				if sErr == nil {
+					passed = status.IsClean()
+				}
+			}
+
+		case "branch_exists":
+			// Check if a branch with the given name exists
+			refs, rErr := repo.References()
+			if rErr == nil {
+				_ = refs.ForEach(func(ref *plumbing.Reference) error {
+					if ref.Name().IsBranch() && ref.Name().Short() == check.Name {
+						passed = true
+					}
+					return nil
+				})
+			}
+
+		case "current_branch":
+			// Check if current HEAD is on the specified branch
+			headRef, hErr := repo.Head()
+			if hErr == nil && headRef.Name().IsBranch() {
+				passed = headRef.Name().Short() == check.Name
 			}
 		}
 

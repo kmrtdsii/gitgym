@@ -1,0 +1,530 @@
+/* GitDojo.css - Learning Mode Styles */
+
+/* === MODAL OVERRIDE === */
+.dojo-modal .modal-content {
+    max-width: 900px;
+    height: 90vh;
+    max-height: 90vh;
+    overflow: hidden;
+}
+
+.dojo-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* === PROBLEM LIST === */
+.dojo-list {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 24px;
+}
+
+.dojo-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.dojo-title {
+    font-size: 32px;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.dojo-icon {
+    font-size: 36px;
+}
+
+.dojo-subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin: 0;
+}
+
+.dojo-categories {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.dojo-category {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border-subtle);
+}
+
+.category-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.category-icon {
+    font-size: 20px;
+}
+
+.category-label {
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-primary);
+}
+
+.problem-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.problem-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-default);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    width: 100%;
+}
+
+.problem-card:hover:not(.locked) {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+}
+
+.problem-card.locked {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.problem-card.completed {
+    border-color: var(--success-fg, #22c55e);
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.problem-status {
+    font-size: 18px;
+    width: 28px;
+    text-align: center;
+}
+
+.problem-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.problem-id {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+}
+
+.problem-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.problem-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.problem-difficulty {
+    font-size: 10px;
+    letter-spacing: 1px;
+}
+
+.problem-time {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* Progress */
+.dojo-progress {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border-subtle);
+}
+
+.progress-bar {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+/* === CHALLENGE VIEW === */
+.dojo-challenge {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.challenge-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.back-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+}
+
+.back-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.challenge-title-row {
+    text-align: center;
+}
+
+.challenge-id {
+    font-size: 11px;
+    font-weight: 600;
+    opacity: 0.8;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.challenge-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.challenge-timer {
+    font-size: 18px;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.challenge-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+}
+
+.challenge-section {
+    margin-bottom: 24px;
+}
+
+.section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin: 0 0 12px 0;
+}
+
+.problem-description {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.goals-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.goal-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.goal-checkbox {
+    color: var(--text-tertiary);
+}
+
+/* Hints */
+.hints-section {
+    background: var(--bg-secondary);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+}
+
+.hints-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.hints-header .section-title {
+    margin: 0;
+}
+
+.reveal-hint-btn {
+    background: transparent;
+    border: 1px dashed var(--border-subtle);
+    color: var(--accent-primary);
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.reveal-hint-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-primary);
+}
+
+.hints-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hint-item {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.hint-number {
+    font-weight: 700;
+    color: var(--accent-primary);
+}
+
+.hint-text {
+    color: var(--text-primary);
+}
+
+.terminal-instruction {
+    text-align: center;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.challenge-actions {
+    display: flex;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-subtle);
+    background: var(--bg-secondary);
+}
+
+.challenge-actions.preview-actions {
+    justify-content: center;
+    border-top: none;
+    background: transparent;
+    padding: 32px 24px;
+}
+
+.start-button {
+    min-width: 200px;
+    padding: 16px 48px;
+    font-size: 18px;
+}
+
+/* === RESULT VIEW === */
+.dojo-result {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 24px;
+    text-align: center;
+}
+
+.result-header {
+    padding: 32px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+}
+
+.result-header.passed {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+}
+
+.result-header.failed {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.result-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.result-status {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+}
+
+.result-stats {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.result-section {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.solution-code {
+    background: #1e293b;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'SF Mono', 'Consolas', monospace;
+    font-size: 13px;
+}
+
+.code-line {
+    display: flex;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.line-prefix {
+    color: #22c55e;
+}
+
+.line-content {
+    color: #f1f5f9;
+}
+
+.trivia-section {
+    background: var(--bg-secondary);
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+}
+
+.trivia-text {
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.result-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 24px;
+}
+
+/* === SHARED BUTTONS === */
+.action-button {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+}
+
+.action-button.primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.action-button.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+}
+
+.action-button.primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.action-button.secondary {
+    background: var(--bg-button-inactive);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.action-button.secondary:hover {
+    background: var(--bg-hover);
+}

@@ -8,7 +8,96 @@
         "loading": "GitGymを読み込み中...",
         "searchPlaceholder": "コミットを検索...",
         "skills": "🎯 スキル",
-        "skillRadarTitle": "Gitスキルレーダー"
+        "skillRadarTitle": "Gitスキルレーダー",
+        "dojo": "Dojo"
+    },
+    "dojo": {
+        "title": "Git Dojo",
+        "subtitle": "今日の問題を選択してください",
+        "category": {
+            "basic": "BASIC",
+            "intermediate": "INTERMEDIATE",
+            "advanced": "ADVANCED"
+        },
+        "minutes": "分",
+        "progress": "進捗",
+        "cleared": "クリア",
+        "problem": "問題",
+        "goals": "ゴール",
+        "terminalInstruction": "下のターミナルでコマンドを入力してください",
+        "submit": "採点する",
+        "submitting": "採点中...",
+        "giveUp": "ギブアップ",
+        "giveUpConfirm": "本当にギブアップしますか？",
+        "backToList": "問題一覧に戻る",
+        "backConfirm": "本当に戻りますか？進捗は保存されません。",
+        "start": "スタート",
+        "confirmExit": {
+            "title": "チャレンジを終了しますか？",
+            "message": "進捗は保存されません。本当に終了してもよろしいですか？",
+            "cancel": "キャンセル",
+            "confirm": "終了する"
+        },
+        "hints": {
+            "title": "ヒント",
+            "reveal": "ヒントを見る",
+            "generic": {
+                "1": "git status で現在の状態を確認しましょう",
+                "2": "エラーメッセージをよく読んでみましょう",
+                "3": "git help <command> でコマンドの使い方を確認できます"
+            }
+        },
+        "result": {
+            "passed": "合格!",
+            "failed": "不合格...",
+            "score": "スコア",
+            "points": "点",
+            "time": "タイム",
+            "hints": "ヒント使用",
+            "times": "回",
+            "solution": "模範解答",
+            "trivia": "豆知識",
+            "backToList": "問題一覧に戻る",
+            "next": "次の問題へ"
+        },
+        "problems": {
+            "101": {
+                "title": "初めてのコミット",
+                "description": "READMEファイルが作成されています。このファイルをステージングしてコミットしてください。",
+                "goals": {
+                    "0": "ファイルをステージングする",
+                    "1": "コミットを作成する"
+                },
+                "trivia": "git add . はカレントディレクトリ以下のすべての変更をステージングします。特定のファイルだけをステージングしたい場合は、ファイル名を指定しましょう。"
+            },
+            "102": {
+                "title": "ブランチを作成する",
+                "description": "新機能を開発するために、新しいブランチを作成してそこに切り替えてください。",
+                "goals": {
+                    "0": "新しいブランチを作成する",
+                    "1": "作成したブランチに切り替える"
+                },
+                "trivia": "git switch -c <branch-name> を使うと、ブランチの作成と切り替えを1コマンドで行えます。"
+            },
+            "103": {
+                "title": "マージコンフリクトを解決する",
+                "description": "AliceとBobが同じファイルを同時に編集してしまいました。マージコンフリクトを解決し、両方の変更を含むコミットを作成してください。",
+                "goals": {
+                    "0": "コンフリクトを解決する",
+                    "1": "マージコミットを作成する"
+                },
+                "trivia": "コンフリクトマーカーは <<<<<<< HEAD, =======, >>>>>>> の3つです。=======より上が現在のブランチ、下がマージ対象の内容です。"
+            },
+            "201": {
+                "title": "リベースの基本",
+                "description": "featureブランチをmainブランチの最新コミットの上にリベースしてください。",
+                "goals": {
+                    "0": "featureブランチに切り替える",
+                    "1": "mainの上にリベースする"
+                },
+                "trivia": "リベースはコミット履歴を直線的に保つのに便利ですが、すでにプッシュしたブランチをリベースすると問題が起きることがあります。"
+            }
+        }
     },
     "viewMode": {
         "graph": "グラフ",
@@ -112,7 +201,8 @@
             "description": "Gitリポジトリに接続してリモート履歴を可視化しましょう。",
             "settings": "リモート再設定",
             "setup": "リモートを設定",
-            "label": "リモートURL"
+            "label": "リモートURL",
+            "copyUrl": "URLをコピー"
         },
         "empty": {
             "title": "リモートリポジトリ",
@@ -156,6 +246,7 @@
         "objective": "目標",
         "verify": "検証する",
         "abort": "中止",
+        "start": "スタート",
         "success": "ミッション達成！",
         "failed": "検証失敗",
         "loading": "ミッション詳細を読み込み中...",
@@ -169,7 +260,7 @@
         "clearTime": "クリアタイム",
         "hintsUsed": "使用ヒント",
         "times": "回",
-        "returnToRadar": "Skill Radarに戻る",
+        "returnToRadar": "閉じる",
         "steps": {
             "title": "ステップ",
             "identifyConflict": "競合ファイルを特定する",
@@ -180,6 +271,22 @@
             "title": "ヒント",
             "reveal": "ヒントを表示",
             "remaining": "残り"
+        },
+        "backToList": "問題一覧に戻る",
+        "problem": "問題",
+        "goalsTitle": "ゴール",
+        "terminalGuidance": "下のターミナルでコマンドを入力してください",
+        "giveUp": "ギブアップ",
+        "goals": {
+            "stageFile": "ファイルをステージングする",
+            "createCommit": "コミットを作成する",
+            "createBranch": "新しいブランチを作成する"
+        },
+        "confirmExit": {
+            "title": "ミッションを終了しますか？",
+            "message": "進捗は保存されません。本当に終了してもよろしいですか？",
+            "cancel": "キャンセル",
+            "confirm": "終了する"
         },
         "scenario": "シナリオ",
         "whatYouLearn": "学べること",

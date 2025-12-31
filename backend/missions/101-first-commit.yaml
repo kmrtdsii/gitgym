@@ -1,0 +1,45 @@
+id: "101-first-commit"
+title: "Your First Commit"
+description: "A README.md file has been created but not tracked. Stage and commit this file to complete your first commit."
+difficulty:
+  level: "basic"
+  stars: 1
+skill: "commit"
+
+setup:
+  - "mkdir project"
+  - "cd project"
+  - "git init"
+  - "git config user.name 'User'"
+  - "git config user.email 'user@example.com'"
+  - "echo '# My Project' > README.md"
+  - "echo '' >> README.md"
+  - "echo 'This is my first Git project!' >> README.md"
+
+validation:
+  checks:
+    - type: "commit_exists"
+      description: "At least one commit exists"
+    - type: "file_tracked"
+      path: "README.md"
+      description: "README.md is tracked by git"
+    - type: "clean_working_tree"
+      description: "Working tree is clean (no unstaged changes)"
+
+hints:
+  - "Use `git status` to see which files are not yet tracked."
+  - "Use `git add <filename>` to stage a file for commit."
+  - "Use `git commit -m 'message'` to create a commit with a message."
+
+scoring:
+  time_bonus: true
+  hint_penalty: 10
+
+translations:
+  ja:
+    title: "初めてのコミット"
+    description: "README.md ファイルが作成されていますが、まだ Git で追跡されていません。このファイルをステージングしてコミットしてください。"
+    hints:
+      - "`git status` で追跡されていないファイルを確認しましょう。"
+      - "`git add <ファイル名>` でファイルをステージングします。"
+      - "`git commit -m 'メッセージ'` でコミットを作成します。"

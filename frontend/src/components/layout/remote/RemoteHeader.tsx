@@ -170,7 +170,7 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                             />
                             <button
                                 onClick={handleCopyUrl}
-                                title="Copy URL"
+                                title={t('remote.header.copyUrl')}
                                 style={{
                                     display: 'flex', alignItems: 'center',
                                     background: 'transparent', border: 'none',

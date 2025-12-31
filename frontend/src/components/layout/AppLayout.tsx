@@ -22,6 +22,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import CommitDetails from '../visualization/CommitDetails';
 import SearchBar from '../common/SearchBar';
 import SkillRadar from '../visualization/SkillRadar';
+import GitDojo from '../learning/GitDojo';
+import { DojoProvider } from '../../context/DojoContext';
 
 type ViewMode = 'graph' | 'branches' | 'tags';
 
@@ -57,6 +59,7 @@ const AppLayout = () => {
     // Modal State
     const [isAddDevModalOpen, setIsAddDevModalOpen] = useState(false);
     const [isSkillRadarOpen, setIsSkillRadarOpen] = useState(false);
+    const [isDojoOpen, setIsDojoOpen] = useState(false);
 
     const handleObjectSelect = (obj: SelectedObject) => {
         setSelectedObject(obj);
@@ -158,13 +161,13 @@ const AppLayout = () => {
                             </button>
                         ))}
 
-                        {/* Skill Radar Button */}
+                        {/* Git Dojo Button (NEW) */}
                         <button
-                            onClick={() => setIsSkillRadarOpen(true)}
+                            onClick={() => setIsDojoOpen(true)}
                             style={{
-                                background: 'transparent',
-                                border: '1px solid var(--accent-primary)',
-                                color: 'var(--accent-primary)',
+                                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                border: 'none',
+                                color: 'white',
                                 borderRadius: '4px',
                                 padding: '4px 12px',
                                 fontSize: '11px',
@@ -173,9 +176,33 @@ const AppLayout = () => {
                                 marginLeft: '8px',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '4px'
+                                gap: '4px',
+                                boxShadow: '0 2px 6px rgba(245, 158, 11, 0.3)'
                             }}
-                            title="Open Git Skill Tree"
+                            title="Git Dojo - Learn Git step by step"
+                        >
+                            <span>🥋 {t('app.dojo')}</span>
+                        </button>
+
+                        {/* Skill Radar Button (Deprecated) */}
+                        <button
+                            onClick={() => setIsSkillRadarOpen(true)}
+                            style={{
+                                background: 'transparent',
+                                border: '1px solid var(--text-tertiary)',
+                                color: 'var(--text-tertiary)',
+                                borderRadius: '4px',
+                                padding: '4px 12px',
+                                fontSize: '11px',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                marginLeft: '8px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                opacity: 0.7
+                            }}
+                            title="Legacy Skill Radar (Deprecated)"
                         >
                             <span>{t('app.skills')}</span>
                         </button>
@@ -309,7 +336,14 @@ const AppLayout = () => {
                     onClose={() => setIsSkillRadarOpen(false)}
                 />
 
-                <MissionPanel />
+                <DojoProvider>
+                    <GitDojo
+                        isOpen={isDojoOpen}
+                        onClose={() => setIsDojoOpen(false)}
+                        onOpen={() => setIsDojoOpen(true)}
+                    />
+                    <MissionPanel />
+                </DojoProvider>
             </div>
         </div>
     );
