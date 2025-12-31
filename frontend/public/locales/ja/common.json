@@ -178,7 +178,7 @@
         "emptyState": "\"git init\" と入力して開始してください。",
         "emptyRepo": {
             "title": "リポジトリは空です",
-            "description": "最初のコミットをプッシュしてグラフを表示しましょう。"
+            "description": "最初のコミットを作成して、グラフを表示しましょう。"
         },
         "simulation": {
             "title": "シミュレーションモード",
@@ -193,6 +193,11 @@
         "hash": "ハッシュ",
         "message": "メッセージ",
         "date": "日付",
+        "rename": "名前を変更",
+        "delete": "削除",
+        "cancel": "キャンセル",
+        "save": "保存",
+        "clickToRename": "クリックして名前を変更",
         "time": {
             "justNow": "たった今",
             "minutesAgo": "{{count}}分前",

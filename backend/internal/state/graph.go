@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/go-git/go-billy/v5/util"
 	gogit "github.com/go-git/go-git/v5"
@@ -41,7 +42,10 @@ func (sm *SessionManager) GetGraphState(sessionID string, showAll bool) (*GraphS
 	sm.mu.RUnlock()
 	sort.Strings(state.SharedRemotes)
 
-	// 6. File System (Explorer) - Session specific
+	// 6. Active Project detection
+	state.ActiveProject = findActiveProject(session)
+
+	// 7. File System (Explorer) - Session specific
 	populateFiles(session, state)
 
 	// 7. Projects - Session specific
@@ -169,52 +173,100 @@ func populateBranchesAndTags(repo *gogit.Repository, state *GraphState) error {
 }
 
 func populateFiles(session *Session, state *GraphState) {
-	// Show detailed file list based on the WORKTREE (filesystem), including untracked.
+	// Walk the filesystem.
+	// If we are in a project, walk from project root recursively.
+	// If we are at /, just show the top-level (projects).
 
-	repo := session.GetRepo()
-	if repo == nil {
-		return
-	}
-
-	w, err := repo.Worktree()
-	if err != nil {
-		// Bare repo or other issue
-		return
-	}
-
-	// Walk the filesystem to get ALL files including untracked
-	// PERFORMANCE GUARD: Limit file count to preventing UI freezing
 	const MaxFileCount = 1000
 	count := 0
 
-	_ = util.Walk(w.Filesystem, "/", func(path string, fi os.FileInfo, err error) error {
+	startPath := session.CurrentDir
+	if state.ActiveProject != "" {
+		startPath = "/" + state.ActiveProject
+	}
+
+	log.Printf("Walking Filesystem: startPath=%s (ActiveProject=%s)", startPath, state.ActiveProject)
+
+	_ = util.Walk(session.Filesystem, startPath, func(path string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
 		if count >= MaxFileCount {
-			return filepath.SkipDir // Stop walking
+			return filepath.SkipDir
 		}
 
-		if fi.IsDir() {
-			if path == ".git" {
-				return filepath.SkipDir
+		// Calculate relative path for display (relative to startPath)
+		relPath := path
+		if startPath != "/" {
+			if path == startPath {
+				return nil // Skip the directory itself
 			}
-			return nil
+			if !strings.HasPrefix(path, startPath+"/") {
+				return nil
+			}
+			relPath = strings.TrimPrefix(path, startPath+"/")
+		} else {
+			relPath = strings.TrimPrefix(path, "/")
 		}
 
-		// Clean path if needed (billy usually returns clean paths)
-		if path != "" && path[0] == '/' {
-			path = path[1:]
+		if relPath != "" {
+			// Skip .git directory content for the explorer
+			if strings.Contains(relPath, ".git/") || relPath == ".git" {
+				if fi.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+
+			displayPath := relPath
+			if fi.IsDir() {
+				displayPath += "/"
+			}
+			state.Files = append(state.Files, displayPath)
+			count++
 		}
 
-		state.Files = append(state.Files, path)
-		count++
 		return nil
 	})
 
+	log.Printf("Walking Filesystem: found %d files", len(state.Files))
 	if count >= MaxFileCount {
 		state.Files = append(state.Files, "... (limit reached)")
 	}
+}
+
+func findActiveProject(session *Session) string {
+	session.mu.RLock()
+	defer session.mu.RUnlock()
+
+	curr := session.CurrentDir
+	if curr == "/" {
+		return ""
+	}
+
+	// Find the longest repo path that is a prefix of curr
+	var bestMatch string
+	for path := range session.Repos {
+		// path is e.g. "gitgym" or "proj/foo"
+		repoPath := "/" + path
+		if strings.HasPrefix(curr+"/", repoPath+"/") || curr == repoPath {
+			if len(repoPath) > len(bestMatch) {
+				bestMatch = repoPath
+			}
+		}
+	}
+
+	if bestMatch != "" {
+		return strings.TrimPrefix(bestMatch, "/")
+	}
+
+	// Fallback: use the top-level folder name if we are inside something
+	parts := strings.Split(strings.TrimPrefix(curr, "/"), "/")
+	if len(parts) > 0 && parts[0] != "" {
+		return parts[0]
+	}
+
+	return ""
 }
 
 func populateGitStatus(repo *gogit.Repository, state *GraphState) error {
@@ -246,17 +298,32 @@ func populateGitStatus(repo *gogit.Repository, state *GraphState) error {
 }
 
 func populateProjects(session *Session, state *GraphState) {
-	rootInfos, err := session.Filesystem.ReadDir("/")
-	if err == nil {
-		for _, info := range rootInfos {
-			if info.IsDir() && info.Name() != ".git" {
-				state.Projects = append(state.Projects, info.Name())
+	session.mu.RLock()
+	defer session.mu.RUnlock()
+
+	state.ProjectMetadata = make(map[string]ProjectMetadata)
+
+	// Use registered repositories to determine the project list.
+	// This ensures only Git-initialized folders appear in the Workspace.
+	for path, repo := range session.Repos {
+		// Keys in session.Repos are internal paths (usually no leading slash)
+		cleanPath := strings.TrimPrefix(path, "/")
+		if cleanPath != "" {
+			state.Projects = append(state.Projects, cleanPath)
+
+			// Get branch info
+			meta := ProjectMetadata{}
+			if head, err := repo.Head(); err == nil && head.Name().IsBranch() {
+				meta.Branch = head.Name().Short()
+			} else {
+				meta.Branch = "DETACHED"
 			}
+			state.ProjectMetadata[cleanPath] = meta
 		}
-		log.Printf("Scan Projects: found %d projects: %v", len(state.Projects), state.Projects)
-	} else {
-		log.Printf("Scan Projects Error: %v", err)
 	}
+
+	sort.Strings(state.Projects)
+	log.Printf("Population Projects: found %d projects: %v", len(state.Projects), state.Projects)
 }
 
 func statusCodeToChar(c gogit.StatusCode) rune {

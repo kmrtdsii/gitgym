@@ -147,12 +147,12 @@ export const useGitData = (sessionId: string): GitDataHook => {
         }
     }, []);
 
-    // Re-fetch when showAllCommits changes
+    // Re-fetch when showAllCommits or command count changes
     useEffect(() => {
         if (sessionId) {
             fetchState(sessionId);
         }
-    }, [sessionId, showAllCommits, fetchState]);
+    }, [sessionId, showAllCommits, fetchState, state.commandCount]);
 
     return {
         state,

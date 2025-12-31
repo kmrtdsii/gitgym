@@ -178,7 +178,7 @@
         "emptyState": "Type \"git init\" to start.",
         "emptyRepo": {
             "title": "Repository is empty",
-            "description": "Push your first commit to see the graph."
+            "description": "Create your first commit to see the graph."
         },
         "simulation": {
             "title": "Simulation Mode",
@@ -193,6 +193,11 @@
         "hash": "Hash",
         "message": "Message",
         "date": "Date",
+        "rename": "Rename",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "save": "Save",
+        "clickToRename": "Click to rename",
         "time": {
             "justNow": "now",
             "minutesAgo": "{{count}} minutes ago",

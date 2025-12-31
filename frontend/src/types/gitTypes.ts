@@ -30,6 +30,8 @@ export interface GitState {
     files: string[];
     currentPath?: string;
     projects?: string[];
+    projectMetadata?: Record<string, { branch: string }>;
+    activeProject?: string;
     remotes?: Remote[]; // Defined remotes
     sharedRemotes?: string[];
 

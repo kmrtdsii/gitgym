@@ -8,11 +8,12 @@ interface FileEditorProps {
     filePath: string;
     onClose: () => void;
     onSave?: () => void;
+    onRename?: (oldPath: string, newPath: string) => void;
 }
 
-export const FileEditor: React.FC<FileEditorProps> = ({ filePath, onClose, onSave }) => {
+export const FileEditor: React.FC<FileEditorProps> = ({ filePath, onClose, onSave, onRename }) => {
     const { t } = useTranslation();
-    const { sessionId, refreshState } = useGit();
+    const { sessionId, refreshState, runCommand } = useGit();
     const [content, setContent] = useState<string>('');
     const [originalContent, setOriginalContent] = useState<string>('');
     const [loading, setLoading] = useState(true);
@@ -20,6 +21,11 @@ export const FileEditor: React.FC<FileEditorProps> = ({ filePath, onClose, onSav
     const [error, setError] = useState<string | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const lineNumbersRef = useRef<HTMLDivElement>(null);
+
+    // Renaming state
+    const [isRenaming, setIsRenaming] = useState(false);
+    const [newName, setNewName] = useState('');
+    const renameInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const loadFile = async () => {
@@ -46,6 +52,29 @@ export const FileEditor: React.FC<FileEditorProps> = ({ filePath, onClose, onSav
             await refreshState();
             onSave?.();
             onClose();
+        } catch (err) {
+            setError(String(err));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleRename = async () => {
+        const trimmed = newName.trim();
+        if (!trimmed || trimmed === fileName) {
+            setIsRenaming(false);
+            return;
+        }
+
+        const parentDir = filePath.includes('/') ? filePath.substring(0, filePath.lastIndexOf('/')) : '';
+        const newPath = parentDir ? `${parentDir}/${trimmed}` : trimmed;
+
+        try {
+            setSaving(true);
+            setError(null);
+            await runCommand(`mv ${filePath} ${newPath}`);
+            onRename?.(filePath, newPath);
+            setIsRenaming(false);
         } catch (err) {
             setError(String(err));
         } finally {
@@ -85,7 +114,34 @@ export const FileEditor: React.FC<FileEditorProps> = ({ filePath, onClose, onSav
                 <div className="file-editor-header">
                     <div className="file-editor-title">
                         <span className="file-icon">{getFileIcon()}</span>
-                        <span className="file-name">{fileName}</span>
+                        {isRenaming ? (
+                            <input
+                                ref={renameInputRef}
+                                className="file-name-input"
+                                value={newName}
+                                onChange={e => setNewName(e.target.value)}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') handleRename();
+                                    if (e.key === 'Escape') setIsRenaming(false);
+                                }}
+                                onBlur={() => {
+                                    if (newName.trim() === fileName) setIsRenaming(false);
+                                    else handleRename();
+                                }}
+                                autoFocus
+                            />
+                        ) : (
+                            <span
+                                className="file-name editable"
+                                onClick={() => {
+                                    setNewName(fileName);
+                                    setIsRenaming(true);
+                                }}
+                                title={t('common.clickToRename', 'Click to rename')}
+                            >
+                                {fileName}
+                            </span>
+                        )}
                         {hasChanges && <span className="unsaved-dot" title="未保存の変更" />}
                         {hasConflict && <span className="conflict-badge">⚠️ CONFLICT</span>}
                     </div>
@@ -148,12 +204,12 @@ export const FileEditor: React.FC<FileEditorProps> = ({ filePath, onClose, onSav
                             {saving ? (
                                 <>
                                     <span className="btn-spinner" />
-                                    Saving...
+                                    {t('common.saving', '保存中...')}
                                 </>
                             ) : (
                                 <>
                                     <span className="save-icon">💾</span>
-                                    {t('common.save', 'Save')}
+                                    {t('common.save', '保存')}
                                 </>
                             )}
                         </button>
