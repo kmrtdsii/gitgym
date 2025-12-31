@@ -7,6 +7,8 @@
         },
         "loading": "Loading GitGym...",
         "searchPlaceholder": "Search commits...",
+        "searchBranches": "Search branches",
+        "searchTags": "Search tags",
         "skills": "🎯 Skills",
         "skillRadarTitle": "Git Skill Radar",
         "dojo": "Dojo"

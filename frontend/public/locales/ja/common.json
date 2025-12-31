@@ -7,6 +7,8 @@
         },
         "loading": "GitGymを読み込み中...",
         "searchPlaceholder": "コミットを検索...",
+        "searchBranches": "ブランチで検索",
+        "searchTags": "タグで検索",
         "skills": "🎯 スキル",
         "skillRadarTitle": "Gitスキルレーダー",
         "dojo": "Dojo"

@@ -14,6 +14,7 @@ interface GitGraphVizProps {
     state?: GitState;
     title?: string;
     searchQuery?: string;
+    searchFocus?: 'commit' | 'branch' | 'tag';
 }
 
 /**
@@ -30,7 +31,8 @@ const GitGraphViz: React.FC<GitGraphVizProps> = ({
     selectedCommitId,
     state: propState,
     title,
-    searchQuery
+    searchQuery,
+    searchFocus = 'commit'
 }) => {
     const { state: contextState } = useGit();
     const { t, i18n } = useTranslation('common');
@@ -90,15 +92,28 @@ const GitGraphViz: React.FC<GitGraphVizProps> = ({
 
         const query = searchQuery.toLowerCase();
         return nodes.map(node => {
-            const formattedDate = new Date(node.timestamp).toLocaleString(i18n.language, {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
+            let match = false;
 
-            const match =
-                node.id.toLowerCase().includes(query) ||
-                node.message.toLowerCase().includes(query) ||
-                formattedDate.startsWith(query); // Prefix match for date
+            if (searchFocus === 'commit') {
+                const formattedDate = new Date(node.timestamp).toLocaleString(i18n.language, {
+                    year: 'numeric', month: '2-digit', day: '2-digit',
+                    hour: '2-digit', minute: '2-digit', second: '2-digit'
+                });
+
+                match =
+                    node.id.toLowerCase().includes(query) ||
+                    node.message.toLowerCase().includes(query) ||
+                    formattedDate.startsWith(query); // Prefix match for date
+            } else if (searchFocus === 'branch') {
+                const nodeBadges = badgesMap[node.id] || [];
+                match = nodeBadges.some(b =>
+                    (b.type === 'branch' || b.type === 'remote-branch') &&
+                    b.text.toLowerCase().includes(query)
+                );
+            } else if (searchFocus === 'tag') {
+                const nodeBadges = badgesMap[node.id] || [];
+                match = nodeBadges.some(b => b.type === 'tag' && b.text.toLowerCase().includes(query));
+            }
 
             return {
                 ...node,
@@ -107,7 +122,7 @@ const GitGraphViz: React.FC<GitGraphVizProps> = ({
                 // Visual preference: if node is dimmed, edges connecting it likely dimmed too.
             };
         });
-    }, [nodes, searchQuery]);
+    }, [nodes, searchQuery, searchFocus, i18n.language, badgesMap]);
 
     const activeNodes = searchQuery ? filteredNodes : nodes;
 
