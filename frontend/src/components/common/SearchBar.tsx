@@ -26,7 +26,7 @@ const SearchBar: React.FC<SearchBarProps> = ({ value, onChange, placeholder = "S
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
-            width: '200px',
+            width: '100%',
             height: '24px',
             background: 'var(--bg-secondary)',
             border: '1px solid var(--border-subtle)',

@@ -8,6 +8,7 @@ interface DeveloperTabsProps {
     onSwitchDeveloper: (name: string) => void;
     onAddDeveloper: () => void;
     onRemoveDeveloper?: (name: string) => void;
+    children?: React.ReactNode;
 }
 
 /**
@@ -20,6 +21,7 @@ const DeveloperTabs: React.FC<DeveloperTabsProps> = ({
     onSwitchDeveloper,
     onAddDeveloper,
     onRemoveDeveloper,
+    children
 }) => {
     const tabListRef = React.useRef<HTMLDivElement>(null);
 
@@ -97,6 +99,8 @@ const DeveloperTabs: React.FC<DeveloperTabsProps> = ({
             >
                 <Plus size={18} />
             </button>
+            <div style={{ flex: 1 }} />
+            {children}
         </div>
     );
 };

@@ -12,7 +12,7 @@ import BottomPanel from './BottomPanel';
 import { Resizer } from '../common';
 import AddDeveloperModal from './AddDeveloperModal';
 import MissionPanel from './MissionPanel';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, GitBranch, Tag } from 'lucide-react';
 
 import type { SelectedObject } from '../../types/layoutTypes';
 import { useTheme } from '../../context/ThemeContext';
@@ -94,8 +94,6 @@ const AppLayout = () => {
         document.body.style.cursor = 'col-resize';
     };
 
-    const modes: ViewMode[] = ['graph', 'branches', 'tags'];
-
     return (
         <div className="layout-container" ref={containerRef} style={{ display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: 'var(--bg-primary)' }}>
 
@@ -127,40 +125,8 @@ const AppLayout = () => {
                     onSwitchDeveloper={switchDeveloper}
                     onAddDeveloper={() => setIsAddDevModalOpen(true)}
                     onRemoveDeveloper={removeDeveloper}
-                />
-
-                {/* ROW 2: View Toggles (Graph, Branches...) & Global Controls */}
-                <div style={{
-                    height: '40px',
-                    background: 'var(--bg-toolbar)', // Matches active tab
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0 16px',
-                    borderBottom: '1px solid var(--border-subtle)'
-                }}>
-                    {/* View Modes */}
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        {modes.map(mode => (
-                            <button
-                                key={mode}
-                                onClick={() => setViewMode(mode)}
-                                style={{
-                                    background: viewMode === mode ? 'var(--accent-primary)' : 'var(--bg-button-inactive)',
-                                    color: viewMode === mode ? 'white' : 'var(--text-secondary)',
-                                    border: '1px solid transparent',
-                                    borderRadius: '4px',
-                                    padding: '4px 12px',
-                                    fontSize: '11px',
-                                    cursor: 'pointer',
-                                    fontWeight: 600
-                                }}
-                                data-testid={`view-mode-${mode}`}
-                            >
-                                {t(`viewMode.${mode}`)}
-                            </button>
-                        ))}
-
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingRight: '12px' }}>
                         {/* Git Dojo Button (NEW) */}
                         <button
                             onClick={() => setIsDojoOpen(true)}
@@ -173,7 +139,6 @@ const AppLayout = () => {
                                 fontSize: '11px',
                                 cursor: 'pointer',
                                 fontWeight: 600,
-                                marginLeft: '8px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '4px',
@@ -196,7 +161,6 @@ const AppLayout = () => {
                                 fontSize: '11px',
                                 cursor: 'pointer',
                                 fontWeight: 600,
-                                marginLeft: '8px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '4px',
@@ -206,15 +170,9 @@ const AppLayout = () => {
                         >
                             <span>{t('app.skills')}</span>
                         </button>
-                    </div>
 
-                    {/* Search Bar */}
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-                        <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder={t('app.searchPlaceholder')} />
-                    </div>
+                        <div style={{ width: '12px', borderRight: '1px solid var(--border-subtle)', height: '16px' }} />
 
-                    {/* Right Side Controls */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '6px', fontSize: '10px', color: 'var(--text-secondary)' }} data-testid="show-all-toggle">
                             <input
                                 type="checkbox"
@@ -246,13 +204,77 @@ const AppLayout = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </DeveloperTabs>
+
+
 
                 {/* ROW 3: Stacked Content */}
                 <div ref={stackContainerRef} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
                     {/* Top: Graph / Visualization */}
                     <div ref={centerContentRef} style={{ height: vizHeight, minHeight: '100px', display: 'flex', borderBottom: '1px solid var(--border-subtle)', overflow: 'hidden', position: 'relative' }}>
+
+                        {/* Floating Toolbar (Search & View Toggles) */}
+                        <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '32px', // Tighter spacing
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '0 16px',
+                            zIndex: 10,
+                            pointerEvents: 'none', // Allow clicks to pass through to graph where empty
+                            background: 'linear-gradient(to bottom, var(--bg-primary) 0%, transparent 100%)' // Subtle fade
+                        }}>
+                            {/* Search Bar (Full Width) */}
+                            <div style={{ flex: 1, pointerEvents: 'auto' }}>
+                                <SearchBar value={searchQuery} onChange={setSearchQuery} placeholder={t('app.searchPlaceholder')} />
+                            </div>
+
+                            {/* View Toggles (Icons) */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', pointerEvents: 'auto' }}>
+                                <button
+                                    onClick={() => setViewMode(viewMode === 'branches' ? 'graph' : 'branches')}
+                                    title={t('viewMode.branches')}
+                                    style={{
+                                        background: viewMode === 'branches' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                        color: viewMode === 'branches' ? 'white' : 'var(--text-secondary)',
+                                        border: '1px solid var(--border-subtle)',
+                                        borderRadius: '4px',
+                                        padding: '6px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                    }}
+                                >
+                                    <GitBranch size={16} />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode(viewMode === 'tags' ? 'graph' : 'tags')}
+                                    title={t('viewMode.tags')}
+                                    style={{
+                                        background: viewMode === 'tags' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                        color: viewMode === 'tags' ? 'white' : 'var(--text-secondary)',
+                                        border: '1px solid var(--border-subtle)',
+                                        borderRadius: '4px',
+                                        padding: '6px',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                    }}
+                                >
+                                    <Tag size={16} />
+                                </button>
+                            </div>
+                        </div>
+
                         <div style={{ flex: 1, height: '100%', position: 'relative', overflow: 'hidden' }}>
                             <AnimatePresence mode="wait">
                                 {state.HEAD && state.HEAD.type !== 'none' ? (
@@ -345,7 +367,7 @@ const AppLayout = () => {
                     <MissionPanel />
                 </DojoProvider>
             </div>
-        </div>
+        </div >
     );
 };
 
