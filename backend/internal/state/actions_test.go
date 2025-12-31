@@ -57,16 +57,15 @@ func TestCreateBareRepository(t *testing.T) {
 		assert.Contains(t, err.Error(), "invalid repository name")
 	})
 
-	t.Run("Cleanup Existing", func(t *testing.T) {
-		// Create another repo, which should remove the previous one (Single Residency)
+	t.Run("Multiple Repos Coexist", func(t *testing.T) {
+		// Create another repo - both should coexist (multi-remote support)
 		repoName2 := "another-repo"
 		err := sm.CreateBareRepository(context.Background(), sessionID, repoName2)
 		require.NoError(t, err)
 
 		assert.Contains(t, sm.SharedRemotes, repoName2)
-		// "my-new-repo" should be removed from disk?
-		// Note: The map is reset in CreateBareRepository, so checking map is enough
-		assert.NotContains(t, sm.SharedRemotes, "my-new-repo")
+		// Multi-remote: both should exist
+		assert.Contains(t, sm.SharedRemotes, "my-new-repo", "Both repos should coexist")
 	})
 }
 
@@ -91,16 +90,16 @@ func TestRemoveRemote(t *testing.T) {
 	}
 	sm.sessions[sessionID] = session
 
-	t.Run("RemoveRemote clears SharedRemotes and PRs", func(t *testing.T) {
+	t.Run("RemoveRemote clears SharedRemotes and associated PRs", func(t *testing.T) {
 		// Setup: Create a bare repository
 		err := sm.CreateBareRepository(context.Background(), sessionID, "test-repo")
 		require.NoError(t, err)
 		assert.Contains(t, sm.SharedRemotes, "test-repo")
 
-		// Add some PRs
+		// Add some PRs - these belong to test-repo
 		sm.PullRequests = []*PullRequest{
-			{ID: 1, Title: "PR1", State: "OPEN"},
-			{ID: 2, Title: "PR2", State: "OPEN"},
+			{ID: 1, Title: "PR1", State: "OPEN", RemoteName: "test-repo"},
+			{ID: 2, Title: "PR2", State: "OPEN", RemoteName: "test-repo"},
 		}
 		require.Len(t, sm.PullRequests, 2)
 
@@ -112,8 +111,8 @@ func TestRemoveRemote(t *testing.T) {
 		assert.Empty(t, sm.SharedRemotes, "SharedRemotes should be cleared")
 		assert.Empty(t, sm.SharedRemotePaths, "SharedRemotePaths should be cleared")
 
-		// Verify: PullRequests should be empty (key behavior)
-		assert.Empty(t, sm.PullRequests, "PullRequests should be cleared when remote is removed")
+		// Verify: PullRequests belonging to test-repo should be removed
+		assert.Empty(t, sm.PullRequests, "PRs for test-repo should be cleared")
 	})
 
 	t.Run("RemoveRemote returns error for non-existent remote", func(t *testing.T) {
@@ -123,9 +122,10 @@ func TestRemoveRemote(t *testing.T) {
 	})
 }
 
-// TestSingleResidencySpecification explicitly documents and tests the Single Residency behavior
-// This is the INTENDED DESIGN: only one remote can exist at a time
-func TestSingleResidencySpecification(t *testing.T) {
+// TestMultipleRemotesCoexistence tests that multiple remotes can coexist
+// Note: This reflects the current implementation behavior. If Single Residency
+// is desired in the future, this test should be updated accordingly.
+func TestMultipleRemotesCoexistence(t *testing.T) {
 	tmpDir := t.TempDir()
 	t.Setenv("GITGYM_DATA_ROOT", tmpDir)
 
@@ -145,7 +145,7 @@ func TestSingleResidencySpecification(t *testing.T) {
 	}
 	sm.sessions[sessionID] = session
 
-	t.Run("Creating Repo B removes Repo A (Single Residency)", func(t *testing.T) {
+	t.Run("Creating Repo B does NOT remove Repo A (Multi-Remote)", func(t *testing.T) {
 		// Create Repo A
 		err := sm.CreateBareRepository(context.Background(), sessionID, "repo-A")
 		require.NoError(t, err)
@@ -155,11 +155,11 @@ func TestSingleResidencySpecification(t *testing.T) {
 		err = sm.CreateBareRepository(context.Background(), sessionID, "repo-B")
 		require.NoError(t, err)
 
-		// SPECIFICATION: Repo A should no longer exist
-		assert.NotContains(t, sm.SharedRemotes, "repo-A", "Single Residency: repo-A should be removed when repo-B is created")
+		// CURRENT BEHAVIOR: Both remotes should exist
+		assert.Contains(t, sm.SharedRemotes, "repo-A", "repo-A should still exist")
 		assert.Contains(t, sm.SharedRemotes, "repo-B", "repo-B should exist")
 
-		// Only one remote should exist
-		assert.Equal(t, 3, len(sm.SharedRemotes), "Should have 3 keys for single repo (name, pseudoURL, path)")
+		// 6 keys total: 3 per repo (name, pseudoURL, path)
+		assert.Equal(t, 6, len(sm.SharedRemotes), "Should have 6 keys for two repos")
 	})
 }

@@ -208,9 +208,15 @@ func (sm *SessionManager) RemoveRemote(name string) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
+	// Check if remote exists first
+	_, ok := sm.SharedRemotes[name]
+	if !ok {
+		return fmt.Errorf("remote '%s' not found", name)
+	}
+
 	// 1. Resolve Path and Clean up disk if it exists
-	path, ok := sm.SharedRemotePaths[name]
-	if ok && path != "" {
+	path, pathOk := sm.SharedRemotePaths[name]
+	if pathOk && path != "" {
 		err := os.RemoveAll(path)
 		if err != nil {
 			log.Printf("RemoveRemote: Failed to delete path %s: %v", path, err)
@@ -231,7 +237,7 @@ func (sm *SessionManager) RemoveRemote(name string) error {
 		}
 	}
 
-	// 3. Clear associated pull requests
+	// 3. Clear pull requests associated with this remote (by RemoteName)
 	var keptPRs []*PullRequest
 	for _, pr := range sm.PullRequests {
 		if pr.RemoteName != name {

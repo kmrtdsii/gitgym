@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { useTranslation, Trans } from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import { useGit } from '../../context/GitAPIContext';
-import { Folder, FileCode, FilePlus, FolderPlus, X, Check, GitBranch, ChevronRight, ChevronDown, MoreVertical, Pencil, Trash } from 'lucide-react';
+import { Folder, FileCode, FilePlus, FolderPlus, GitBranch, ChevronRight, ChevronDown, MoreVertical, Pencil, Trash } from 'lucide-react';
 import type { SelectedObject } from '../../types/layoutTypes';
 import Modal from '../common/Modal';
 import { Button } from '../common/Button';
@@ -76,11 +76,8 @@ const TreeItem: React.FC<{
 }> = ({ node, depth, selectedItemPath, onFileClick, onOpenFile, onContextMenu, isRenaming, onRenameComplete, onCancelRename }) => {
     const isSelected = selectedItemPath === node.path;
     const [isOpen, setIsOpen] = useState(false);
+    // editValue is used for the rename input field
     const [editValue, setEditValue] = useState(node.name);
-
-    useEffect(() => {
-        if (isRenaming) setEditValue(node.name);
-    }, [isRenaming, node.name]);
 
     const hasChildren = Object.keys(node.children).length > 0;
     const isDir = node.isDir || hasChildren;
@@ -153,7 +150,7 @@ const TreeItem: React.FC<{
                             {isModified && <span className="status-indicator modified">M</span>}
                             {isUntracked && <span className="status-indicator untracked">U</span>}
                             <div className="hover-btns">
-                                <button onClick={(e) => { e.stopPropagation(); onContextMenu?.(e as any, node.path, isDir); }} className="hover-action-btn">
+                                <button onClick={(e) => { e.stopPropagation(); onContextMenu?.(e as unknown as React.MouseEvent, node.path, isDir); }} className="hover-action-btn">
                                     <MoreVertical size={12} />
                                 </button>
                             </div>
@@ -383,7 +380,7 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                     filePath={editingFile}
                     onClose={() => setEditingFile(null)}
                     onSave={() => sessionId && fetchWorkspaceTree(sessionId)}
-                    onRename={(old, newP) => {
+                    onRename={(_old, newP) => {
                         setEditingFile(newP);
                         if (sessionId) fetchWorkspaceTree(sessionId);
                     }}
