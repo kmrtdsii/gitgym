@@ -2,19 +2,23 @@ import React from 'react';
 import type { VizNode } from './graphTypes';
 import { ROW_HEIGHT, TEXT_OFFSET_X, DATE_WIDTH } from './graphConstants';
 import { CommitBadge } from './GraphBadges';
+import type { TFunction } from 'i18next';
+import { formatRelativeTime } from '../../utils/dateUtils';
 
 interface CommitRowProps {
     node: VizNode;
     badges: Array<{ text: string; type: string; isActive?: boolean }>;
     isSelected: boolean;
     onClick?: () => void;
+    t: TFunction;
 }
 
 export const CommitRow: React.FC<CommitRowProps> = ({
     node,
     badges,
     isSelected,
-    onClick
+    onClick,
+    t
 }) => (
     <div
         onClick={onClick}
@@ -100,10 +104,7 @@ export const CommitRow: React.FC<CommitRowProps> = ({
             flexShrink: 0,
             marginRight: '8px'
         }}>
-            {new Date(node.timestamp).toLocaleString('ja-JP', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            })}
+            {formatRelativeTime(node.timestamp, t)}
         </span>
 
         {/* Commit ID */}

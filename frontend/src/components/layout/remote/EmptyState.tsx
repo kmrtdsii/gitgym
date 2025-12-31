@@ -233,6 +233,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
                 isOpen={isCreateDialogOpen}
                 onClose={() => setIsCreateDialogOpen(false)}
                 existingRemotes={recentRemotes}
+                onSuccess={(name) => onSelectRemote?.(name)}
             />
             <ConnectRepoDialog
                 isOpen={isConnectDialogOpen}

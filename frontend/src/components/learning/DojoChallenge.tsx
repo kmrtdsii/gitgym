@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDojo } from '../../context/DojoContext';
-import './GitDojo.css';
+import './DojoChallenge.css';
 
 interface DojoChallengeProps {
     onStartAndClose: () => void;
@@ -17,58 +17,107 @@ const DojoChallenge: React.FC<DojoChallengeProps> = ({ onStartAndClose }) => {
     }
 
     const handleStart = () => {
-        // Close the Dojo modal - mission is already active from startChallenge
         onStartAndClose();
     };
 
     const handleBack = () => {
-        // Preview screen - go directly to list without confirmation
         goToList();
     };
 
+    // Get difficulty info
+    const getDifficultyInfo = () => {
+        const level = currentProblem.level || 'basic';
+        const stars = currentProblem.stars || 2;
+
+        const levelMap: Record<string, { label: string; color: string; gradient: string }> = {
+            basic: { label: 'BASIC', color: '#22c55e', gradient: 'linear-gradient(135deg, #22c55e, #16a34a)' },
+            intermediate: { label: 'INTERMEDIATE', color: '#f59e0b', gradient: 'linear-gradient(135deg, #f59e0b, #d97706)' },
+            advanced: { label: 'ADVANCED', color: '#ef4444', gradient: 'linear-gradient(135deg, #ef4444, #dc2626)' },
+        };
+
+        return {
+            ...levelMap[level] || levelMap.basic,
+            stars
+        };
+    };
+
+    const difficulty = getDifficultyInfo();
+
     return (
-        <div className="dojo-challenge">
-            {/* Header - No timer in preview */}
-            <div className="challenge-header">
-                <button className="back-button" onClick={handleBack}>
-                    ← {t('dojo.backToList')}
+        <div className="dojo-challenge-v2">
+            {/* Header */}
+            <div className="dc-header">
+                <button className="dc-back-btn" onClick={handleBack}>
+                    <span className="back-arrow">←</span>
+                    <span>{t('dojo.backToList')}</span>
                 </button>
-                <div className="challenge-title-row">
-                    <span className="challenge-id">CHALLENGE #{currentProblem.id}</span>
-                    <h2 className="challenge-title">{t(currentProblem.title)}</h2>
+
+                <div className="dc-meta">
+                    <span className="dc-id">#{currentProblem.id}</span>
+                    <span className="dc-difficulty" style={{ background: difficulty.gradient }}>
+                        {difficulty.label}
+                    </span>
                 </div>
             </div>
 
-            {/* Challenge Body - Preview shows problem + goals + Start */}
-            <div className="challenge-body">
-                {/* Problem Description */}
-                <div className="challenge-section">
-                    <h3 className="section-title">📋 {t('dojo.problem')}</h3>
-                    <p className="problem-description">{t(currentProblem.description)}</p>
+            {/* Title Card */}
+            <div className="dc-title-card">
+                <div className="dc-stars">
+                    {Array.from({ length: 3 }, (_, i) => (
+                        <span
+                            key={i}
+                            className={`star ${i < difficulty.stars ? 'filled' : ''}`}
+                        >
+                            ★
+                        </span>
+                    ))}
+                </div>
+                <h1 className="dc-title">{t(currentProblem.title)}</h1>
+                <div className="dc-time">
+                    <span className="time-icon">⏱️</span>
+                    <span>約 {currentProblem.estimatedMinutes || 5} 分</span>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="dc-content">
+                {/* Problem Section */}
+                <div className="dc-section">
+                    <div className="section-header">
+                        <span className="section-icon">📋</span>
+                        <span className="section-label">{t('dojo.problem')}</span>
+                    </div>
+                    <div className="section-body">
+                        <p className="dc-description">{t(currentProblem.description)}</p>
+                    </div>
                 </div>
 
-                {/* Goals */}
-                <div className="challenge-section">
-                    <h3 className="section-title">🎯 {t('dojo.goals')}</h3>
-                    <ul className="goals-list">
-                        {currentProblem.goals.map((goal, idx) => (
-                            <li key={idx} className="goal-item">
-                                <span className="goal-checkbox">☐</span>
-                                <span className="goal-text">{t(goal)}</span>
-                            </li>
-                        ))}
-                    </ul>
+                {/* Goals Section */}
+                <div className="dc-section">
+                    <div className="section-header">
+                        <span className="section-icon">🎯</span>
+                        <span className="section-label">{t('dojo.goals')}</span>
+                    </div>
+                    <div className="section-body">
+                        <ul className="dc-goals">
+                            {currentProblem.goals.map((goal, idx) => (
+                                <li key={idx} className="dc-goal-item">
+                                    <span className="goal-check">○</span>
+                                    <span className="goal-text">{t(goal)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
+            </div>
 
-                {/* Start Button */}
-                <div className="challenge-actions preview-actions">
-                    <button
-                        className="action-button primary start-button"
-                        onClick={handleStart}
-                    >
-                        🚀 {t('dojo.start')}
-                    </button>
-                </div>
+            {/* Start Button */}
+            <div className="dc-footer">
+                <button className="dc-start-btn" onClick={handleStart}>
+                    <span className="btn-icon">🚀</span>
+                    <span className="btn-text">{t('dojo.start')}</span>
+                    <span className="btn-glow" />
+                </button>
             </div>
         </div>
     );

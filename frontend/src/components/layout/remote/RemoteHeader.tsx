@@ -100,7 +100,7 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                 </div>
 
                 {/* Settings button - Right aligned */}
-                {!isSettingsOpen && (
+                {!isSettingsOpen && remoteUrl && (
                     <button
                         onClick={onEditRemote}
                         title={t('remote.header.settings')}
@@ -120,7 +120,7 @@ const RemoteHeader: React.FC<RemoteHeaderProps> = ({
                         className="hover:bg-bg-tertiary transition-colors"
                     >
                         <Settings size={14} />
-                        <span>{remoteUrl ? t('remote.header.settings') : t('remote.header.setup')}</span>
+                        <span>{t('remote.header.settings')}</span>
                     </button>
                 )}
             </div>

@@ -50,6 +50,8 @@ func (s *Server) routes() {
 
 	// Workspace
 	s.Mux.HandleFunc("/api/workspace/tree", s.handleGetWorkspaceTree)
+	s.Mux.HandleFunc("/api/file/read", s.handleReadFile)
+	s.Mux.HandleFunc("/api/file/write", s.handleWriteFile)
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {

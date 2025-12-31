@@ -6,6 +6,7 @@ import type { SelectedObject } from '../../types/layoutTypes';
 import Modal from '../common/Modal';
 import { Button } from '../common/Button';
 import WorkspaceTree from '../workspace/WorkspaceTree';
+import { FileEditor } from '../editor/FileEditor';
 
 import { ChevronRight, ChevronDown } from 'lucide-react';
 interface FileExplorerProps {
@@ -85,7 +86,7 @@ const buildTree = (files: string[], statuses: Record<string, string>): TreeNode 
 };
 
 // ... (TreeItem)
-const TreeItem: React.FC<{ node: TreeNode, depth: number }> = ({ node, depth }) => {
+const TreeItem: React.FC<{ node: TreeNode, depth: number, onFileClick?: (path: string) => void }> = ({ node, depth, onFileClick }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     const hasChildren = Object.keys(node.children).length > 0;
@@ -138,10 +139,10 @@ const TreeItem: React.FC<{ node: TreeNode, depth: number }> = ({ node, depth }) 
         <div>
             <div
                 className="explorer-row"
-                onClick={isDir ? handleToggle : undefined}
+                onClick={isDir ? handleToggle : () => onFileClick?.(node.path)}
                 style={{
                     padding: `4px 12px 4px ${12 + depth * 12}px`, // Indentation
-                    cursor: isDir ? 'pointer' : 'default',
+                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     color: !isDir ? textColor : 'var(--text-secondary)'
@@ -199,7 +200,7 @@ const TreeItem: React.FC<{ node: TreeNode, depth: number }> = ({ node, depth }) 
             {isOpen && hasChildren && (
                 <div>
                     {sortedChildren.map(child => (
-                        <TreeItem key={child.path} node={child} depth={depth + 1} />
+                        <TreeItem key={child.path} node={child} depth={depth + 1} onFileClick={onFileClick} />
                     ))}
                 </div>
             )}
@@ -221,6 +222,8 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
 
     // Modal State (for delete confirmation)
     const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+    // File Editor State
+    const [editingFile, setEditingFile] = useState<string | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     // Fetch tree on mount and when state changes
@@ -343,7 +346,7 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                                 });
 
                                 return children.map(child => (
-                                    <TreeItem key={child.path} node={child} depth={0} />
+                                    <TreeItem key={child.path} node={child} depth={0} onFileClick={setEditingFile} />
                                 ));
                             })()}
                         </div>
@@ -368,6 +371,14 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                     </Button>
                 </div>
             </Modal>
+
+            {/* File Editor Modal */}
+            {editingFile && (
+                <FileEditor
+                    filePath={editingFile}
+                    onClose={() => setEditingFile(null)}
+                />
+            )}
 
             <style>{`
                 .explorer-row { display: flex; align-items: center; padding-top: 5px; padding-bottom: 5px; cursor: pointer; border-radius: 4px; }

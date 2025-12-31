@@ -7,6 +7,7 @@ import (
 	"time"
 
 	gogit "github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/kurobon/gitgym/backend/internal/git"
 )
@@ -64,7 +65,23 @@ func (c *LogCommand) parseArgs(args []string) (*LogOptions, error) {
 func (c *LogCommand) executeLog(_ *git.Session, repo *gogit.Repository, opts *LogOptions) (string, error) {
 	// executeLog performs the log operation with optional graph rendering.
 	// This implementation attempts a simplified ASCII graph.
-	cIter, err := repo.Log(&gogit.LogOptions{All: false}) // HEAD only traversal by default
+
+	logOpts := &gogit.LogOptions{
+		All: false,
+	}
+
+	// Handle arguments (revisions)
+	if len(opts.Args) > 0 {
+		// Try to resolve the first argument as a revision
+		hash, err := repo.ResolveRevision(plumbing.Revision(opts.Args[0]))
+		if err == nil {
+			logOpts.From = *hash
+		}
+		// If multiple args or complex pathspecs are needed, we'd need more logic.
+		// For now, support "git log <branch>" simplistic usage.
+	}
+
+	cIter, err := repo.Log(logOpts)
 	if err != nil {
 		return "", err
 	}

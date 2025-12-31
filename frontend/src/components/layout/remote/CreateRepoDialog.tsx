@@ -8,7 +8,7 @@ import CloneProgress from './CloneProgress';
 interface CreateRepoDialogProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess?: () => void;
+    onSuccess?: (repoName: string) => void;
     existingRemotes?: Array<{ name: string, url: string }>;
 }
 
@@ -73,11 +73,11 @@ const CreateRepoDialog: React.FC<CreateRepoDialogProps> = ({ isOpen, onClose, on
         if (cloneStatus === 'complete') {
             const timer = setTimeout(() => {
                 onClose();
-                if (onSuccess) onSuccess();
+                if (onSuccess) onSuccess(repoName);
             }, 1000);
             return () => clearTimeout(timer);
         }
-    }, [cloneStatus, onClose, onSuccess]);
+    }, [cloneStatus, onClose, onSuccess, repoName]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

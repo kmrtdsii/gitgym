@@ -230,6 +230,22 @@ export const gitService = {
         const res = await fetch(`/api/workspace/tree?session=${sessionId}&t=${Date.now()}`);
         if (!res.ok) throw new Error('Failed to fetch workspace tree');
         return res.json();
+    },
+
+    async readFile(sessionId: string, path: string): Promise<{ path: string; content: string }> {
+        const res = await fetch(`/api/file/read?session=${sessionId}&path=${encodeURIComponent(path)}&t=${Date.now()}`);
+        if (!res.ok) throw new Error('Failed to read file');
+        return res.json();
+    },
+
+    async writeFile(sessionId: string, path: string, content: string): Promise<{ success: boolean; path: string }> {
+        const res = await fetch('/api/file/write', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId, path, content })
+        });
+        if (!res.ok) throw new Error('Failed to write file');
+        return res.json();
     }
 };
 

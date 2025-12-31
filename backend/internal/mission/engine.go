@@ -75,8 +75,18 @@ func (e *Engine) StartMission(ctx context.Context, missionID string) (string, er
 
 	// 2. Run Setup Commands
 	for _, cmdStr := range m.Setup {
+		ignoreError := false
+		if strings.HasPrefix(cmdStr, "!") {
+			ignoreError = true
+			cmdStr = strings.TrimPrefix(cmdStr, "!")
+			cmdStr = strings.TrimSpace(cmdStr)
+		}
+
 		if err := e.runCommand(ctx, sess, cmdStr); err != nil {
-			return "", fmt.Errorf("setup failed at '%s': %w", cmdStr, err)
+			if !ignoreError {
+				return "", fmt.Errorf("setup failed at '%s': %w", cmdStr, err)
+			}
+			// Log checking?
 		}
 	}
 

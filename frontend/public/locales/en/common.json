@@ -134,7 +134,7 @@
             },
             "301": {
                 "title": "The Conflict Crisis",
-                "description": "Bob and Alice edited the same file. The repository is in a broken merge state. Fix it.",
+                "description": "You tried to merge a feature branch, but it raised a conflict with main. Resolve the conflict and complete the merge.",
                 "goals": [
                     "Resolve merge conflict in README.md",
                     "Commit the merge"
@@ -190,7 +190,15 @@
         "name": "Name",
         "hash": "Hash",
         "message": "Message",
-        "date": "Date"
+        "date": "Date",
+        "time": {
+            "justNow": "now",
+            "minutesAgo": "{{count}} minutes ago",
+            "hoursAgo": "{{count}} hours ago",
+            "yesterday": "yesterday",
+            "daysAgo": "{{count}} days ago",
+            "onDate": "on {{date}}"
+        }
     },
     "commitDetails": {
         "title": "Commit Details",

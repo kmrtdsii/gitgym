@@ -1,0 +1,312 @@
+/* DojoChallenge v2 - Premium Design with Theme Support */
+
+.dojo-challenge-v2 {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    overflow: hidden;
+}
+
+/* Header */
+.dc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dc-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.dc-back-btn:hover {
+    background: var(--bg-button-inactive);
+    color: var(--text-primary);
+    transform: translateX(-2px);
+}
+
+.back-arrow {
+    font-size: 16px;
+}
+
+.dc-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dc-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    letter-spacing: 0.05em;
+}
+
+.dc-difficulty {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+    letter-spacing: 0.1em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Title Card */
+.dc-title-card {
+    text-align: center;
+    padding: 32px 24px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.dc-stars {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.dc-stars .star {
+    font-size: 24px;
+    color: var(--text-tertiary);
+    opacity: 0.4;
+    transition: all 0.3s;
+}
+
+.dc-stars .star.filled {
+    color: #fbbf24;
+    opacity: 1;
+    text-shadow: 0 0 16px rgba(251, 191, 36, 0.6);
+    animation: starPulse 2s ease-in-out infinite;
+}
+
+@keyframes starPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.dc-title {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+    letter-spacing: -0.02em;
+}
+
+.dc-time {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.time-icon {
+    font-size: 14px;
+}
+
+/* Content */
+.dc-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.dc-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.section-icon {
+    font-size: 16px;
+}
+
+.section-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.section-body {
+    padding: 18px;
+}
+
+.dc-description {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+}
+
+/* Goals */
+.dc-goals {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.dc-goal-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    transition: all 0.2s;
+}
+
+.dc-goal-item:hover {
+    background: var(--bg-button-inactive);
+    transform: translateX(4px);
+}
+
+.goal-check {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    border: 2px solid var(--border-subtle);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.goal-text {
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+/* Footer */
+.dc-footer {
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-subtle);
+}
+
+.dc-start-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 48px;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s;
+    box-shadow:
+        0 4px 20px rgba(99, 102, 241, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dc-start-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+        0 8px 30px rgba(99, 102, 241, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.dc-start-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.btn-icon {
+    font-size: 18px;
+}
+
+.btn-text {
+    letter-spacing: 0.05em;
+}
+
+.btn-glow {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    50%,
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Scrollbar */
+.dc-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.dc-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.dc-content::-webkit-scrollbar-thumb {
+    background: var(--border-subtle);
+    border-radius: 3px;
+}
+
+.dc-content::-webkit-scrollbar-thumb:hover {
+    background: var(--border-active);
+}

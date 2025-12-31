@@ -134,7 +134,7 @@
             },
             "301": {
                 "title": "コンフリクトの危機",
-                "description": "AliceとBobが同じファイルを同時に編集してしまいました。マージコンフリクトを解決してください。",
+                "description": "機能ブランチをmainにマージしようとしましたが、同じ箇所が変更されていたためコンフリクトが発生しました。両方の変更を残したまま解決してください。",
                 "goals": [
                     "README.md のコンフリクトを解決する",
                     "マージコミットを作成する"
@@ -190,7 +190,15 @@
         "name": "名前",
         "hash": "ハッシュ",
         "message": "メッセージ",
-        "date": "日付"
+        "date": "日付",
+        "time": {
+            "justNow": "たった今",
+            "minutesAgo": "{{count}}分前",
+            "hoursAgo": "{{count}}時間前",
+            "yesterday": "昨日",
+            "daysAgo": "{{count}}日前",
+            "onDate": "{{date}}"
+        }
     },
     "commitDetails": {
         "title": "コミット詳細",

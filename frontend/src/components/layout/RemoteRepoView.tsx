@@ -115,7 +115,21 @@ const RemoteRepoView: React.FC<RemoteRepoViewProps> = ({ topHeight, onResizeStar
     };
 
     // Computed Values
-    const remoteUrl = setupUrl || (serverState?.remotes?.[0]?.urls?.[0]) || '';
+    // Computed Values
+    const remoteUrl = useMemo(() => {
+        if (setupUrl) return setupUrl;
+        if (!serverState?.remotes || serverState.remotes.length === 0) return '';
+
+        // Find active remote
+        const activeName = activeRemoteView || 'origin';
+        const remote = serverState.remotes.find(r => r.name === activeName);
+        if (remote && remote.urls.length > 0) {
+            return remote.urls[0];
+        }
+        // Fallback to first one if active not found (or default)
+        return serverState.remotes[0]?.urls?.[0] || '';
+    }, [setupUrl, serverState, activeRemoteView]);
+
     const projectName = remoteUrl.split('/').pop()?.replace('.git', '') || 'Remote Repository';
 
     const handleDisconnect = async () => {

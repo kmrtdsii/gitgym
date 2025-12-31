@@ -2,7 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -164,5 +166,122 @@ func getBaseName(path string) string {
 func sortNodes(nodes []*DirectoryNode) {
 	sort.Slice(nodes, func(i, j int) bool {
 		return strings.ToLower(nodes[i].Name) < strings.ToLower(nodes[j].Name)
+	})
+}
+
+// handleReadFile reads a file's content from the session filesystem
+func (s *Server) handleReadFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	sessionID := r.URL.Query().Get("session")
+	if sessionID == "" {
+		sessionID = "default"
+	}
+
+	filePath := r.URL.Query().Get("path")
+	if filePath == "" {
+		http.Error(w, "path parameter required", http.StatusBadRequest)
+		return
+	}
+
+	session, exists := s.SessionManager.GetSession(sessionID)
+	if !exists {
+		http.Error(w, "Session not found", http.StatusNotFound)
+		return
+	}
+
+	session.RLock()
+	defer session.RUnlock()
+
+	// Resolve path relative to current directory if not absolute
+	absPath := filePath
+	if !strings.HasPrefix(filePath, "/") {
+		absPath = filepath.Join(session.CurrentDir, filePath)
+	}
+	// Strip leading slash for billy filesystem
+	fsPath := strings.TrimPrefix(absPath, "/")
+
+	file, err := session.Filesystem.Open(fsPath)
+	if err != nil {
+		http.Error(w, "File not found: "+err.Error(), http.StatusNotFound)
+		return
+	}
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		http.Error(w, "Failed to read file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"path":    absPath,
+		"content": string(content),
+	})
+}
+
+// handleWriteFile writes content to a file in the session filesystem
+func (s *Server) handleWriteFile(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		SessionID string `json:"sessionId"`
+		Path      string `json:"path"`
+		Content   string `json:"content"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.SessionID == "" {
+		req.SessionID = "default"
+	}
+	if req.Path == "" {
+		http.Error(w, "path field required", http.StatusBadRequest)
+		return
+	}
+
+	session, exists := s.SessionManager.GetSession(req.SessionID)
+	if !exists {
+		http.Error(w, "Session not found", http.StatusNotFound)
+		return
+	}
+
+	session.Lock()
+	defer session.Unlock()
+
+	// Resolve path relative to current directory if not absolute
+	absPath := req.Path
+	if !strings.HasPrefix(req.Path, "/") {
+		absPath = filepath.Join(session.CurrentDir, req.Path)
+	}
+	// Strip leading slash for billy filesystem
+	fsPath := strings.TrimPrefix(absPath, "/")
+
+	file, err := session.Filesystem.Create(fsPath)
+	if err != nil {
+		http.Error(w, "Failed to create file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer file.Close()
+
+	_, err = file.Write([]byte(req.Content))
+	if err != nil {
+		http.Error(w, "Failed to write file: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"path":    absPath,
 	})
 }

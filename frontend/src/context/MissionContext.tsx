@@ -25,7 +25,7 @@ interface MissionContextType {
 const MissionContext = createContext<MissionContextType | undefined>(undefined);
 
 export const MissionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const { sessionId, setSessionId } = useGit();
+    const { sessionId, setSessionId, clearTranscript, refreshState } = useGit();
     const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
     const [originalSessionId, setOriginalSessionId] = useState<string | null>(null);
 
@@ -47,6 +47,9 @@ export const MissionProvider: React.FC<{ children: React.ReactNode }> = ({ child
             setActiveMissionId(missionId);
             // Switch Global Git Context to Mission Session
             setSessionId(data.sessionId);
+            // Clear terminal and refresh state for new session
+            clearTranscript();
+            await refreshState();
         } catch (e) {
             console.error("Failed to start mission", e);
             alert("Failed to start mission: " + e);

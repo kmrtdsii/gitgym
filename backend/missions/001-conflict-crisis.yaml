@@ -1,6 +1,6 @@
 id: "001-conflict-crisis"
 title: "The Conflict Crisis"
-description: "Bob and Alice edited the same file. The repository is in a broken merge state. Fix it so that both changes are preserved."
+description: "You tried to merge a feature branch, but it raised a conflict with main. Resolve the conflict and complete the merge."
 difficulty:
   level: "basic"
   stars: 2
@@ -10,37 +10,37 @@ setup:
   - "git init"
   - "git config user.name 'User'"
   - "git config user.email 'user@example.com'"
-  - "echo 'Line 1: Shared content' > README.md"
+  - "echo 'Version 1.0' > README.md"
   - "git add README.md"
   - "git commit -m 'Initial commit'"
-  - "git checkout -b feature" 
-  - "echo 'Line 2: Feature work' >> README.md"
+  - "git checkout -b feature"
+  - "echo 'Version 1.0 - Feature Update' > README.md"
   - "git add README.md"
-  - "git commit -m 'Add feature work'"
-  - "git checkout master"
-  - "echo 'Line 2: Main work' >> README.md"
+  - "git commit -m 'Add feature update'"
+  - "git checkout main"
+  - "echo 'Version 1.0 - Hotfix' > README.md"
   - "git add README.md"
-  - "git commit -m 'Add main work'"
-  - "git merge feature" # This causes a conflict and exit code 1 (allowed by engine)
+  - "git commit -m 'Add hotfix'"
+  - "!git merge feature"
 
 validation:
   checks:
     - type: "no_conflict"
       description: "No merge conflicts remain"
     - type: "commit_exists"
-      message_pattern: "Merge branch 'feature'"
+      message_pattern: "Merge"
       description: "A merge commit was created"
     - type: "file_content"
       path: "README.md"
       contains:
-        - "Line 2: Feature work"
-        - "Line 2: Main work"
+        - "Feature"
+        - "Hotfix"
       description: "Both changes are preserved"
 
 hints:
   - "Run `git status` to see which files are in conflict."
-  - "Edit README.md to remove the `<<<<` markers and keep both lines."
-  - "After fixing the file, don't forget to `git add README.md` and `git commit`."
+  - "Use `echo 'Version 1.0 - Feature Update + Hotfix' > README.md` to resolve the conflict."
+  - "After resolving, run `git add README.md` and then `git commit` to complete the merge."
 
 scoring:
   time_bonus: true
@@ -49,8 +49,8 @@ scoring:
 translations:
   ja:
     title: "コンフリクトの危機"
-    description: "BobとAliceが同じファイルを編集してしまいました。リポジトリはマージ競合状態で壊れています。両方の変更が保存されるように修正してください。"
+    description: "機能ブランチをmainにマージしようとしましたが、同じ箇所が変更されていたためコンフリクトが発生しました。両方の変更を残したまま解決してください。"
     hints:
       - "`git status` を実行して、競合しているファイルを確認しましょう。"
-      - "README.md を編集して `<<<<` マーカーを削除し、両方の行を残してください。"
-      - "修正後は `git add README.md` と `git commit` を忘れずに！"
+      - "`echo 'Version 1.0 - Feature Update + Hotfix' > README.md` でファイルを上書きして競合を解決します。"
+      - "解決後は `git add README.md` と `git commit` を実行してマージを完了させてください。"
