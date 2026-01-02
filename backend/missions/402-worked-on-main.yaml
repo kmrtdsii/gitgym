@@ -1,0 +1,74 @@
+id: "402-worked-on-main"
+title: "Oops, I Committed to Main!"
+description: "You just realized you made 3 commits directly on main instead of a feature branch. Move them to a new branch without losing any work."
+difficulty:
+  level: "intermediate"
+  stars: 2
+skill: "reset"
+
+setup:
+  - "git init"
+  - "git config user.name 'User'"
+  - "git config user.email 'user@example.com'"
+  - "echo 'Original main' > README.md"
+  - "git add README.md"
+  - "git commit -m 'Initial commit on main'"
+  - "echo 'Feature work 1' > feature.js"
+  - "git add feature.js"
+  - "git commit -m 'Add feature module'"
+  - "echo 'Feature work 2' >> feature.js"
+  - "git add feature.js"
+  - "git commit -m 'Extend feature'"
+  - "echo 'Feature work 3' >> feature.js"
+  - "git add feature.js"
+  - "git commit -m 'Complete feature'"
+
+# Scenario: 4 commits on main (1 original + 3 accidental feature commits)
+# Goal: Create feature branch with 3 commits, reset main to original
+
+validation:
+  checks:
+    - type: "branch_exists"
+      name: "feature/task-A"
+      description: "Feature branch created"
+    - type: "head_on_branch"
+      branch: "main"
+      description: "On main branch"
+    - type: "commit_count"
+      branch: "main"
+      count: 1
+      description: "Main has only original commit"
+    - type: "commit_count"
+      branch: "feature/task-A"
+      count: 4
+      description: "Feature branch has all commits"
+
+hints:
+  - "First, create a new branch at the current position: `git branch feature/task-A`"
+  - "Then reset main back 3 commits: `git reset --hard HEAD~3`"
+  - "The commits are NOT lost - they're still on the feature branch!"
+
+scoring:
+  time_bonus: true
+  hint_penalty: 10
+  max_score: 100
+
+translations:
+  ja:
+    title: "しまった、mainで作業してた！"
+    description: "3つのコミットをmainブランチに直接してしまったことに気づきました。作業を失わずに新しいブランチに移動してください。"
+    hints:
+      - "まず現在の位置で新しいブランチを作成: `git branch feature/task-A`"
+      - "次にmainを3コミット前に戻す: `git reset --hard HEAD~3`"
+      - "コミットは消えていません - featureブランチに残っています！"
+
+summary: |
+  ## 🎯 Branch = Pointer
+  
+  | Concept | Explanation |
+  |---------|-------------|
+  | Branch | Just a lightweight pointer to a commit |
+  | HEAD | Points to current branch/commit |
+  | reset --hard | Moves HEAD and branch pointer, updates working tree |
+  
+  **Key insight:** Creating a branch before reset "saves" the commits!

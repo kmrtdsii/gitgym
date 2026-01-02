@@ -1,0 +1,70 @@
+id: "403-reflog-rescue"
+title: "The Reflog Rescue"
+description: "Disaster! You ran reset --hard and lost hours of work. Use Git's secret recovery tool to save the day."
+difficulty:
+  level: "advanced"
+  stars: 3
+skill: "reflog"
+
+setup:
+  - "git init"
+  - "git config user.name 'User'"
+  - "git config user.email 'user@example.com'"
+  - "echo 'Base code' > app.js"
+  - "git add app.js"
+  - "git commit -m 'Initial commit'"
+  - "echo 'Important feature A' >> app.js"
+  - "git add app.js"
+  - "git commit -m 'Add critical feature A'"
+  - "echo 'Important feature B' >> app.js"
+  - "git add app.js"
+  - "git commit -m 'Add critical feature B'"
+  - "echo 'Hours of work' >> app.js"
+  - "git add app.js"
+  - "git commit -m 'Complete major refactoring'"
+  # Simulate the disaster
+  - "git reset --hard HEAD~3"
+
+# Scenario: User has accidentally reset to initial commit, losing 3 important commits
+# Goal: Use reflog to find and recover the lost commits
+
+validation:
+  checks:
+    - type: "head_commit_message"
+      message_pattern: "Complete major refactoring"
+      description: "Lost work recovered"
+    - type: "file_content"
+      path: "app.js"
+      contains:
+        - "Hours of work"
+      description: "All changes restored"
+
+hints:
+  - "Use `git reflog` to see the history of HEAD movements."
+  - "Find the commit hash for 'Complete major refactoring' in the reflog."
+  - "Use `git reset --hard <hash>` to restore to that point."
+
+scoring:
+  time_bonus: true
+  hint_penalty: 15
+  max_score: 100
+
+translations:
+  ja:
+    title: "Reflog レスキュー"
+    description: "大惨事！reset --hard で数時間の作業を消してしまいました。Gitの秘密の復旧ツールで救出してください。"
+    hints:
+      - "`git reflog` でHEADの移動履歴を確認します。"
+      - "reflog から 'Complete major refactoring' のコミットハッシュを見つけます。"
+      - "`git reset --hard <ハッシュ>` でその時点に復元します。"
+
+summary: |
+  ## 🎯 Reflog: Git's Safety Net
+  
+  | What | Explanation |
+  |------|-------------|
+  | Reflog | Records every HEAD movement (commits, resets, checkouts) |
+  | HEAD@{n} | Reference to HEAD position n steps ago |
+  | Retention | Kept for 90 days by default |
+  
+  **Key insight:** Git rarely truly deletes commits. Reflog is your emergency lifeline!

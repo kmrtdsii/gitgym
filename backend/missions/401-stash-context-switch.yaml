@@ -1,0 +1,68 @@
+id: "401-stash-context-switch"
+title: "Emergency Hotfix"
+description: "You're in the middle of a big refactoring when a critical bug is reported. Save your work, fix the bug, and resume where you left off."
+difficulty:
+  level: "advanced"
+  stars: 3
+skill: "stash"
+
+setup:
+  - "git init"
+  - "git config user.name 'User'"
+  - "git config user.email 'user@example.com'"
+  - "echo 'Production code v1' > app.js"
+  - "git add app.js"
+  - "git commit -m 'Initial production release'"
+  - "git branch hotfix"
+  - "echo 'Refactoring in progress...' > app.js"
+  - "echo 'New module' > new-feature.js"
+  - "git add new-feature.js"
+
+# Scenario: app.js is modified (not staged), new-feature.js is staged
+# Goal: stash everything, switch to hotfix, fix bug, come back, restore work
+
+validation:
+  checks:
+    - type: "branch_exists"
+      name: "hotfix"
+      description: "Hotfix branch exists"
+    - type: "head_on_branch"
+      branch: "main"
+      description: "Back on main branch"
+    - type: "file_content"
+      path: "app.js"
+      contains:
+        - "Refactoring"
+      description: "Refactoring work restored"
+    - type: "commit_count_min"
+      count: 2
+      description: "Hotfix commit exists"
+
+hints:
+  - "Use `git stash` to save your in-progress work (both staged and unstaged)."
+  - "Switch to the hotfix branch with `git switch hotfix` or `git checkout hotfix`."
+  - "After fixing and committing, switch back to main and use `git stash pop`."
+
+scoring:
+  time_bonus: true
+  hint_penalty: 10
+  max_score: 100
+
+translations:
+  ja:
+    title: "緊急ホットフィックス"
+    description: "大規模リファクタリングの最中に、本番環境でバグが発覚。作業を退避して、バグを修正し、元の作業に戻ってください。"
+    hints:
+      - "`git stash` で作業中の変更（ステージ済み・未ステージ両方）を退避します。"
+      - "`git switch hotfix` でホットフィックスブランチに切り替えます。"
+      - "修正・コミット後、mainに戻り `git stash pop` で作業を復元します。"
+
+summary: |
+  ## 🎯 Git Stash: The Emergency Escape
+  
+  | Command | What it does |
+  |---------|--------------|
+  | `git stash` | Save work-in-progress to a stack |
+  | `git stash list` | View stashed changes |
+  | `git stash pop` | Restore and remove from stack |
+  | `git stash apply` | Restore but keep in stack |

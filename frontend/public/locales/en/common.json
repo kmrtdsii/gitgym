@@ -172,10 +172,38 @@
             "304": {
                 "title": "Undo a Merge",
                 "description": "A feature branch merge introduced a bug. Revert the merge commit safely.",
-                "goals": [
-                    "Revert the merge commit"
-                ],
+                "goals": {
+                    "0": "Revert the merge commit"
+                },
                 "trivia": "When reverting a merge, you must specify `-m 1` to keep the mainline history as the parent."
+            },
+            "401": {
+                "title": "Emergency Hotfix",
+                "description": "You're in the middle of a big refactoring when a critical bug is reported. Save your work, fix the bug, and resume.",
+                "goals": {
+                    "0": "Stash your in-progress changes",
+                    "1": "Fix the bug on hotfix branch",
+                    "2": "Return to main and restore work"
+                },
+                "trivia": "`git stash` saves work-in-progress to a temporary stack. Use `pop` to restore, `apply` to restore and keep."
+            },
+            "402": {
+                "title": "Oops, I Committed to Main!",
+                "description": "You just realized you made 3 commits directly on main. Move them to a new branch without losing work.",
+                "goals": {
+                    "0": "Create feature/task-A branch",
+                    "1": "Reset main to original state"
+                },
+                "trivia": "Branches are just pointers. Create the branch first, then reset - your commits are safe!"
+            },
+            "403": {
+                "title": "The Reflog Rescue",
+                "description": "Disaster! You ran reset --hard and lost hours of work. Use Git's secret recovery tool to save the day.",
+                "goals": {
+                    "0": "Find the lost commit in reflog",
+                    "1": "Recover the lost work"
+                },
+                "trivia": "Git rarely truly deletes commits. Reflog keeps HEAD movement history for 90 days by default."
             }
         }
     },

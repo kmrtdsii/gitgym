@@ -269,6 +269,73 @@ export const DOJO_PROBLEMS: DojoProblem[] = [
         ],
         trivia: 'dojo.problems.304.trivia',
     },
+
+    // === ADVANCED (Real-world Scenarios) ===
+    {
+        id: '401',
+        title: 'dojo.problems.401.title',
+        description: 'dojo.problems.401.description',
+        category: 'advanced',
+        difficulty: 3,
+        estimatedMinutes: 10,
+        prerequisiteIds: ['202'],
+        missionId: '401-stash-context-switch',
+        commands: ['git stash', 'git switch', 'git stash pop'],
+        goals: [
+            'dojo.problems.401.goals.0',
+            'dojo.problems.401.goals.1',
+            'dojo.problems.401.goals.2',
+        ],
+        solutionSteps: [
+            'git stash',
+            'git switch hotfix',
+            '# Fix the bug and commit',
+            'git switch main',
+            'git stash pop',
+        ],
+        trivia: 'dojo.problems.401.trivia',
+    },
+    {
+        id: '402',
+        title: 'dojo.problems.402.title',
+        description: 'dojo.problems.402.description',
+        category: 'advanced',
+        difficulty: 2,
+        estimatedMinutes: 7,
+        prerequisiteIds: ['202'],
+        missionId: '402-worked-on-main',
+        commands: ['git branch', 'git reset'],
+        goals: [
+            'dojo.problems.402.goals.0',
+            'dojo.problems.402.goals.1',
+        ],
+        solutionSteps: [
+            'git branch feature/task-A',
+            'git reset --hard HEAD~3',
+        ],
+        trivia: 'dojo.problems.402.trivia',
+    },
+    {
+        id: '403',
+        title: 'dojo.problems.403.title',
+        description: 'dojo.problems.403.description',
+        category: 'advanced',
+        difficulty: 3,
+        estimatedMinutes: 10,
+        prerequisiteIds: ['202'],
+        missionId: '403-reflog-rescue',
+        commands: ['git reflog', 'git reset'],
+        goals: [
+            'dojo.problems.403.goals.0',
+            'dojo.problems.403.goals.1',
+        ],
+        solutionSteps: [
+            'git reflog',
+            '# Find the hash of lost commit',
+            'git reset --hard <hash>',
+        ],
+        trivia: 'dojo.problems.403.trivia',
+    },
 ];
 
 // Helper functions
