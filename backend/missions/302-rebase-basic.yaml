@@ -13,8 +13,8 @@ setup:
   - "echo 'Initial' > README.md"
   - "git add README.md"
   - "git commit -m 'Initial commit'"
-  - "gitCheckout -b feature" # Helper or raw
-  - "git checkout -b feature"
+  - "git branch feature"
+  - "git checkout feature"
   - "echo 'Feature' > feature.txt"
   - "git add feature.txt"
   - "git commit -m 'Feature commit'"
