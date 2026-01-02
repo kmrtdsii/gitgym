@@ -37,12 +37,21 @@ The backend is a Go service using standard layout.
 - **`cmd/server/main.go`**: HTTP Server & Dependency Injection.
 
 ### Core Logic (`internal/`)
+- **`internal/config/`**: Centralized Configuration (env vars, defaults).
 - **`internal/git/`**: The Git Engine.
     - **`engine.go`**: Dispatcher. Routes string commands `git commit ...` to specific Command structs.
     - **`commands/`**: **CRITICAL**. One file per Git Command (e.g., `clone.go`, `push.go`).
         - *Rule*: All business logic lives here.
+    - **`commands/checkout/`**: Strategy pattern implementation for `git checkout`.
+        - `types.go`, `file_strategy.go`, `branch_strategy.go`, `orphan_strategy.go`, `ref_strategy.go`
 - **`internal/state/`**: Session & Persistence.
     - **`session.go`**: Managing User Sessions (in-memory/temp dir).
     - **`actions.go`**: "IngestRemote" logic (Pseudo-Remote architecture).
+    - **`file_cache.go`**: Cached file listings for performance.
+    - **`graph.go`**: Builds `GraphState` for frontend visualization.
 - **`internal/server/`**: HTTP Handlers.
     - **`handlers.go`**: REST Endpoints mapping to Engine calls.
+
+### Configuration
+- **`.golangci.yml`**: Linter config with `testifylint`, `gosec`, `staticcheck` enabled.
+

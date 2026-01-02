@@ -1,0 +1,36 @@
+# golangci-lint configuration for GitGym
+# Reference: https://golangci-lint.run/usage/configuration/
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    # Security
+    - gosec
+    # Testing
+    - testifylint
+    # Error handling
+    - errcheck
+    # Static analysis
+    - staticcheck
+    - govet
+    # Code quality
+    - unused
+    - ineffassign
+    - typecheck
+
+linters-settings:
+  testifylint:
+    enable-all: true
+  gosec:
+    severity: medium
+    confidence: medium
+
+issues:
+  exclude-rules:
+    # Exclude test files from some linters
+    - path: _test\.go
+      linters:
+        - errcheck
