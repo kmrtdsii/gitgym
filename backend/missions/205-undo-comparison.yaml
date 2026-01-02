@@ -1,0 +1,76 @@
+id: "205-undo-comparison"
+title: "The Undo Trio: reset vs restore vs revert"
+description: "Master the three R's of Git undo. Each has a different purpose - learn when to use each one."
+difficulty:
+  level: "intermediate"
+  stars: 3
+skill: "reset"
+
+setup:
+  - "git init"
+  - "git config user.name 'User'"
+  - "git config user.email 'user@example.com'"
+  - "echo 'Version 1' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'v1: Initial version'"
+  - "echo 'Version 2' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'v2: Updated version'"
+  - "echo 'Version 3 - mistake!' > file.txt"
+  - "git add file.txt"
+  - "git commit -m 'v3: Mistake commit'"
+  - "echo 'Version 4 - another mistake' > file.txt"
+  - "git add file.txt"
+
+objectives:
+  - title: "Step 1: Unstage with restore"
+    description: "Use git restore --staged to unstage file.txt without losing changes"
+    check:
+      type: "file_staged"
+      path: "file.txt"
+      should_be_staged: false
+  - title: "Step 2: Revert the mistake commit"
+    description: "Use git revert to create a new commit that undoes v3"
+    check:
+      type: "commit_count_min"
+      count: 4
+  - title: "Step 3: Reset to clean history"  
+    description: "Use git reset to go back to v2, removing the revert from history"
+    check:
+      type: "head_commit_message"
+      message_pattern: "v2"
+
+hints:
+  - "restore は履歴を変えずにファイルを復元します。`git restore --staged file.txt`"
+  - "revert は打ち消しコミットを作成します。履歴は残ります。`git revert HEAD`"
+  - "reset は履歴を書き換えます。`git reset --hard HEAD~2`"
+
+scoring:
+  time_bonus: true
+  hint_penalty: 10
+  max_score: 100
+
+translations:
+  ja:
+    title: "取り消し三兄弟: reset vs restore vs revert"
+    description: "Gitの3つのR（Undo系コマンド）をマスターしよう。それぞれ用途が違います。"
+    objectives:
+      - title: "ステップ1: restore でアンステージ"
+        description: "`git restore --staged` を使って file.txt を変更を失わずにアンステージしてください"
+      - title: "ステップ2: revert で打ち消しコミット"
+        description: "`git revert` を使って v3 の変更を打ち消す新しいコミットを作成してください"
+      - title: "ステップ3: reset で履歴整理"
+        description: "`git reset` を使って v2 まで戻り、revert コミットを履歴から削除してください"
+    hints:
+      - "restore は履歴を変えずにファイルを復元します。`git restore --staged file.txt`"
+      - "revert は打ち消しコミットを作成します。履歴は残ります。`git revert HEAD`"
+      - "reset は履歴を書き換えます。`git reset --hard HEAD~2`"
+
+summary: |
+  ## 🎯 reset vs restore vs revert
+  
+  | コマンド | 動作 | 履歴 |
+  |---------|------|-----|
+  | restore | ファイルを復元 | 変わらない |
+  | revert  | 打ち消しコミット作成 | 残る |
+  | reset   | HEADを移動 | 書き換わる |
