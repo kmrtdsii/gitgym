@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useGit } from './GitAPIContext';
 
 
@@ -29,7 +29,7 @@ export const MissionProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
     const [originalSessionId, setOriginalSessionId] = useState<string | null>(null);
 
-    const startMission = async (missionId: string) => {
+    const startMission = useCallback(async (missionId: string) => {
         // Save current session
         if (!activeMissionId && sessionId) {
             setOriginalSessionId(sessionId);
@@ -54,9 +54,9 @@ export const MissionProvider: React.FC<{ children: React.ReactNode }> = ({ child
             console.error("Failed to start mission", e);
             alert("Failed to start mission: " + e);
         }
-    };
+    }, [activeMissionId, sessionId, setSessionId, clearTranscript, refreshState]);
 
-    const endMission = () => {
+    const endMission = useCallback(() => {
         setActiveMissionId(null);
         if (originalSessionId) {
             setSessionId(originalSessionId);
@@ -66,9 +66,9 @@ export const MissionProvider: React.FC<{ children: React.ReactNode }> = ({ child
             // initSession(); 
             // Logic depends on how persistent session is handled
         }
-    };
+    }, [originalSessionId, setSessionId]);
 
-    const verifyMission = async () => {
+    const verifyMission = useCallback(async () => {
         if (!activeMissionId || !sessionId) return;
         const res = await fetch('/api/mission/verify', {
             method: 'POST',
@@ -76,7 +76,7 @@ export const MissionProvider: React.FC<{ children: React.ReactNode }> = ({ child
             body: JSON.stringify({ sessionId, missionId: activeMissionId }),
         });
         return await res.json() as VerificationResult;
-    };
+    }, [activeMissionId, sessionId]);
 
     return (
         <MissionContext.Provider value={{ activeMissionId, startMission, endMission, verifyMission }}>
