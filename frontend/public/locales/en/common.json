@@ -194,6 +194,7 @@
         "message": "Message",
         "date": "Date",
         "rename": "Rename",
+        "edit": "Edit",
         "delete": "Delete",
         "cancel": "Cancel",
         "save": "Save",

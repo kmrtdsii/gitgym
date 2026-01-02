@@ -1,11 +1,12 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useGit } from '../../context/GitAPIContext';
-import { Folder, FileCode, FilePlus, FolderPlus, GitBranch, ChevronRight, ChevronDown, MoreVertical, Pencil, Trash } from 'lucide-react';
+import { Folder, FileCode, FilePlus, FolderPlus, GitBranch, ChevronRight, ChevronDown, MoreVertical, Pencil, Trash, FileText } from 'lucide-react';
 import type { SelectedObject } from '../../types/layoutTypes';
 import Modal from '../common/Modal';
 import { Button } from '../common/Button';
 import { FileEditor } from '../editor/FileEditor';
+import { Resizer } from '../common';
 
 interface FileExplorerProps {
     onSelect: (obj: SelectedObject) => void;
@@ -183,7 +184,7 @@ const TreeItem: React.FC<{
 
 const FileExplorer: React.FC<FileExplorerProps> = () => {
     const { t } = useTranslation('common');
-    const { state, runCommand, sessionId, fetchWorkspaceTree } = useGit();
+    const { state, runCommand, sessionId, fetchWorkspaceTree, currentRepo } = useGit();
 
     const [selectedItemPath, setSelectedItemPath] = useState<string | null>(null);
     const [editingFile, setEditingFile] = useState<string | null>(null);
@@ -196,6 +197,34 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
     const [renamingPath, setRenamingPath] = useState<string | null>(null);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<{ path: string, isDir: boolean } | null>(null);
+
+    // Resizable pane state
+    const [workspaceWidth, setWorkspaceWidth] = useState(160);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const handleWorkspaceResize = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        const startX = e.clientX;
+        const startWidth = workspaceWidth;
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+            const delta = moveEvent.clientX - startX;
+            const newWidth = Math.max(120, Math.min(300, startWidth + delta));
+            setWorkspaceWidth(newWidth);
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    }, [workspaceWidth]);
 
     useEffect(() => {
         if (sessionId) fetchWorkspaceTree(sessionId);
@@ -213,7 +242,7 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside, true);
     }, []);
 
-    const activeProject = state.activeProject || null;
+
     const files = state.files || [];
     const fileStatuses = state.fileStatuses || {};
     const projects = state.projects || [];
@@ -266,13 +295,13 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
     };
 
     return (
-        <div className="file-explorer-container">
+        <div className="file-explorer-container" ref={containerRef}>
             {/* PANE 1: WORKSPACE */}
-            <div className="workspace-pane">
+            <div className="workspace-pane" style={{ width: workspaceWidth }}>
                 <div className="pane-header">{t('workspace.title').toUpperCase()}</div>
                 <div className="pane-content">
                     {projects.map(proj => {
-                        const isSelected = activeProject === proj;
+                        const isSelected = currentRepo === proj || (currentRepo && currentRepo.endsWith('/' + proj));
                         const branch = projectMetadata[proj]?.branch;
                         return (
                             <div key={proj} className={`project-row ${isSelected ? 'active' : ''}`} onClick={() => handleNavigate(`/${proj}`)}>
@@ -287,13 +316,13 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                 </div>
             </div>
 
+            {/* Resizer between Workspace and Working Tree */}
+            <Resizer orientation="vertical" onMouseDown={handleWorkspaceResize} />
+
             {/* PANE 2: WORKING TREE */}
             <div className="working-tree-pane">
                 <div className="pane-header">
-                    <div className="title-area">
-                        <span>{t('workspace.files').toUpperCase()}</span>
-                        {activeProject && <span className="active-project-badge">{activeProject.toUpperCase()}</span>}
-                    </div>
+                    <span>{t('workspace.files').toUpperCase()}</span>
                     <div className="header-actions">
                         <button onClick={() => setCreatingType('file')} title="New File"><FilePlus size={14} /></button>
                         <button onClick={() => setCreatingType('folder')} title="New Folder"><FolderPlus size={14} /></button>
@@ -354,6 +383,12 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
                     style={{ top: contextMenu.y, left: contextMenu.x }}
                     onClick={(e) => e.stopPropagation()}
                 >
+                    {/* Edit option - only for files */}
+                    {!contextMenu.isDir && (
+                        <div className="menu-item" onClick={() => { setEditingFile(contextMenu.path); setContextMenu(null); }}>
+                            <FileText size={12} /> {t('common.edit', '編集')}
+                        </div>
+                    )}
                     <div className="menu-item" onClick={() => { setRenamingPath(contextMenu.path); setContextMenu(null); }}>
                         <Pencil size={12} /> {t('common.rename', '名前を変更')}
                     </div>
@@ -389,20 +424,18 @@ const FileExplorer: React.FC<FileExplorerProps> = () => {
 
             <style>{`
                 .file-explorer-container { display: flex; width: 100%; height: 100%; background: var(--bg-primary); color: var(--text-primary); }
-                .workspace-pane { width: 240px; border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; }
-                .working-tree-pane { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-                .pane-header { height: 40px; display: flex; align-items: center; padding: 0 12px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); font-size: 11px; font-weight: 800; color: var(--text-secondary); letter-spacing: 0.05em; justify-content: space-between; flex-shrink: 0; }
+                .workspace-pane { flex-shrink: 0; display: flex; flex-direction: column; background: var(--bg-secondary); min-width: 120px; }
+                .working-tree-pane { flex: 1; display: flex; flex-direction: column; min-width: 0; border-left: 1px solid var(--border-subtle); }
+                .pane-header { height: 40px; display: flex; align-items: center; padding: 0 12px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); font-size: 11px; font-weight: 700; color: var(--text-tertiary); letter-spacing: 0.05em; justify-content: space-between; flex-shrink: 0; }
                 .pane-content { flex: 1; overflow-y: auto; padding: 8px 0; }
-                .title-area { display: flex; align-items: center; gap: 8px; overflow: hidden; }
-                .project-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; color: var(--text-secondary); }
-                .project-row:hover { background: var(--bg-tertiary); }
-                .project-row.active { background: rgba(var(--accent-primary-rgb), 0.15); border-left-color: var(--accent-primary); color: var(--text-primary); }
-                .project-row.active .project-name { font-weight: 700; color: var(--accent-primary); }
+                .project-row { display: flex; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; color: var(--text-secondary); }
+                .project-row:hover { background: rgba(255, 255, 255, 0.05); }
+                .project-row.active { background: rgba(255, 255, 255, 0.12); border-left-color: var(--accent-primary); }
+                .project-row.active .project-name { font-weight: 600; color: var(--text-primary); }
                 .project-row.active svg { color: var(--accent-primary); }
                 .project-info { display: flex; flex-direction: column; min-width: 0; }
-                .project-name { font-size: 13px; font-weight: 500; transition: all 0.2s; }
-                .project-branch { font-size: 11px; color: var(--accent-primary); opacity: 0.8; }
-                .active-project-badge { margin-left: 8px; background: rgba(var(--accent-primary-rgb), 0.15); color: var(--accent-primary); padding: 1px 6px; border-radius: 4px; font-size: 10px; }
+                .project-name { font-size: 13px; font-weight: 400; transition: all 0.15s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                .project-branch { font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
                 .header-actions { display: flex; gap: 4px; }
                 .header-actions button { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; border-radius: 4px; display: flex; align-items: center; }
                 .header-actions button:hover { background: var(--bg-tertiary); color: var(--text-primary); }

@@ -1,81 +1,105 @@
 .developer-tabs-container {
-    height: 44px;
-    /* Slightly taller for premium feel */
+    height: 40px;
     background: var(--bg-secondary);
     display: flex;
-    align-items: flex-end;
+    align-items: stretch;
     padding: 0 12px;
-    gap: 4px;
+    gap: 0;
     border-bottom: 1px solid var(--border-subtle);
 }
 
 .tab-container {
     display: flex;
     height: 100%;
-    align-items: flex-end;
+    align-items: stretch;
 }
 
 .user-tab-wrapper {
     display: flex;
     align-items: center;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    margin-right: 2px;
     background: transparent;
-    transition: background-color 0.2s ease;
+    position: relative;
+    transition: background-color 0.15s ease;
 }
 
 .user-tab-wrapper:hover {
-    background: var(--bg-tertiary);
+    background: rgba(255, 255, 255, 0.03);
 }
 
+/* Active tab styling */
 .user-tab-wrapper.active {
-    background: var(--bg-primary);
-    border: 1px solid var(--border-subtle);
-    border-bottom: none;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* Bottom accent line - covers entire wrapper including close button */
+.user-tab-wrapper.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent-primary);
 }
 
 .user-tab {
     border: none;
     background: transparent;
-    padding: 4px 12px;
-    height: 30px;
-    color: var(--text-secondary);
+    padding: 0 14px;
+    height: 100%;
+    color: var(--text-tertiary);
     font-size: 13px;
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    transition: color 0.2s ease;
+    transition: color 0.15s ease;
+    font-weight: 400;
 }
 
 .user-tab:hover {
-    color: var(--text-primary);
+    color: var(--text-secondary);
 }
 
 .user-tab.active {
     color: var(--text-primary);
-    font-weight: 600;
+    font-weight: 500;
 }
 
+/* Dim icon in non-active tabs */
+.user-tab-wrapper:not(.active) .user-tab svg {
+    opacity: 0.4;
+}
+
+.user-tab-wrapper.active .user-tab svg {
+    opacity: 0.8;
+    color: var(--accent-primary);
+}
+
+/* Close button inside the wrapper - no external margin */
 .tab-close-btn {
     border: none;
     background: transparent;
     color: var(--text-tertiary);
     cursor: pointer;
     padding: 4px;
-    margin-right: 4px;
+    margin-left: -4px;
+    margin-right: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 4px;
-    transition: all 0.2s ease;
-    opacity: 0.6;
+    transition: all 0.15s ease;
+    opacity: 0;
+}
+
+.user-tab-wrapper:hover .tab-close-btn {
+    opacity: 0.5;
 }
 
 .tab-close-btn:hover {
-    background: var(--bg-button-inactive);
-    color: var(--color-error);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
     opacity: 1;
 }
 
@@ -85,17 +109,18 @@
     color: var(--text-tertiary);
     cursor: pointer;
     padding: 6px;
+    margin-left: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 4px;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     align-self: center;
-    margin-bottom: 2px;
+    opacity: 0.5;
 }
 
 .tab-add-btn:hover {
-    background: var(--bg-button-inactive);
-    color: var(--text-primary);
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    opacity: 1;
 }
