@@ -129,10 +129,20 @@
             "204": {
                 "title": "変更の破棄",
                 "description": "設定ファイルを変更しましたが、壊してしまいました。ローカルの変更を破棄して元に戻してください。",
-                "goals": [
-                    "config.ini を元の状態に戻す"
-                ],
+                "goals": {
+                    "0": "config.ini を元の状態に戻す"
+                },
                 "trivia": "`git restore` は、役割が多すぎた `git checkout` から機能を分離するために Git 2.23 で導入されました。"
+            },
+            "205": {
+                "title": "取り消し三兄弟: reset vs restore vs revert",
+                "description": "Gitの3つのR（Undo系コマンド）をマスターしよう。それぞれ用途が違います。",
+                "goals": {
+                    "0": "restore でアンステージ",
+                    "1": "revert で打ち消しコミット作成",
+                    "2": "reset で履歴整理"
+                },
+                "trivia": "reset は履歴を書き換え、restore はファイルを復元し、revert は打ち消しコミットを作成します。共有ブランチでは revert が安全です。"
             },
             "301": {
                 "title": "コンフリクトの危機",

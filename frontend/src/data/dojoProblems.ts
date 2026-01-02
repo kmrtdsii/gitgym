@@ -166,6 +166,28 @@ export const DOJO_PROBLEMS: DojoProblem[] = [
         ],
         trivia: 'dojo.problems.204.trivia',
     },
+    {
+        id: '205',
+        title: 'dojo.problems.205.title',
+        description: 'dojo.problems.205.description',
+        category: 'intermediate',
+        difficulty: 3,
+        estimatedMinutes: 10,
+        prerequisiteIds: ['202', '203', '204'],
+        missionId: '205-undo-comparison',
+        commands: ['git reset', 'git restore', 'git revert'],
+        goals: [
+            'dojo.problems.205.goals.0',
+            'dojo.problems.205.goals.1',
+            'dojo.problems.205.goals.2',
+        ],
+        solutionSteps: [
+            'git restore --staged file.txt',
+            'git revert HEAD',
+            'git reset --hard HEAD~2',
+        ],
+        trivia: 'dojo.problems.205.trivia',
+    },
 
     // === INTERMEDIATE (Branching) ===
     {

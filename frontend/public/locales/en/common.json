@@ -129,10 +129,20 @@
             "204": {
                 "title": "Discard Changes",
                 "description": "You modified a config file but broke it. Discard your local changes.",
-                "goals": [
-                    "Restore config.ini to original state"
-                ],
+                "goals": {
+                    "0": "Restore config.ini to original state"
+                },
                 "trivia": "`git restore` was introduced in Git 2.23 to separate responsibilities from the overloaded `git checkout`."
+            },
+            "205": {
+                "title": "The Undo Trio: reset vs restore vs revert",
+                "description": "Master the three R's of Git undo. Each has a different purpose.",
+                "goals": {
+                    "0": "Unstage with restore",
+                    "1": "Create a revert commit",
+                    "2": "Reset history"
+                },
+                "trivia": "reset rewrites history, restore restores files, revert creates undo commits. Use revert on shared branches for safety."
             },
             "301": {
                 "title": "The Conflict Crisis",
