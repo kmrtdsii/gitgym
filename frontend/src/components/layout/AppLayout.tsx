@@ -22,7 +22,7 @@ import CommitDetails from '../visualization/CommitDetails';
 import SearchNavigator from './SearchNavigator';
 import SkillRadar from '../visualization/SkillRadar';
 import GitDojo from '../learning/GitDojo';
-import { DojoProvider } from '../../context/DojoContext';
+import { useDojo } from '../../context/DojoContext';
 
 type SearchFocus = 'commit' | 'branch' | 'tag';
 
@@ -60,6 +60,8 @@ const AppLayout = () => {
     const [isAddDevModalOpen, setIsAddDevModalOpen] = useState(false);
     const [isSkillRadarOpen, setIsSkillRadarOpen] = useState(false);
     const [isDojoOpen, setIsDojoOpen] = useState(false);
+
+    const { goToList } = useDojo();
 
     const handleObjectSelect = (obj: SelectedObject) => {
         setSelectedObject(obj);
@@ -157,7 +159,10 @@ const AppLayout = () => {
 
                         {/* Git Dojo Button */}
                         <button
-                            onClick={() => setIsDojoOpen(true)}
+                            onClick={() => {
+                                goToList();
+                                setIsDojoOpen(true);
+                            }}
                             style={{
                                 background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
                                 border: 'none',
@@ -437,14 +442,12 @@ const AppLayout = () => {
                 onClose={() => setIsSkillRadarOpen(false)}
             />
 
-            <DojoProvider>
-                <GitDojo
-                    isOpen={isDojoOpen}
-                    onClose={() => setIsDojoOpen(false)}
-                    onOpen={() => setIsDojoOpen(true)}
-                />
-                <MissionPanel />
-            </DojoProvider>
+            <GitDojo
+                isOpen={isDojoOpen}
+                onClose={() => setIsDojoOpen(false)}
+                onOpen={() => setIsDojoOpen(true)}
+            />
+            <MissionPanel />
         </div>
     );
 };

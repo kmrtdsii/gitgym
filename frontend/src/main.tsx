@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { GitProvider } from './context/GitAPIContext.tsx'
 import { MissionProvider } from './context/MissionContext.tsx'
+import { DojoProvider } from './context/DojoContext.tsx'
 import { ThemeProvider } from './context/ThemeContext.tsx'
 import './i18n';
 
@@ -12,9 +13,11 @@ createRoot(document.getElementById('root')!).render(
   <ThemeProvider>
     <GitProvider>
       <MissionProvider>
-        <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#888' }}>Loading...</div>}>
-          <App />
-        </Suspense>
+        <DojoProvider>
+          <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: '#888' }}>Loading...</div>}>
+            <App />
+          </Suspense>
+        </DojoProvider>
       </MissionProvider>
     </GitProvider>
   </ThemeProvider>,

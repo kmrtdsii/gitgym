@@ -18,20 +18,9 @@ type ViewMode = 'level' | 'command';
 
 const GitDojo: React.FC<GitDojoProps> = ({ isOpen, onClose, onOpen }) => {
     const { t } = useTranslation('common');
-    const { state, startChallenge, isCompleted, setOpenModalCallback, goToList } = useDojo();
+    const { state, startChallenge, isCompleted, setOpenModalCallback } = useDojo();
     const [viewMode, setViewMode] = useState<ViewMode>('level');
     const [selectedCommand, setSelectedCommand] = useState<string | null>(null);
-
-    // Reset to list ONLY when the modal is first opened
-    const prevOpenRef = React.useRef(isOpen);
-    React.useEffect(() => {
-        if (isOpen && !prevOpenRef.current) {
-            goToList();
-            setViewMode('level');
-            setSelectedCommand(null);
-        }
-        prevOpenRef.current = isOpen;
-    }, [isOpen, goToList]);
 
     // Register the modal open callback
     React.useEffect(() => {
