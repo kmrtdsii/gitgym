@@ -38,10 +38,18 @@ func (s *RefStrategy) Execute(sess *git.Session, ctx *Context, opts *Options) (s
 		return "", err
 	}
 
-	sess.RecordReflog(fmt.Sprintf("checkout: moving from %s to %s", "HEAD", opts.Target))
+	reflogTarget := opts.Target
+	if reflogTarget == "" && ctx.TargetHash != nil {
+		reflogTarget = ctx.TargetHash.String()[:7]
+	}
+	sess.RecordReflog(fmt.Sprintf("checkout: moving from %s to %s", "HEAD", reflogTarget))
 
 	if ctx.IsDetached {
-		return fmt.Sprintf("Note: switching to '%s'.\n\nYou are in 'detached HEAD' state.", opts.Target), nil
+		target := opts.Target
+		if target == "" {
+			target = ctx.TargetHash.String()[:7]
+		}
+		return fmt.Sprintf("Note: switching to '%s'.\n\nYou are in 'detached HEAD' state.", target), nil
 	}
 	if ctx.TargetRef != "" && ctx.TargetRef.IsRemote() {
 		return fmt.Sprintf("Switched to a new branch '%s'\nBranch '%s' set up to track remote branch '%s' from 'origin'.", opts.Target, opts.Target, opts.Target), nil

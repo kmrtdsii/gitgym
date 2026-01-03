@@ -181,6 +181,18 @@ func (c *CheckoutCommand) resolveContext(repo *gogit.Repository, opts *checkout.
 	}
 
 	if opts.Target == "" {
+		// Handle "git checkout --detach" (detach at current HEAD)
+		if opts.Detach {
+			headRef, err := repo.Head()
+			if err != nil {
+				return nil, fmt.Errorf("fatal: cannot detach HEAD: %w", err)
+			}
+			h := headRef.Hash()
+			ctx.TargetHash = &h
+			ctx.IsDetached = true
+			ctx.Mode = checkout.ModeRefOrPath
+			return ctx, nil
+		}
 		return nil, fmt.Errorf("usage: git checkout <branch> | git checkout -b <branch>")
 	}
 
