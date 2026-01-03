@@ -9,6 +9,7 @@ import (
 	gogit "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/kurobon/gitgym/backend/internal/git"
 )
 
@@ -24,6 +25,8 @@ var _ git.Command = (*LogCommand)(nil)
 type LogOptions struct {
 	Oneline bool
 	Graph   bool
+	Limit   int
+	Author  string
 	Args    []string // Revisions or paths
 }
 
@@ -47,14 +50,40 @@ func (c *LogCommand) Execute(ctx context.Context, s *git.Session, args []string)
 func (c *LogCommand) parseArgs(args []string) (*LogOptions, error) {
 	opts := &LogOptions{}
 	cmdArgs := args[1:]
-	for _, arg := range cmdArgs {
-		switch arg {
-		case "--oneline":
+	for i := 0; i < len(cmdArgs); i++ {
+		arg := cmdArgs[i]
+		switch {
+		case arg == "--oneline":
 			opts.Oneline = true
-		case "--graph":
+		case arg == "--graph":
 			opts.Graph = true
-		case "-h", "--help":
+		case arg == "-h" || arg == "--help":
 			return nil, fmt.Errorf("help requested")
+		case arg == "-n":
+			if i+1 < len(cmdArgs) {
+				i++
+				var n int
+				_, err := fmt.Sscanf(cmdArgs[i], "%d", &n)
+				if err != nil || n < 1 {
+					return nil, fmt.Errorf("fatal: -n requires a positive integer")
+				}
+				opts.Limit = n
+			}
+		case strings.HasPrefix(arg, "-n"):
+			// Handle -n5 format
+			var n int
+			_, err := fmt.Sscanf(arg[2:], "%d", &n)
+			if err != nil || n < 1 {
+				return nil, fmt.Errorf("fatal: -n requires a positive integer")
+			}
+			opts.Limit = n
+		case arg == "--author":
+			if i+1 < len(cmdArgs) {
+				i++
+				opts.Author = cmdArgs[i]
+			}
+		case strings.HasPrefix(arg, "--author="):
+			opts.Author = strings.TrimPrefix(arg, "--author=")
 		default:
 			opts.Args = append(opts.Args, arg)
 		}
@@ -91,6 +120,7 @@ func (c *LogCommand) executeLog(_ *git.Session, repo *gogit.Repository, opts *Lo
 	// Graph state
 	// columns tracks the commit hashes currently "active" in vertical lines
 	var columns []string
+	var count int
 
 	err = cIter.ForEach(func(c *object.Commit) error {
 		var graphLine string
@@ -223,6 +253,11 @@ func (c *LogCommand) executeLog(_ *git.Session, repo *gogit.Repository, opts *Lo
 				strings.TrimSpace(c.Message),
 			))
 		}
+
+		count++
+		if opts.Limit > 0 && count >= opts.Limit {
+			return storer.ErrStop
+		}
 		return nil
 	})
 	if err != nil {
@@ -239,20 +274,25 @@ func (c *LogCommand) Help() string {
     ・プロジェクトの歴史を遡って確認する
 
  📋 SYNOPSIS
-    git log [--oneline] [--graph]
+    git log [options] [<revision>]
 
  ⚙️  COMMON OPTIONS
     --oneline
         各コミットを1行（ハッシュの一部とメッセージのみ）で表示します。
-        履歴の概観をつかむのに便利です。
 
     --graph
         履歴をグラフ（ASCIIアート）として表示します。
-        ブランチやマージの流れを視覚的に確認できます。
+
+    -n <number>
+        指定した件数のコミットのみ表示します。
+        -n5 のように続けて書くこともできます。
+
+    --author <pattern>
+        指定したパターンに一致する作者のコミットのみ表示します。
 
  🛠  EXAMPLES
-    1. 詳細なログを表示
-       $ git log
+    1. 最新の5件を表示
+       $ git log -n 5
 
     2. 簡潔なログを表示
        $ git log --oneline

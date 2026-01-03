@@ -22,6 +22,7 @@ var _ git.Command = (*SwitchCommand)(nil)
 type SwitchOptions struct {
 	CreateBranch string
 	TargetBranch string
+	Detach       bool
 }
 
 func (c *SwitchCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
@@ -42,7 +43,7 @@ func (c *SwitchCommand) Execute(ctx context.Context, s *git.Session, args []stri
 		return "", err
 	}
 
-	return c.executeSwitch(s, w, opts)
+	return c.executeSwitch(s, repo, w, opts)
 }
 
 func (c *SwitchCommand) parseArgs(args []string) (*SwitchOptions, error) {
@@ -60,6 +61,8 @@ func (c *SwitchCommand) parseArgs(args []string) (*SwitchOptions, error) {
 				opts.CreateBranch = cmdArgs[i+1]
 				i++
 			}
+		case "-d", "--detach":
+			opts.Detach = true
 		case "-h", "--help":
 			return nil, fmt.Errorf("help requested")
 		default:
@@ -69,7 +72,7 @@ func (c *SwitchCommand) parseArgs(args []string) (*SwitchOptions, error) {
 	return opts, nil
 }
 
-func (c *SwitchCommand) executeSwitch(s *git.Session, w *gogit.Worktree, opts *SwitchOptions) (string, error) {
+func (c *SwitchCommand) executeSwitch(s *git.Session, repo *gogit.Repository, w *gogit.Worktree, opts *SwitchOptions) (string, error) {
 	if opts.CreateBranch != "" {
 		// logic for create
 		checkoutOpts := &gogit.CheckoutOptions{
@@ -85,6 +88,22 @@ func (c *SwitchCommand) executeSwitch(s *git.Session, w *gogit.Worktree, opts *S
 
 	if opts.TargetBranch == "" {
 		return "", fmt.Errorf("missing branch name")
+	}
+
+	// Detached HEAD mode
+	if opts.Detach {
+		hash, err := repo.ResolveRevision(plumbing.Revision(opts.TargetBranch))
+		if err != nil {
+			return "", fmt.Errorf("fatal: invalid reference: %s", opts.TargetBranch)
+		}
+		err = w.Checkout(&gogit.CheckoutOptions{
+			Hash: *hash,
+		})
+		if err != nil {
+			return "", err
+		}
+		s.RecordReflog(fmt.Sprintf("switch: moving to %s", opts.TargetBranch))
+		return fmt.Sprintf("HEAD is now at %s\n\nYou are in 'detached HEAD' state.", hash.String()[:7]), nil
 	}
 
 	err := w.Checkout(&gogit.CheckoutOptions{
