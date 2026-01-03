@@ -21,9 +21,11 @@ type DiffCommand struct{}
 var _ git.Command = (*DiffCommand)(nil)
 
 type DiffOptions struct {
-	Cached bool
-	Ref1   string
-	Ref2   string
+	Cached   bool
+	Stat     bool
+	NameOnly bool
+	Ref1     string
+	Ref2     string
 }
 
 func (c *DiffCommand) Execute(ctx context.Context, s *git.Session, args []string) (string, error) {
@@ -52,6 +54,10 @@ func (c *DiffCommand) parseArgs(args []string) (*DiffOptions, error) {
 		switch arg {
 		case "--cached", "--staged":
 			opts.Cached = true
+		case "--stat":
+			opts.Stat = true
+		case "--name-only":
+			opts.NameOnly = true
 		case "-h", "--help":
 			return nil, fmt.Errorf("help requested")
 		default:
@@ -171,7 +177,104 @@ func (c *DiffCommand) executeDiff(s *git.Session, repo *gogit.Repository, opts *
 		return "", err
 	}
 
+	// Format output based on options
+	if opts.NameOnly {
+		return c.formatNameOnly(patch), nil
+	}
+	if opts.Stat {
+		return c.formatStat(patch), nil
+	}
+
 	return patch.String(), nil
+}
+
+func (c *DiffCommand) formatNameOnly(patch *object.Patch) string {
+	var sb strings.Builder
+	for _, fp := range patch.FilePatches() {
+		from, to := fp.Files()
+		var name string
+		if to != nil {
+			name = to.Path()
+		} else if from != nil {
+			name = from.Path()
+		}
+		if name != "" {
+			sb.WriteString(name)
+			sb.WriteString("\n")
+		}
+	}
+	return sb.String()
+}
+
+func (c *DiffCommand) formatStat(patch *object.Patch) string {
+	var sb strings.Builder
+	var totalAdd, totalDel int
+	var maxLen int
+
+	type fileStat struct {
+		name string
+		add  int
+		del  int
+	}
+	var stats []fileStat
+
+	for _, fp := range patch.FilePatches() {
+		from, to := fp.Files()
+		var name string
+		if to != nil {
+			name = to.Path()
+		} else if from != nil {
+			name = from.Path()
+		}
+
+		var add, del int
+		for _, chunk := range fp.Chunks() {
+			lines := strings.Split(chunk.Content(), "\n")
+			for range lines {
+				switch chunk.Type() {
+				case 1: // Add
+					add++
+				case 2: // Delete
+					del++
+				}
+			}
+			// Adjust for empty trailing line
+			if len(lines) > 0 && lines[len(lines)-1] == "" {
+				switch chunk.Type() {
+				case 1:
+					add--
+				case 2:
+					del--
+				}
+			}
+		}
+
+		if len(name) > maxLen {
+			maxLen = len(name)
+		}
+		stats = append(stats, fileStat{name: name, add: add, del: del})
+		totalAdd += add
+		totalDel += del
+	}
+
+	// Format each file
+	for _, st := range stats {
+		changes := st.add + st.del
+		bar := strings.Repeat("+", st.add) + strings.Repeat("-", st.del)
+		if len(bar) > 50 {
+			// Scale down for very large changes
+			scale := float64(50) / float64(changes)
+			bar = strings.Repeat("+", int(float64(st.add)*scale)) +
+				strings.Repeat("-", int(float64(st.del)*scale))
+		}
+		sb.WriteString(fmt.Sprintf(" %-*s | %3d %s\n", maxLen, st.name, changes, bar))
+	}
+
+	// Summary line
+	sb.WriteString(fmt.Sprintf(" %d file(s) changed, %d insertion(s)(+), %d deletion(s)(-)\n",
+		len(stats), totalAdd, totalDel))
+
+	return sb.String()
 }
 
 func (c *DiffCommand) Help() string {
@@ -180,12 +283,19 @@ func (c *DiffCommand) Help() string {
  💡 DESCRIPTION
     ・2つのコミットを比較して、変更内容（差分）を表示する
     ・ファイルの中身が具体的にどう変わったかを確認する
-    
-    ⚠️ 現在のバージョンでは、ワーキングツリーとインデックスの差分（引数なしの diff）はサポートされていません。
-    2つのコミットを指定して比較してください。
 
  📋 SYNOPSIS
-    git diff <commit1> <commit2>
+    git diff [options] [<commit>] [<commit>]
+
+ ⚙️  OPTIONS
+    --cached, --staged
+        インデックス（ステージングエリア）とHEADの差分を表示
+
+    --stat
+        変更されたファイルのリストと追加・削除行数のサマリーを表示
+
+    --name-only
+        変更されたファイル名のみを表示
 
  🛠  EXAMPLES
     1. 2つのコミットを比較
@@ -193,6 +303,12 @@ func (c *DiffCommand) Help() string {
 
     2. ブランチ間を比較
        $ git diff main develop
+
+    3. 変更ファイルと行数のサマリー
+       $ git diff --stat HEAD~1 HEAD
+
+    4. 変更ファイル名のみ
+       $ git diff --name-only HEAD~1 HEAD
 
  🔗 REFERENCE
     Full documentation: https://git-scm.com/docs/git-diff

@@ -110,6 +110,88 @@ func (c *RemoteCommand) executeRemote(_ *git.Session, repo *gogit.Repository, op
 		return "", nil
 	}
 
+	if opts.SubCmd == "rename" {
+		if opts.Name == "" || opts.URL == "" {
+			return "", fmt.Errorf("usage: git remote rename <old> <new>")
+		}
+		oldName := opts.Name
+		newName := opts.URL // URL field holds the new name in this context
+
+		// Get old remote config
+		remote, err := repo.Remote(oldName)
+		if err != nil {
+			return "", fmt.Errorf("error: No such remote: '%s'", oldName)
+		}
+		cfg := remote.Config()
+
+		// Create new remote with same URLs
+		_, err = repo.CreateRemote(&config.RemoteConfig{
+			Name: newName,
+			URLs: cfg.URLs,
+		})
+		if err != nil {
+			return "", err
+		}
+
+		// Delete old remote
+		err = repo.DeleteRemote(oldName)
+		if err != nil {
+			return "", err
+		}
+
+		return "", nil
+	}
+
+	if opts.SubCmd == "set-url" {
+		if opts.Name == "" || opts.URL == "" {
+			return "", fmt.Errorf("usage: git remote set-url <name> <newurl>")
+		}
+
+		// Get current remote config
+		remote, err := repo.Remote(opts.Name)
+		if err != nil {
+			return "", fmt.Errorf("error: No such remote '%s'", opts.Name)
+		}
+		oldCfg := remote.Config()
+
+		// Delete and recreate with new URL
+		err = repo.DeleteRemote(opts.Name)
+		if err != nil {
+			return "", err
+		}
+
+		newURLs := []string{opts.URL}
+		// Keep additional URLs if any
+		if len(oldCfg.URLs) > 1 {
+			newURLs = append(newURLs, oldCfg.URLs[1:]...)
+		}
+
+		_, err = repo.CreateRemote(&config.RemoteConfig{
+			Name: opts.Name,
+			URLs: newURLs,
+		})
+		if err != nil {
+			return "", err
+		}
+
+		return "", nil
+	}
+
+	if opts.SubCmd == "get-url" {
+		if opts.Name == "" {
+			return "", fmt.Errorf("usage: git remote get-url <name>")
+		}
+		remote, err := repo.Remote(opts.Name)
+		if err != nil {
+			return "", fmt.Errorf("error: No such remote '%s'", opts.Name)
+		}
+		cfg := remote.Config()
+		if len(cfg.URLs) > 0 {
+			return cfg.URLs[0], nil
+		}
+		return "", nil
+	}
+
 	return "", fmt.Errorf("unknown subcommand: %s", opts.SubCmd)
 }
 
@@ -156,15 +238,33 @@ func (c *RemoteCommand) Help() string {
     ・登録されている接続先の一覧を表示する（引数なし）
     ・新しい接続先を追加する（add）
     ・不要な接続先を削除する（remove）
+    ・接続先の名前を変更する（rename）
+    ・接続先のURLを変更する（set-url）
 
  📋 SYNOPSIS
     git remote [-v]
     git remote add <name> <url>
     git remote remove <name>
+    git remote rename <old> <new>
+    git remote set-url <name> <newurl>
+    git remote get-url <name>
 
  ⚙️  COMMON OPTIONS
     -v, --verbose
         URLも含めて詳細に表示します。
+
+ 🛠  EXAMPLES
+    1. リモート一覧を表示
+       $ git remote -v
+
+    2. 新しいリモートを追加
+       $ git remote add origin https://github.com/user/repo.git
+
+    3. リモートの名前を変更
+       $ git remote rename origin upstream
+
+    4. リモートのURLを変更
+       $ git remote set-url origin https://github.com/user/new-repo.git
 
  🔗 REFERENCE
     Full documentation: https://git-scm.com/docs/git-remote

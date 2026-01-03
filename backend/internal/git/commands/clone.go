@@ -37,6 +37,8 @@ var SafeRepoNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_\-]+$`)
 type CloneOptions struct {
 	URL       string
 	Directory string
+	Depth     int
+	Branch    string
 }
 
 type cloneContext struct {
@@ -79,6 +81,21 @@ func (c *CloneCommand) parseArgs(args []string) (*CloneOptions, error) {
 		switch arg {
 		case "-h", "--help":
 			return nil, fmt.Errorf("help requested")
+		case "--depth":
+			if i+1 < len(cmdArgs) {
+				i++
+				var depth int
+				_, err := fmt.Sscanf(cmdArgs[i], "%d", &depth)
+				if err != nil || depth < 1 {
+					return nil, fmt.Errorf("fatal: depth must be a positive integer")
+				}
+				opts.Depth = depth
+			}
+		case "-b", "--branch":
+			if i+1 < len(cmdArgs) {
+				i++
+				opts.Branch = cmdArgs[i]
+			}
 		default:
 			if opts.URL == "" {
 				opts.URL = arg
@@ -303,15 +320,28 @@ func (c *CloneCommand) Help() string {
     ・GitGymでは事前定義されたリポジトリURLのみサポートしています。
 
  📋 SYNOPSIS
-    git clone <url> [<directory>]
+    git clone [options] <url> [<directory>]
+
+ ⚙️  OPTIONS
+    -b <branch>, --branch <branch>
+        クローン後に指定したブランチをチェックアウトします。
+
+    --depth <depth>
+        指定した数のコミットのみを取得します（シャロークローン）。
+        GitGymでは参考情報として受け付けますが、全オブジェクトがコピーされます。
 
  🛠  PRACTICAL EXAMPLES
     1. 基本: リポジトリをクローン
-       $ git clone git@github.com:org/repo.git
+       $ git clone https://github.com/org/repo.git
 
-    2. 実践: ディレクトリ名を指定してクローン (Recommended)
-       「リポジトリ名とは別のフォルダ名で作業したい」場合に使います。
-       $ git clone git@github.com:org/repo.git my-project
+    2. 実践: ディレクトリ名を指定してクローン
+       $ git clone https://github.com/org/repo.git my-project
+
+    3. 特定のブランチをクローン
+       $ git clone -b develop https://github.com/org/repo.git
+
+    4. シャロークローン（履歴を制限）
+       $ git clone --depth 1 https://github.com/org/repo.git
 
  🔗 REFERENCE
     Full documentation: https://git-scm.com/docs/git-clone
